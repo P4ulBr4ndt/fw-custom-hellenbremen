@@ -7,6 +7,8 @@ void setBoardDefaultConfiguration() {
     setHellenVbatt();
     setHellenCan();
     setDefaultHellenAtPullUps();
+    setHellenEnPin(Gpio::G4, true);
+
     // engineConfiguration->injectionPins[0] = Gpio::F13;
     // engineConfiguration->ignitionPins[0] = Gpio::E15;
 
