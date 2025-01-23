@@ -21,7 +21,7 @@ void setBoardDefaultConfiguration() {
     engineConfiguration->ignitionPins[0] = Gpio::C13;
     engineConfiguration->ignitionPins[1] = Gpio::E5;
 
-    engineConfiguration->triggerInputPins = Gpio::B1;
+    engineConfiguration->triggerInputPins[0] = Gpio::B1;
 
     engineConfiguration->engineType = engine_type_e::HARLEY;
 
