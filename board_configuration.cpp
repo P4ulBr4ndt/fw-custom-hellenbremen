@@ -9,7 +9,7 @@ void setBoardDefaultConfiguration() {
     setHellenVbatt();
     setHellenCan();
     setDefaultHellenAtPullUps();
-    setHellenMegaEnPin();
+    setHellenEnPin(Gpio::G4, true);
 
     engineConfiguration->cylindersCount = 2;
     engineConfiguration->firingOrder = FO_1_2;
@@ -76,6 +76,4 @@ void setBoardDefaultConfiguration() {
     // engineConfiguration->vbattDividerCoeff = (6.34 + 1) / 1;
 
     // engineConfiguration->adcVcc = 3.3f;
-
-    hellenEnableEn("WhyNotOn?");
 }
