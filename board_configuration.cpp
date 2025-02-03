@@ -62,15 +62,12 @@ void setBoardDefaultConfiguration() {
     setCustomMap(/*lowValue*/ 20, /*mapLowValueVoltage*/ 0.79, /*highValue*/ 101.3, /*mapHighValueVoltage*/ 4);
 
 
-    // engineConfiguration->triggerInputPins[0] = Gpio::B1;
-    // engineConfiguration->triggerInputPins[1] = Gpio::Unassigned;
 
     // engineConfiguration->map.sensor.hwChannel = EFI_ADC_3;
 
     // engineConfiguration->clt.adcChannel = EFI_ADC_1;
 
     // engineConfiguration->iat.adcChannel = EFI_ADC_2;
-
 
     // 5.6k high side/10k low side = 1.56 ratio divider
     // engineConfiguration->analogInputDividerCoefficient = 1.56f;
@@ -79,4 +76,6 @@ void setBoardDefaultConfiguration() {
     // engineConfiguration->vbattDividerCoeff = (6.34 + 1) / 1;
 
     // engineConfiguration->adcVcc = 3.3f;
+
+    hellenEnableEn("WhyNotOn?");
 }
