@@ -9,7 +9,7 @@ void setBoardDefaultConfiguration() {
     setHellenVbatt();
     setHellenCan();
     setDefaultHellenAtPullUps();
-    setHellenEnPin(Gpio::G4, true);
+    setHellenMegaEnPin();
 
     engineConfiguration->cylindersCount = 2;
     engineConfiguration->firingOrder = FO_1_2;
