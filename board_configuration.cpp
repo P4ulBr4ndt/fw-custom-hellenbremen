@@ -4,8 +4,7 @@
 
 #define HARLEY_V_TWIN 45.0
 
-// board-specific configuration setup
-void setBoardDefaultConfiguration() {
+void setHarleyEngineConfiguration() {
     setHellenVbatt();
     setHellenCan();
     setDefaultHellenAtPullUps();
@@ -27,7 +26,6 @@ void setBoardDefaultConfiguration() {
 
     engineConfiguration->ignitionMode = IM_INDIVIDUAL_COILS;
     engineConfiguration->injectionMode = IM_SEQUENTIAL;
-
 
     strcpy(engineConfiguration->scriptSettingName[0], "compReleaseRpm");
     engineConfiguration->scriptSetting[0] = 300;
@@ -60,10 +58,15 @@ void setBoardDefaultConfiguration() {
     engineConfiguration->mapCamDetectionAnglePosition = 50;
 
     setCustomMap(/*lowValue*/ 20, /*mapLowValueVoltage*/ 0.79, /*highValue*/ 101.3, /*mapHighValueVoltage*/ 4);
+    engineConfiguration->map.sensor.hwChannel = EFI_ADC_10;
 
+    engineConfiguration->tps1_1AdcChannel = EFI_ADC_4;
+    engineConfiguration->tpsMin = 100;
+    engineConfiguration->tpsMax = 900;
 
-
-    // engineConfiguration->map.sensor.hwChannel = EFI_ADC_3;
+    engineConfiguration->throttlePedalPositionAdcChannel = EFI_ADC_3;
+    engineConfiguration->throttlePedalUpVoltage = 1.36;
+    engineConfiguration->throttlePedalWOTVoltage = 4.46;
 
     // engineConfiguration->clt.adcChannel = EFI_ADC_1;
 
@@ -78,9 +81,11 @@ void setBoardDefaultConfiguration() {
     // engineConfiguration->adcVcc = 3.3f;
 }
 
+// board-specific configuration setup
+void setBoardDefaultConfiguration() {
+    setHarleyEngineConfiguration();
+}
+
 void setBoardConfigOverrides() {
-    setHellenVbatt();
-    setHellenCan();
-    setDefaultHellenAtPullUps();
-    setHellenMegaEnPin(true);
+    setHarleyEngineConfiguration();
 }
