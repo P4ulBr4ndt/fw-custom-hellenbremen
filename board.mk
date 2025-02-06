@@ -13,5 +13,8 @@ DDEFS += -DRAM_UNUSED_SIZE=100
 # this is usually used by Bluetooth
 DDEFS += $(PRIMARY_COMMUNICATION_PORT_USART2)
 
+# ACR Management
+DDEFS += -DEFI_HD_ACR=TRUE
+
 # this includes knock and mux control settings
 include $(BOARDS_DIR)/hellen/hellen-common-mega144.mk
