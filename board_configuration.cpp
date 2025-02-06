@@ -5,11 +5,6 @@
 #define HARLEY_V_TWIN 45.0
 
 void setHarleyEngineConfiguration() {
-    setHellenVbatt();
-    setHellenCan();
-    setDefaultHellenAtPullUps();
-    setHellenMegaEnPin(true);
-
     engineConfiguration->cylindersCount = 2;
     engineConfiguration->firingOrder = FO_1_2;
     strcpy(engineConfiguration->engineMake, "Harley");
@@ -83,9 +78,17 @@ void setHarleyEngineConfiguration() {
 
 // board-specific configuration setup
 void setBoardDefaultConfiguration() {
+    setHellenVbatt();
+    setHellenCan();
+    setDefaultHellenAtPullUps();
+    setHellenMegaEnPin(true);
+
     setHarleyEngineConfiguration();
 }
 
 void setBoardConfigOverrides() {
-    setHarleyEngineConfiguration();
+    setHellenVbatt();
+    setHellenCan();
+    setDefaultHellenAtPullUps();
+    setHellenMegaEnPin(true);
 }
