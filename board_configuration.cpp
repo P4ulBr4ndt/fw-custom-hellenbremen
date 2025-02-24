@@ -4,39 +4,8 @@
 
 #define HARLEY_V_TWIN 45.0
 
-void setHarleyEngineConfiguration() {
-    engineConfiguration->cylindersCount = 2;
-    engineConfiguration->firingOrder = FO_1_2;
-    strcpy(engineConfiguration->engineMake, "Harley");
-
-    engineConfiguration->injectionPins[0] = Gpio::G7;
-    engineConfiguration->injectionPins[1] = Gpio::G8;
-
-    engineConfiguration->ignitionPins[0] = Gpio::C13;
-    engineConfiguration->ignitionPins[1] = Gpio::E5;
-
-    engineConfiguration->triggerInputPins[0] = Gpio::B1;
-
-    engineConfiguration->engineType = engine_type_e::HARLEY;
-
-    engineConfiguration->ignitionMode = IM_INDIVIDUAL_COILS;
-    engineConfiguration->injectionMode = IM_SEQUENTIAL;
-
-    strcpy(engineConfiguration->scriptSettingName[0], "compReleaseRpm");
-    engineConfiguration->scriptSetting[0] = 300;
-    strcpy(engineConfiguration->scriptSettingName[1], "compReleaseDur");
-    engineConfiguration->scriptSetting[1] = 5000;
-    engineConfiguration->afr.hwChannel = EFI_ADC_NONE;
-    engineConfiguration->enableAemXSeries = true;
-
-    // total 45 degree odd fire, split across two cylinders mostly for fun
-    engineConfiguration->timing_offset_cylinder[0] = -HARLEY_V_TWIN / 2;
-    engineConfiguration->timing_offset_cylinder[1] = +HARLEY_V_TWIN / 2;
-
-    // work-around for https://github.com/rusefi/rusefi/issues/5894 todo: fix it!
-    engineConfiguration->maximumIgnitionTiming = 90;
-    engineConfiguration->minimumIgnitionTiming = -90;
-
+void setHarleyDefaults() {
+    // Trigger
     engineConfiguration->trigger.type = trigger_type_e::TT_TOOTHED_WHEEL_32_2;
     engineConfiguration->overrideTriggerGaps = true;
     engineConfiguration->gapTrackingLengthOverride = 3;
@@ -47,18 +16,29 @@ void setHarleyEngineConfiguration() {
     engineConfiguration->triggerGapOverrideFrom[2] = 1.850; // this one is custom
     engineConfiguration->triggerGapOverrideTo[2] = 6;
 
+    // Cam
     engineConfiguration->vvtMode[0] = VVT_MAP_V_TWIN;
-
-    engineConfiguration->mainRelayPin = Gpio::Unassigned;
     engineConfiguration->mapCamDetectionAnglePosition = 50;
+    engineConfiguration->mainRelayPin = Gpio::Unassigned;
 
+    // ACR
+    strcpy(engineConfiguration->scriptSettingName[0], "compReleaseRpm");
+    engineConfiguration->scriptSetting[0] = 300;
+    strcpy(engineConfiguration->scriptSettingName[1], "compReleaseDur");
+    engineConfiguration->scriptSetting[1] = 5000;
+
+    // AFR
+    engineConfiguration->afr.hwChannel = EFI_ADC_NONE;
+    engineConfiguration->enableAemXSeries = false;
+
+    // MAP
     setCustomMap(/*lowValue*/ 20, /*mapLowValueVoltage*/ 0.79, /*highValue*/ 101.3, /*mapHighValueVoltage*/ 4);
     engineConfiguration->map.sensor.hwChannel = EFI_ADC_10;
 
+    // TPS
     engineConfiguration->tps1_1AdcChannel = EFI_ADC_4;
     engineConfiguration->tpsMin = 100;
     engineConfiguration->tpsMax = 900;
-
     engineConfiguration->throttlePedalPositionAdcChannel = EFI_ADC_3;
     engineConfiguration->throttlePedalUpVoltage = 1.36;
     engineConfiguration->throttlePedalWOTVoltage = 4.46;
@@ -76,14 +56,36 @@ void setHarleyEngineConfiguration() {
     // engineConfiguration->adcVcc = 3.3f;
 }
 
+void setHarleyOverrides() {
+    engineConfiguration->cylindersCount = 2;
+    engineConfiguration->firingOrder = FO_1_2;
+    strcpy(engineConfiguration->engineMake, "Harley");
+
+    engineConfiguration->injectionPins[0] = Gpio::G7;
+    engineConfiguration->injectionPins[1] = Gpio::G8;
+
+    engineConfiguration->ignitionPins[0] = Gpio::E5;
+    engineConfiguration->ignitionPins[1] = Gpio::C13;
+
+    engineConfiguration->triggerInputPins[0] = Gpio::B1;
+
+    engineConfiguration->engineType = engine_type_e::HARLEY;
+
+    engineConfiguration->ignitionMode = IM_INDIVIDUAL_COILS;
+    engineConfiguration->injectionMode = IM_SEQUENTIAL;
+
+    // total 45 degree odd fire, split across two cylinders mostly for fun
+    engineConfiguration->timing_offset_cylinder[0] = -HARLEY_V_TWIN / 2;
+    engineConfiguration->timing_offset_cylinder[1] = +HARLEY_V_TWIN / 2;
+
+    // work-around for https://github.com/rusefi/rusefi/issues/5894 todo: fix it!
+    engineConfiguration->maximumIgnitionTiming = 90;
+    engineConfiguration->minimumIgnitionTiming = -90;
+}
+
 // board-specific configuration setup
 void setBoardDefaultConfiguration() {
-    setHellenVbatt();
-    setHellenCan();
-    setDefaultHellenAtPullUps();
-    setHellenMegaEnPin(true);
-
-    setHarleyEngineConfiguration();
+    setHarleyDefaults();
 }
 
 void setBoardConfigOverrides() {
@@ -91,4 +93,6 @@ void setBoardConfigOverrides() {
     setHellenCan();
     setDefaultHellenAtPullUps();
     setHellenMegaEnPin(true);
+
+    setHarleyOverrides();
 }
