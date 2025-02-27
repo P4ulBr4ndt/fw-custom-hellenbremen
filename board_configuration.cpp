@@ -57,26 +57,28 @@ void setHarleyDefaults() {
 }
 
 void setHarleyOverrides() {
+    // Generic
     engineConfiguration->cylindersCount = 2;
     engineConfiguration->firingOrder = FO_1_2;
     strcpy(engineConfiguration->engineMake, "Harley");
 
-    engineConfiguration->injectionPins[0] = Gpio::G7;
-    engineConfiguration->injectionPins[1] = Gpio::G8;
+    // Injection
+    engineConfiguration->injectionMode = IM_SEQUENTIAL;
+    //engineConfiguration->injectionPins[0] = Gpio::G7;
+    //engineConfiguration->injectionPins[1] = Gpio::G8;
 
-    engineConfiguration->ignitionPins[0] = Gpio::E5;
-    engineConfiguration->ignitionPins[1] = Gpio::C13;
+    // Ignition
+    engineConfiguration->ignitionMode = IM_INDIVIDUAL_COILS;
+    //engineConfiguration->ignitionPins[0] = Gpio::E5;
+    //engineConfiguration->ignitionPins[1] = Gpio::C13;
 
     engineConfiguration->triggerInputPins[0] = Gpio::B1;
 
     engineConfiguration->engineType = engine_type_e::HARLEY;
 
-    engineConfiguration->ignitionMode = IM_INDIVIDUAL_COILS;
-    engineConfiguration->injectionMode = IM_SEQUENTIAL;
-
     // total 45 degree odd fire, split across two cylinders mostly for fun
-    engineConfiguration->timing_offset_cylinder[0] = -HARLEY_V_TWIN / 2;
-    engineConfiguration->timing_offset_cylinder[1] = +HARLEY_V_TWIN / 2;
+    //engineConfiguration->timing_offset_cylinder[0] = -HARLEY_V_TWIN / 2;
+    //engineConfiguration->timing_offset_cylinder[1] = +HARLEY_V_TWIN / 2;
 
     // work-around for https://github.com/rusefi/rusefi/issues/5894 todo: fix it!
     engineConfiguration->maximumIgnitionTiming = 90;
