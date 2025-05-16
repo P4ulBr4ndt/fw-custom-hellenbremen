@@ -33,19 +33,20 @@ void setHarleyDefaults() {
 
     // MAP
     setCustomMap(/*lowValue*/ 20, /*mapLowValueVoltage*/ 0.79, /*highValue*/ 101.3, /*mapHighValueVoltage*/ 4);
-    engineConfiguration->map.sensor.hwChannel = EFI_ADC_10;
+    engineConfiguration->map.sensor.hwChannel = EFI_ADC_13;
 
     // TPS
     engineConfiguration->tps1_1AdcChannel = EFI_ADC_4;
+    engineConfiguration->tps1_2AdcChannel = EFI_ADC_14;
     engineConfiguration->tpsMin = 100;
     engineConfiguration->tpsMax = 900;
-    engineConfiguration->throttlePedalPositionAdcChannel = EFI_ADC_3;
+    engineConfiguration->throttlePedalPositionAdcChannel = EFI_ADC_10;
+    engineConfiguration->throttlePedalPositionSecondAdcChannel = EFI_ADC_12;
     engineConfiguration->throttlePedalUpVoltage = 1.36;
     engineConfiguration->throttlePedalWOTVoltage = 4.46;
 
-    // engineConfiguration->clt.adcChannel = EFI_ADC_1;
-
-    // engineConfiguration->iat.adcChannel = EFI_ADC_2;
+    engineConfiguration->clt.adcChannel = EFI_ADC_5;
+    engineConfiguration->iat.adcChannel = EFI_ADC_2;
 
     // 5.6k high side/10k low side = 1.56 ratio divider
     // engineConfiguration->analogInputDividerCoefficient = 1.56f;
@@ -54,6 +55,14 @@ void setHarleyDefaults() {
     // engineConfiguration->vbattDividerCoeff = (6.34 + 1) / 1;
 
     // engineConfiguration->adcVcc = 3.3f;
+
+    // Injection
+    engineConfiguration->injectionPins[0] = Gpio::G7;
+    engineConfiguration->injectionPins[1] = Gpio::G8;
+
+    // Ignition
+    engineConfiguration->ignitionPins[0] = Gpio::E5;
+    engineConfiguration->ignitionPins[1] = Gpio::C13;
 }
 
 void setHarleyOverrides() {
@@ -64,21 +73,17 @@ void setHarleyOverrides() {
 
     // Injection
     engineConfiguration->injectionMode = IM_SEQUENTIAL;
-    //engineConfiguration->injectionPins[0] = Gpio::G7;
-    //engineConfiguration->injectionPins[1] = Gpio::G8;
 
     // Ignition
     engineConfiguration->ignitionMode = IM_INDIVIDUAL_COILS;
-    //engineConfiguration->ignitionPins[0] = Gpio::E5;
-    //engineConfiguration->ignitionPins[1] = Gpio::C13;
 
-    engineConfiguration->triggerInputPins[0] = Gpio::B1;
+    engineConfiguration->triggerInputPins[0] = Gpio::B0;
 
     engineConfiguration->engineType = engine_type_e::HARLEY;
 
     // total 45 degree odd fire, split across two cylinders mostly for fun
-    //engineConfiguration->timing_offset_cylinder[0] = -HARLEY_V_TWIN / 2;
-    //engineConfiguration->timing_offset_cylinder[1] = +HARLEY_V_TWIN / 2;
+    engineConfiguration->timing_offset_cylinder[0] = -HARLEY_V_TWIN / 2;
+    engineConfiguration->timing_offset_cylinder[1] = +HARLEY_V_TWIN / 2;
 
     // work-around for https://github.com/rusefi/rusefi/issues/5894 todo: fix it!
     engineConfiguration->maximumIgnitionTiming = 90;
