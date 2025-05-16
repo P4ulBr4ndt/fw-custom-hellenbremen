@@ -1189,7 +1189,7 @@
 #define maf_sensor_type_e_CUSTOM 0
 #define maf_sensor_type_e_DensoTODO 3
 #define maf_sensor_type_e_enum "v0", "v1", "v2", "v3"
-#define MAIN_HELP_URL "http://www.rusefi.com/"
+#define MAIN_HELP_URL "https://don-performance.com"
 #define MAP_ANGLE_SIZE 8
 #define MAP_sensor_config_s_size 140
 #define MAP_UPPER_LIMIT 1000
@@ -1338,7 +1338,7 @@
 #define SentInput_NONE 0
 #define show_tcu_gauges false
 #define show_vvt_output_pin true
-#define SIGNATURE_HASH 3828700770
+#define SIGNATURE_HASH 1292904686
 #define SIMULATOR_TUNE_BIN_FILE_NAME "generated/simulator_tune_image.bin"
 #define SIMULATOR_TUNE_BIN_FILE_NAME_PREFIX "generated/simulator_tune_image"
 #define SIMULATOR_TUNE_BIN_FILE_NAME_SUFFIX ".bin"
@@ -1651,9 +1651,9 @@
 #define TS_SET_LOGGER_SWITCH 'l'
 #define TS_SET_LOGGER_SWITCH_char l
 #define ts_show_acr_pins true
-#define ts_show_air_conditioning true
-#define ts_show_alternator true
-#define ts_show_analog_divider true
+#define ts_show_air_conditioning false
+#define ts_show_alternator false
+#define ts_show_analog_divider false
 #define ts_show_analog_ego true
 #define ts_show_analog_input_settings true
 #define ts_show_aux_connections true
@@ -1663,13 +1663,13 @@
 #define ts_show_bank2_cam2 true
 #define ts_show_brake_pedal_pin true
 #define ts_show_cam2 true
-#define ts_show_can2 true
+#define ts_show_can2 false
 #define ts_show_can_bitrate true
-#define ts_show_can_pins true
+#define ts_show_can_pins false
 #define ts_show_can_wbo true
 #define ts_show_charge_estimation true
 #define ts_show_check_engine false
-#define ts_show_clt_iat_pullup true
+#define ts_show_clt_iat_pullup false
 #define ts_show_clutch_down true
 #define ts_show_clutch_down_pin true
 #define ts_show_clutch_up true
@@ -1678,28 +1678,28 @@
 #define ts_show_compression_ratio false
 #define ts_show_compressor_sensor true
 #define ts_show_console_settings true
-#define ts_show_cylinder_10 true
-#define ts_show_cylinder_11 true
-#define ts_show_cylinder_12 true
+#define ts_show_cylinder_10 false
+#define ts_show_cylinder_11 false
+#define ts_show_cylinder_12 false
 #define ts_show_cylinder_2 true
-#define ts_show_cylinder_3 true
-#define ts_show_cylinder_4 true
-#define ts_show_cylinder_5 true
-#define ts_show_cylinder_6 true
-#define ts_show_cylinder_7 true
-#define ts_show_cylinder_8 true
-#define ts_show_cylinder_9 true
+#define ts_show_cylinder_3 false
+#define ts_show_cylinder_4 false
+#define ts_show_cylinder_5 false
+#define ts_show_cylinder_6 false
+#define ts_show_cylinder_7 false
+#define ts_show_cylinder_8 false
+#define ts_show_cylinder_9 false
 #define ts_show_cylinder_bank true
 #define ts_show_debug_mode false
 #define ts_show_ego2 true
-#define ts_show_egt true
+#define ts_show_egt false
 #define ts_show_etb true
 #define ts_show_etb_bias_curve true
 #define ts_show_etb_extra_monitoring 
 #define ts_show_etb_pins true
 #define ts_show_exhaust_vvt true
 #define ts_show_experimental true
-#define ts_show_fan2_settings true
+#define ts_show_fan2_settings false
 #define ts_show_final_ratio true
 #define ts_show_firing_order true
 #define ts_show_flex_inverted true
@@ -1707,7 +1707,7 @@
 #define ts_show_ford_toyota_tps_pps true
 #define ts_show_fuel_level_sensor true
 #define ts_show_fuel_pressure_sensor true
-#define ts_show_fuel_pump true
+#define ts_show_fuel_pump false
 #define ts_show_fuel_relay_pin true
 #define ts_show_fuel_strategy true
 #define ts_show_fuel_temp_sensor true
@@ -1744,7 +1744,7 @@
 #define ts_show_intake_vvt_direction true
 #define ts_show_k_line false
 #define ts_show_l9779 false
-#define ts_show_maf true
+#define ts_show_maf false
 #define ts_show_main_relay true
 #define ts_show_main_relay_microRusEFI_message false
 #define ts_show_mc33810 false
@@ -1759,13 +1759,13 @@
 #define ts_show_popular_vehicles true
 #define ts_show_reboot_to_dfu true
 #define ts_show_reset_calibrations false
-#define ts_show_rotary true
-#define ts_show_sd_card true
-#define ts_show_sd_pins true
+#define ts_show_rotary false
+#define ts_show_sd_card false
+#define ts_show_sd_pins false
 #define ts_show_second_bank true
-#define ts_show_software_knock false
+#define ts_show_software_knock true
 #define ts_show_speedo_settings true
-#define ts_show_spi true
+#define ts_show_spi false
 #define ts_show_spi1_enable true
 #define ts_show_spi1_pins true
 #define ts_show_spi2_enable true
@@ -1799,7 +1799,7 @@
 #define ts_show_trigger_pins true
 #define ts_show_tsp_pps_limits true
 #define ts_show_tunerstudio_port true
-#define ts_show_vbatt true
+#define ts_show_vbatt false
 #define ts_show_vehicle_speed_sensor true
 #define ts_show_vehicle_weight false
 #define ts_show_vr_threshold_2 false
@@ -1810,7 +1810,7 @@
 #define ts_show_wastegate_sensor true
 #define ts_show_wbo_canbus_index true
 #define ts_show_wbo_canbus_set_index true
-#define TS_SIGNATURE "rusEFI main.2025.05.16.hellen-bremen.3828700770"
+#define TS_SIGNATURE "rusEFI main.2025.05.16.hellen-bremen.1292904686"
 #define TS_SIMULATE_CAN '>'
 #define TS_SIMULATE_CAN_char >
 #define TS_SINGLE_WRITE_COMMAND 'W'
