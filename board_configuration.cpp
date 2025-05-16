@@ -6,7 +6,6 @@
 
 void setHarleyDefaults() {
     // Trigger
-    engineConfiguration->trigger.type = trigger_type_e::TT_TOOTHED_WHEEL_32_2;
     engineConfiguration->overrideTriggerGaps = true;
     engineConfiguration->gapTrackingLengthOverride = 3;
     engineConfiguration->triggerGapOverrideFrom[0] = 0.75;
@@ -19,34 +18,27 @@ void setHarleyDefaults() {
     // Cam
     engineConfiguration->vvtMode[0] = VVT_MAP_V_TWIN;
     engineConfiguration->mapCamDetectionAnglePosition = 50;
+
     engineConfiguration->mainRelayPin = Gpio::Unassigned;
 
-    // ACR
+    // ACR TODO: Is this still used?
     strcpy(engineConfiguration->scriptSettingName[0], "compReleaseRpm");
     engineConfiguration->scriptSetting[0] = 300;
     strcpy(engineConfiguration->scriptSettingName[1], "compReleaseDur");
     engineConfiguration->scriptSetting[1] = 5000;
 
-    // AFR
+    // AFR TODO
     engineConfiguration->afr.hwChannel = EFI_ADC_NONE;
     engineConfiguration->enableAemXSeries = false;
 
     // MAP
     setCustomMap(/*lowValue*/ 20, /*mapLowValueVoltage*/ 0.79, /*highValue*/ 101.3, /*mapHighValueVoltage*/ 4);
-    engineConfiguration->map.sensor.hwChannel = EFI_ADC_13;
 
     // TPS
-    engineConfiguration->tps1_1AdcChannel = EFI_ADC_4;
-    engineConfiguration->tps1_2AdcChannel = EFI_ADC_14;
     engineConfiguration->tpsMin = 100;
     engineConfiguration->tpsMax = 900;
-    engineConfiguration->throttlePedalPositionAdcChannel = EFI_ADC_10;
-    engineConfiguration->throttlePedalPositionSecondAdcChannel = EFI_ADC_12;
     engineConfiguration->throttlePedalUpVoltage = 1.36;
     engineConfiguration->throttlePedalWOTVoltage = 4.46;
-
-    engineConfiguration->clt.adcChannel = EFI_ADC_5;
-    engineConfiguration->iat.adcChannel = EFI_ADC_2;
 
     // 5.6k high side/10k low side = 1.56 ratio divider
     // engineConfiguration->analogInputDividerCoefficient = 1.56f;
@@ -71,13 +63,41 @@ void setHarleyOverrides() {
     engineConfiguration->firingOrder = FO_1_2;
     strcpy(engineConfiguration->engineMake, "Harley");
 
+    // Knock
+    engineConfiguration->enableSoftwareKnock = true;
+    engineConfiguration->knockFrequency = 0.0f; // TODO
+
+    // Aux Outputs
+    engineConfiguration->fanPin = Gpio::C7;
+    engineConfiguration->fanOnTemperature = 80.f;
+    engineConfiguration->fanOffTemperature = 70.f;
+
+    // MAP
+    engineConfiguration->map.sensor.hwChannel = EFI_ADC_13;
+
+    // ETB
+    engineConfiguration->etb_use_two_wires = false;
+    engineConfiguration->etbIo[0].directionPin1 = Gpio::D13;
+    engineConfiguration->etbIo[0].controlPin = Gpio::D12;
+    engineConfiguration->etbIo[0].disablePin = Gpio::C12;
+    engineConfiguration->tps1_1AdcChannel = EFI_ADC_4;
+    engineConfiguration->tps1_2AdcChannel = EFI_ADC_14;
+    engineConfiguration->throttlePedalPositionAdcChannel = EFI_ADC_10;
+    engineConfiguration->throttlePedalPositionSecondAdcChannel = EFI_ADC_12;
+
+    // Temp Sensors
+    engineConfiguration->clt.adcChannel = EFI_ADC_5;
+    engineConfiguration->iat.adcChannel = EFI_ADC_2;
+
     // Injection
     engineConfiguration->injectionMode = IM_SEQUENTIAL;
 
     // Ignition
     engineConfiguration->ignitionMode = IM_INDIVIDUAL_COILS;
 
+    // Trigger
     engineConfiguration->triggerInputPins[0] = Gpio::B0;
+    engineConfiguration->trigger.type = trigger_type_e::TT_TOOTHED_WHEEL_32_2;
 
     engineConfiguration->engineType = engine_type_e::HARLEY;
 
