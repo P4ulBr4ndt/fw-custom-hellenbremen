@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "name": "Mac",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [
+                "EFI_CAN_SUPPORT=1",
+                "EFI_PROD_CODE=1",
+                "EFI_HD_ACR=1",
+                "EFI_BOOST_CONTROL=0",
+                "EFI_UNIT_TEST=0",
+            ],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c17",
+            "cppStandard": "c++14",
+            "intelliSenseMode": "macos-clang-arm64"
+        }
+    ],
+    "version": 4
+}
