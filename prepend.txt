@@ -4,6 +4,8 @@
 #define FUEL_RPM_COUNT 19
 #define FUEL_LOAD_COUNT 14
 
+#define EFI_HD_ACR true
+
 #define ts_show_etb true
 #define ts_show_etb_pins true
 #define ts_show_analog_divider false
