@@ -116,7 +116,7 @@ void setBoardDefaultConfiguration() {
 }
 
 void setBoardConfigOverrides() {
-    setHellenVbatt();
+    setHellenAnalogDividers();
     setHellenCan();
     setDefaultHellenAtPullUps();
     setHellenMegaEnPin(true);
