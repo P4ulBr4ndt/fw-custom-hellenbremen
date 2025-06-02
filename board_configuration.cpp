@@ -4,7 +4,8 @@
 
 #define HARLEY_V_TWIN 45.0
 
-void setHarleyDefaults() {
+// board-specific configuration setup
+void setBoardDefaultConfiguration() {
     // Trigger
     engineConfiguration->overrideTriggerGaps = true;
     engineConfiguration->gapTrackingLengthOverride = 3;
@@ -60,7 +61,16 @@ void setHarleyDefaults() {
     engineConfiguration->ignitionPins[1] = Gpio::C13;
 }
 
-void setHarleyOverrides() {
+void setBoardConfigOverrides() {
+    setHellenAnalogDividers();
+    setHellenCan();
+    setDefaultHellenAtPullUps();
+
+    // Power for external 5V analog sensors and 3.3SW
+    static OutputPin PwrEn;
+    PwrEn.initPin("PWR EN", Gpio::E0);
+    PwrEn.setValue(1);    
+
     // Generic
     engineConfiguration->cylindersCount = 2;
     engineConfiguration->firingOrder = FO_1_2;
@@ -111,19 +121,4 @@ void setHarleyOverrides() {
     // work-around for https://github.com/rusefi/rusefi/issues/5894 todo: fix it!
     engineConfiguration->maximumIgnitionTiming = 90;
     engineConfiguration->minimumIgnitionTiming = -90;
-}
-
-// board-specific configuration setup
-void setBoardDefaultConfiguration() {
-    setHarleyDefaults();
-}
-
-void setBoardConfigOverrides() {
-    setHellenAnalogDividers();
-    setHellenCan();
-    setDefaultHellenAtPullUps();
-
-    setHellenEnPin(Gpio::E0, true);
-
-    setHarleyOverrides();
 }
