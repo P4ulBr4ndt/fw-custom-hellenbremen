@@ -19,6 +19,9 @@ void setHarleyDefaults() {
     engineConfiguration->vvtMode[0] = VVT_MAP_V_TWIN;
     engineConfiguration->mapCamDetectionAnglePosition = 50;
 
+    // Aux Outputs
+    engineConfiguration->fanOnTemperature = 80.f;
+    engineConfiguration->fanOffTemperature = 70.f;
     engineConfiguration->mainRelayPin = Gpio::Unassigned;
 
     // ACR TODO: Is this still used?
@@ -64,13 +67,13 @@ void setHarleyOverrides() {
     strcpy(engineConfiguration->engineMake, "Harley");
 
     // Knock
-    engineConfiguration->enableSoftwareKnock = true;
-    engineConfiguration->knockFrequency = 0.0f; // TODO
+    // engineConfiguration->enableSoftwareKnock = true;
+    // engineConfiguration->knockFrequency = 0.0f; // TODO
 
     // Aux Outputs
     engineConfiguration->fanPin = Gpio::C7;
-    engineConfiguration->fanOnTemperature = 80.f;
-    engineConfiguration->fanOffTemperature = 70.f;
+    //engineConfiguration->fanOnTemperature = 80.f;
+    //engineConfiguration->fanOffTemperature = 70.f;
 
     // MAP
     engineConfiguration->map.sensor.hwChannel = EFI_ADC_13;
