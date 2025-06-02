@@ -11,3 +11,9 @@ DDEFS += $(PRIMARY_COMMUNICATION_PORT_USART2)
 
 # this includes knock and mux control settings
 include $(BOARDS_DIR)/hellen/hellen-common-mega144.mk
+
+# ACR Management
+DDEFS += -DEFI_HD_ACR=TRUE
+
+# Software Knock
+DDEFS += -DEFI_SOFTWARE_KNOCK=TRUE
