@@ -123,7 +123,7 @@ void setBoardConfigOverrides() {
     setHellenCan();
     setDefaultHellenAtPullUps();
 
-    setHellenEnPin((Gpio)66, true); // TODO: GPIO E0
+    setHellenEnPin(Gpio::E0, true);
 
     setHarleyOverrides();
 }
