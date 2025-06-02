@@ -1,0 +1,23 @@
+{
+	// Use IntelliSense to learn about possible attributes.
+	// Hover to view descriptions of existing attributes.
+	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Debug BremerECU",
+			"type": "cortex-debug",
+			"request": "launch",
+			"cwd": "${workspaceFolder}/firmware",
+			"executable": "${workspaceRoot}/firmware/build/rusefi.elf",
+			"device": "STM32F767V",
+			"v1": false,
+			"svdFile": "${workspaceRoot}/firmware/ext/cmsis-svd/STM32F7x7.svd",
+			"servertype": "openocd",
+			"configFiles": ["interface/stlink.cfg", "target/stm32f7x.cfg"],
+			"rtos": "auto",
+			"runToMain": true,
+			"preLaunchTask": "Build Firmware BremerECU"
+		}
+	]
+}
