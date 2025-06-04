@@ -7,17 +7,18 @@
 		{
 			"name": "Debug BremerECU",
 			"type": "cortex-debug",
-			"request": "launch",
-			"cwd": "${workspaceFolder}/firmware",
-			"executable": "${workspaceRoot}/firmware/build/rusefi.elf",
+			"armToolchainPath": "/Applications/ArmGNUToolchain/14.2.rel1/arm-none-eabi/bin",
+			"request": "attach",
+			"cwd": "${workspaceFolder}/ext/rusefi/firmware",
+			"executable": "${workspaceRoot}/build/rusefi.elf",
 			"device": "STM32F767V",
 			"v1": false,
-			"svdFile": "${workspaceRoot}/firmware/ext/cmsis-svd/STM32F7x7.svd",
+			"svdFile": "${workspaceRoot}/ext/rusefi/firmware/ext/cmsis-svd/STM32F7x7.svd",
 			"servertype": "openocd",
 			"configFiles": ["interface/stlink.cfg", "target/stm32f7x.cfg"],
 			"rtos": "auto",
 			"runToMain": true,
-			"preLaunchTask": "Build Firmware BremerECU"
+			// "preLaunchTask": "Build Firmware BremerECU"
 		}
 	]
 }

@@ -66,11 +66,6 @@ void setBoardConfigOverrides() {
     setHellenCan();
     setDefaultHellenAtPullUps();
 
-    // Power for external 5V analog sensors and 3.3SW
-    static OutputPin PwrEn;
-    PwrEn.initPin("PWR EN", Gpio::E0);
-    PwrEn.setValue(1);    
-
     // Generic
     engineConfiguration->cylindersCount = 2;
     engineConfiguration->firingOrder = FO_1_2;
