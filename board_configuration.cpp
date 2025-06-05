@@ -66,6 +66,9 @@ void setBoardConfigOverrides() {
     setHellenCan();
     setDefaultHellenAtPullUps();
 
+	// TODO: Remove this temp fix, we are currently missing voltage sensing
+	engineConfiguration->vbattAdcChannel = Gpio::Unassigned;
+
     // Generic
     engineConfiguration->cylindersCount = 2;
     engineConfiguration->firingOrder = FO_1_2;
