@@ -66,8 +66,8 @@ void setBoardConfigOverrides() {
     setHellenCan();
     setDefaultHellenAtPullUps();
 
-	// TODO: Remove this temp fix, we are currently missing voltage sensing
-	// engineConfiguration->vbattAdcChannel = EFI_ADC_NONE;
+	// TODO: Readd this line we are currently missing voltage sensing
+	// engineConfiguration->vbattAdcChannel = EFI_ADC_37;
 
     // Generic
     engineConfiguration->cylindersCount = 2;
