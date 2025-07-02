@@ -66,8 +66,10 @@ void setBoardConfigOverrides() {
     setHellenCan();
     setDefaultHellenAtPullUps();
 
-	// VBATT, PF3
+	// VBATT is on PF3
 	engineConfiguration->vbattAdcChannel = EFI_ADC_37;
+	// PWR EN
+	setHellenEnPin(Gpio::E0, true);
 
     // Generic
     engineConfiguration->cylindersCount = 2;
