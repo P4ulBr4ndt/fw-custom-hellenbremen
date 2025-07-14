@@ -24,7 +24,7 @@ void setBoardDefaultConfiguration() {
     engineConfiguration->fanPin = Gpio::C7;
     engineConfiguration->fanOnTemperature = 80.f;
     engineConfiguration->fanOffTemperature = 70.f;
-	engineConfiguration->fan2Pin = GPIO::C8;
+	engineConfiguration->fan2Pin = Gpio::C8;
     engineConfiguration->fan2OnTemperature = 80.f;
     engineConfiguration->fan2OffTemperature = 70.f;
     engineConfiguration->mainRelayPin = Gpio::Unassigned;
