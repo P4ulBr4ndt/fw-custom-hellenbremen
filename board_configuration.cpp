@@ -21,8 +21,12 @@ void setBoardDefaultConfiguration() {
     engineConfiguration->mapCamDetectionAnglePosition = 50;
 
     // Aux Outputs
+    engineConfiguration->fanPin = Gpio::C7;
     engineConfiguration->fanOnTemperature = 80.f;
     engineConfiguration->fanOffTemperature = 70.f;
+	engineConfiguration->fan2Pin = GPIO::C8;
+    engineConfiguration->fan2OnTemperature = 80.f;
+    engineConfiguration->fan2OffTemperature = 70.f;
     engineConfiguration->mainRelayPin = Gpio::Unassigned;
 
     // ACR TODO: Is this still used?
@@ -68,6 +72,10 @@ void setBoardConfigOverrides() {
 
 	// VBATT is on PF3
 	engineConfiguration->vbattAdcChannel = EFI_ADC_37;
+	// set vbatt_divider 4,0303
+	// 10k / 3.3k
+	engineConfiguration->vbattDividerCoeff = (10 + 3.3) / 3.3; // 4,03030303
+
 	// PWR EN
 	setHellenEnPin(Gpio::E0, true);
 
@@ -81,7 +89,7 @@ void setBoardConfigOverrides() {
     // engineConfiguration->knockFrequency = 0.0f; // TODO
 
     // Aux Outputs
-    engineConfiguration->fanPin = Gpio::C7;
+    //engineConfiguration->fanPin = Gpio::C7;
     //engineConfiguration->fanOnTemperature = 80.f;
     //engineConfiguration->fanOffTemperature = 70.f;
 
