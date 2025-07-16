@@ -17,3 +17,9 @@ DDEFS += -DEFI_HD_ACR=TRUE
 
 # Software Knock
 DDEFS += -DEFI_SOFTWARE_KNOCK=TRUE
+
+# This stuff doesn't work on H7 yet
+ifneq ($(PROJECT_CPU),ARCH_STM32H7)
+	DDEFS += -DSTM32_ADC_USE_ADC3=TRUE
+	DDEFS += -DEFI_SOFTWARE_KNOCK=TRUE
+endif
