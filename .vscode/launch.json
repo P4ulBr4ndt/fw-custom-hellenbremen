@@ -11,7 +11,7 @@
 			"request": "attach",
 			"cwd": "${workspaceFolder}/ext/rusefi/firmware",
 			"executable": "${workspaceRoot}/build/rusefi.elf",
-			"device": "STM32F767V",
+			"device": "STM32F767Z",
 			"v1": false,
 			"svdFile": "${workspaceRoot}/ext/rusefi/firmware/ext/cmsis-svd/STM32F7x7.svd",
 			"servertype": "openocd",

@@ -1,15 +1,7 @@
 {
     "files.associations": {
 		"*.input": "ini",
-		"array": "cpp",
-		"*.tcc": "cpp",
-		"memory": "cpp",
-		"istream": "cpp",
-		"functional": "cpp",
-		"tuple": "cpp",
-		"utility": "cpp",
-		"variant": "cpp",
-		"format": "cpp"
+		"typeinfo": "cpp"
 	},
 	"editor.detectIndentation": false,
 	"editor.indentSize": 4,
