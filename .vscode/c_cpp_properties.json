@@ -15,7 +15,12 @@
 				"STM32_ADC_USE_ADC3=1",
 				"EFI_SOFTWARE_KNOCK=1",
 				"ADC_MUX_PIN=1",
-				"EFI_BLUETOOTH_SETUP=1"
+				"EFI_BLUETOOTH_SETUP=1",
+				"EFI_CONSOLE_TX_BRAIN_PIN=Gpio::D5",
+				"EFI_CONSOLE_RX_BRAIN_PIN=Gpio::D6",
+				"TS_PRIMARY_UxART_PORT=UARTD2",
+				"STM32_UART_USE_USART2=1",
+
             ],
             "compilerPath": "/usr/bin/clang",
             "cStandard": "c17",
