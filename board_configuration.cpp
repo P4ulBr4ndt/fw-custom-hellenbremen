@@ -48,14 +48,6 @@ void setBoardDefaultConfiguration() {
     engineConfiguration->throttlePedalUpVoltage = 1.36;
     engineConfiguration->throttlePedalWOTVoltage = 4.46;
 
-    // 5.6k high side/10k low side = 1.56 ratio divider
-    // engineConfiguration->analogInputDividerCoefficient = 1.56f;
-
-    // 6.34k high side/ 1k low side
-    // engineConfiguration->vbattDividerCoeff = (6.34 + 1) / 1;
-
-    // engineConfiguration->adcVcc = 3.3f;
-
     // Injection
     engineConfiguration->injectionPins[0] = Gpio::G7;
     engineConfiguration->injectionPins[1] = Gpio::G8;
@@ -71,7 +63,7 @@ void setBoardConfigOverrides() {
     setDefaultHellenAtPullUps();
 
 	// VBATT is on PF3
-	engineConfiguration->vbattAdcChannel = EFI_ADC_37;
+	//engineConfiguration->vbattAdcChannel = EFI_ADC_37;
 	// set vbatt_divider 4,0303
 	// 10k / 3.3k
 	engineConfiguration->vbattDividerCoeff = (10 + 3.3) / 3.3; // 4,03030303
