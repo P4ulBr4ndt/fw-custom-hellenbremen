@@ -62,8 +62,8 @@ void setBoardConfigOverrides() {
     setHellenCan();
     setDefaultHellenAtPullUps();
 
-	// VBATT is on PF3
-	//engineConfiguration->vbattAdcChannel = EFI_ADC_37;
+	// VBATT is on PA0
+	engineConfiguration->vbattAdcChannel = EFI_ADC_0;
 	// set vbatt_divider 4,0303
 	// 10k / 3.3k
 	engineConfiguration->vbattDividerCoeff = (10 + 3.3) / 3.3; // 4,03030303
