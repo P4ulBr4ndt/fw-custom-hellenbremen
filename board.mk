@@ -9,6 +9,9 @@ include $(BOARD_DIR)/meta-info.env
 # this includes knock and mux control settings
 include $(BOARDS_DIR)/hellen/hellen-common-mega144.mk
 
+# Just making sure
+DDEFS += -DADC_MUX_PIN=Gpio::F2
+
 # ACR Management
 DDEFS += -DEFI_HD_ACR=TRUE
 

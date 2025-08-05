@@ -85,8 +85,9 @@ void setBoardConfigOverrides() {
     //engineConfiguration->fanOnTemperature = 80.f;
     //engineConfiguration->fanOffTemperature = 70.f;
 
-    // MAP
-    engineConfiguration->map.sensor.hwChannel = EFI_ADC_13;
+    // Sensors
+    engineConfiguration->map.sensor.hwChannel = EFI_ADC_13; // PC3
+	engineConfiguration->fuelLevelSensor = EFI_ADC_2; // PA2
 
     // ETB
     engineConfiguration->etb_use_two_wires = false;
@@ -99,8 +100,10 @@ void setBoardConfigOverrides() {
     engineConfiguration->throttlePedalPositionSecondAdcChannel = EFI_ADC_12;
 
     // Temp Sensors
-    engineConfiguration->clt.adcChannel = EFI_ADC_5;
-    engineConfiguration->iat.adcChannel = EFI_ADC_2;
+    engineConfiguration->clt.adcChannel = EFI_ADC_5; // PA5
+    engineConfiguration->iat.adcChannel = EFI_ADC_18; // PA2 MUX = 1
+	engineConfiguration->oilTempSensor.adcChannel = EFI_ADC_17; // PA1 MUX = 1 // ETS
+	engineConfiguration->ambientTempSensor.adcChannel = EFI_ADC_1; // PA1 // AAT for CANBUS
 
     // Injection
     engineConfiguration->injectionMode = IM_SEQUENTIAL;
