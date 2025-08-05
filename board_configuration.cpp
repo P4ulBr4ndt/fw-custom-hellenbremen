@@ -66,7 +66,7 @@ void setBoardConfigOverrides() {
 	engineConfiguration->vbattAdcChannel = EFI_ADC_0;
 	// set vbatt_divider 4,0303
 	// 10k / 3.3k
-	engineConfiguration->vbattDividerCoeff = (10 + 3.3) / 3.3; // 4,03030303
+	engineConfiguration->vbattDividerCoeff = 8.06f;
 
 	// PWR EN
 	setHellenEnPin(Gpio::E0, true);
