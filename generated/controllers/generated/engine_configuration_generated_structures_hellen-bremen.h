@@ -6401,13 +6401,18 @@ struct persistent_config_s {
 	 */
 	int8_t torqueReductionIgnitionRetardGearBins[TORQUE_TABLE_Y_SIZE] = {};
 	/**
-	 * need 4 byte alignment
-	 * units: units
+	 * units: %
 	 * offset 23878
 	 */
-	uint8_t alignmentFill_at_23878[2] = {};
+	scaled_channel<uint16_t, 10, 1> veRearTable[VE_LOAD_COUNT][VE_RPM_COUNT] = {};
+	/**
+	 * need 4 byte alignment
+	 * units: units
+	 * offset 24390
+	 */
+	uint8_t alignmentFill_at_24390[2] = {};
 };
-static_assert(sizeof(persistent_config_s) == 23880);
+static_assert(sizeof(persistent_config_s) == 24392);
 
 // end
 // this section was generated automatically by rusEFI tool config_definition-all.jar based on (unknown script) integration/rusefi_config.txt
