@@ -1,0 +1,1 @@
+uint16_t[VE_LOAD_COUNT x VE_RPM_COUNT] autoscale veRearTable;;"%", 0.1, 0, 0, 999, 1
