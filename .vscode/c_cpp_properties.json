@@ -20,6 +20,7 @@
 				"EFI_CONSOLE_RX_BRAIN_PIN=Gpio::D6",
 				"TS_PRIMARY_UxART_PORT=UARTD2",
 				"STM32_UART_USE_USART2=1",
+				"EFI_HD_DP=1",
 
             ],
             "compilerPath": "/usr/bin/clang",
