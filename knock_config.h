@@ -11,9 +11,9 @@
 #define KNOCK_ADC_CH1 ADC_CHANNEL_IN14
 #define KNOCK_PIN_CH1 Gpio::F4
 
-// knock R - pin PF9
+// knock R - pin PF3
 #define KNOCK_HAS_CH2 true
-#define KNOCK_ADC_CH2 ADC_CHANNEL_IN3
+#define KNOCK_ADC_CH2 ADC_CHANNEL_IN9
 #define KNOCK_PIN_CH2 Gpio::F3
 
 // Sample rate & time - depends on the exact MCU
