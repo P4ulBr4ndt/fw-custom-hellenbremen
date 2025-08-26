@@ -1,0 +1,4 @@
+pin_input_mode_e jssPinMode;
+switch_input_pin_e jssPin;JIFFY STAND SWITCH
+pin_input_mode_e opsPinMode;
+switch_input_pin_e opsPin;OIL PRESSURE SWITCH
