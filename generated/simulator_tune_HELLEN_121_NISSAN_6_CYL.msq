@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <msq xmlns="http://www.msefi.com/:msq">
     <page/>
-    <page number="0" size="24392">
+    <page number="0" size="24400">
         <constant name="accelerometerCsPin">"NONE"</constant>
         <constant name="accelerometerCsPinMode">"default"</constant>
         <constant name="accelerometerSpiDevice">"Off"</constant>
@@ -561,7 +561,7 @@
         <constant name="brakePedalPin">"NONE"</constant>
         <constant name="brakePedalPinMode">"PULLUP"</constant>
         <constant digits="0" name="byFirmwareVersion" units="index">0.0</constant>
-        <constant digits="0" name="calibrationBirthday" units="">2.0250825E7</constant>
+        <constant digits="0" name="calibrationBirthday" units="">2.0250827E7</constant>
         <constant digits="0" name="camDecoder2jzPosition" units="angle">95.0</constant>
         <constant digits="0" name="camDecoder2jzPrecision" units="">40.0</constant>
         <constant name="camInputs1">"NONE"</constant>
@@ -2438,6 +2438,8 @@
         <constant name="isSdCardEnabled">"false"</constant>
         <constant digits="0" name="issFilterReciprocal" units="">2.0</constant>
         <constant name="isWaveAnalyzerEnabled">"true"</constant>
+        <constant name="jssPin">"NONE"</constant>
+        <constant name="jssPinMode">"DEFAULT"</constant>
         <constant digits="0" name="justATempTest" units="">0.0</constant>
         <constant name="kickStartCranking">"false"</constant>
         <constant digits="0" name="kLineBaudRate" units="">10400.0</constant>
@@ -3174,6 +3176,8 @@ canRxAdd(IN_35D, onCanRxAc)</constant>
         <constant digits="1" name="oilTempSensor_tempC_1" units="*C">0.0</constant>
         <constant digits="1" name="oilTempSensor_tempC_2" units="*C">0.0</constant>
         <constant digits="1" name="oilTempSensor_tempC_3" units="*C">0.0</constant>
+        <constant name="opsPin">"NONE"</constant>
+        <constant name="opsPinMode">"DEFAULT"</constant>
         <constant name="overrideTriggerGaps">"false"</constant>
         <constant name="overrideVvtTriggerGaps">"false"</constant>
         <constant name="pauseEtbControl">"false"</constant>
@@ -5234,7 +5238,7 @@ canRxAdd(IN_35D, onCanRxAc)</constant>
 </constant>
         <constant name="yesUnderstandLocking">"no"</constant>
     </page>
-    <versionInfo firmwareInfo="20250521" nPages="1" signature="rusEFI main.2025.08.25.hellen-bremen.1894318112" version="5.0"/>
+    <versionInfo firmwareInfo="20250521" nPages="1" signature="rusEFI main.2025.08.27.hellen-bremen.2180178429" version="5.0"/>
     <bibliography author="rusEFI 20250521" writeDate="date"/>
     <settings/>
     <userComments/>
