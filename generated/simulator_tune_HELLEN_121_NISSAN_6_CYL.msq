@@ -5238,7 +5238,7 @@ canRxAdd(IN_35D, onCanRxAc)</constant>
 </constant>
         <constant name="yesUnderstandLocking">"no"</constant>
     </page>
-    <versionInfo firmwareInfo="20250521" nPages="1" signature="rusEFI main.2025.08.27.hellen-bremen.2180178429" version="5.0"/>
+    <versionInfo firmwareInfo="20250521" nPages="1" signature="rusEFI main.2025.08.27.hellen-bremen.3557528371" version="5.0"/>
     <bibliography author="rusEFI 20250521" writeDate="date"/>
     <settings/>
     <userComments/>
