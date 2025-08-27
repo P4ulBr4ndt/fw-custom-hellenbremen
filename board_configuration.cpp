@@ -29,12 +29,6 @@ void setBoardDefaultConfiguration() {
     engineConfiguration->fan2OffTemperature = 70.f;
     engineConfiguration->mainRelayPin = Gpio::Unassigned;
 
-    // ACR TODO: Is this still used?
-    strcpy(engineConfiguration->scriptSettingName[0], "compReleaseRpm");
-    engineConfiguration->scriptSetting[0] = 300;
-    strcpy(engineConfiguration->scriptSettingName[1], "compReleaseDur");
-    engineConfiguration->scriptSetting[1] = 5000;
-
     // AFR TODO
     engineConfiguration->afr.hwChannel = EFI_ADC_NONE;
     engineConfiguration->enableAemXSeries = false;
@@ -88,6 +82,10 @@ void setBoardConfigOverrides() {
     // Sensors
     engineConfiguration->map.sensor.hwChannel = EFI_ADC_13; // PC3
 	engineConfiguration->fuelLevelSensor = EFI_ADC_2; // PA2
+
+	// Switch Inputs
+	engineConfiguration->jssPin = Gpio::G11;
+	engineConfiguration->opsPin = Gpio::G12;
 
     // ETB
     engineConfiguration->etb_use_two_wires = false;
