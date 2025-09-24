@@ -49,6 +49,11 @@ void setBoardDefaultConfiguration() {
     // Ignition
     engineConfiguration->ignitionPins[0] = Gpio::E5;
     engineConfiguration->ignitionPins[1] = Gpio::C13;
+
+	// Temp sensor
+	// Some harleys have CLT, others not, all have ETS
+	engineConfiguration->clt.adcChannel = EFI_ADC_5; // PA5
+	engineConfiguration->oilTempSensor.adcChannel = EFI_ADC_17; // PA1 MUX = 1 // ETS
 }
 
 void setBoardConfigOverrides() {
@@ -74,11 +79,6 @@ void setBoardConfigOverrides() {
     // engineConfiguration->enableSoftwareKnock = true;
     // engineConfiguration->knockFrequency = 0.0f; // TODO
 
-    // Aux Outputs
-    //engineConfiguration->fanPin = Gpio::C7;
-    //engineConfiguration->fanOnTemperature = 80.f;
-    //engineConfiguration->fanOffTemperature = 70.f;
-
     // Sensors
     engineConfiguration->map.sensor.hwChannel = EFI_ADC_13; // PC3
 	engineConfiguration->fuelLevelSensor = EFI_ADC_2; // PA2
@@ -98,9 +98,7 @@ void setBoardConfigOverrides() {
     engineConfiguration->throttlePedalPositionSecondAdcChannel = EFI_ADC_12;
 
     // Temp Sensors
-    engineConfiguration->clt.adcChannel = EFI_ADC_5; // PA5
     engineConfiguration->iat.adcChannel = EFI_ADC_18; // PA2 MUX = 1
-	engineConfiguration->oilTempSensor.adcChannel = EFI_ADC_17; // PA1 MUX = 1 // ETS
 	engineConfiguration->ambientTempSensor.adcChannel = EFI_ADC_1; // PA1 // AAT for CANBUS
 
     // Injection
