@@ -1,6 +1,6 @@
 #define MAIN_HELP_URL "https://don-performance.com"
 
-#define PEDAL_TO_TPS_SIZE 12
+#define PEDAL_TO_TPS_SIZE 14
 #define FUEL_RPM_COUNT 19
 #define FUEL_LOAD_COUNT 14
 

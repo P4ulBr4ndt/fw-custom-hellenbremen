@@ -43,8 +43,8 @@ void setBoardDefaultConfiguration() {
     engineConfiguration->throttlePedalWOTVoltage = 4.46;
 
     // Injection
-    engineConfiguration->injectionPins[0] = Gpio::G7;
-    engineConfiguration->injectionPins[1] = Gpio::G8;
+    engineConfiguration->injectionPins[0] = Gpio::G8;
+    engineConfiguration->injectionPins[1] = Gpio::G7;
 
     // Ignition
     engineConfiguration->ignitionPins[0] = Gpio::E5;
