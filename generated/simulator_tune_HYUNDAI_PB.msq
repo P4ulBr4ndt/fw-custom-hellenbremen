@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <msq xmlns="http://www.msefi.com/:msq">
     <page/>
-    <page number="0" size="24400">
+    <page number="0" size="24456">
         <constant name="accelerometerCsPin">"NONE"</constant>
         <constant name="accelerometerCsPinMode">"default"</constant>
         <constant name="accelerometerSpiDevice">"Off"</constant>
@@ -561,7 +561,7 @@
         <constant name="brakePedalPin">"NONE"</constant>
         <constant name="brakePedalPinMode">"PULLUP"</constant>
         <constant digits="0" name="byFirmwareVersion" units="index">0.0</constant>
-        <constant digits="0" name="calibrationBirthday" units="">2.025093E7</constant>
+        <constant digits="0" name="calibrationBirthday" units="">2.0251001E7</constant>
         <constant digits="0" name="camDecoder2jzPosition" units="angle">95.0</constant>
         <constant digits="0" name="camDecoder2jzPrecision" units="">40.0</constant>
         <constant name="camInputs1">"NONE"</constant>
@@ -3109,47 +3109,53 @@ end</constant>
         <constant name="overrideTriggerGaps">"false"</constant>
         <constant name="overrideVvtTriggerGaps">"false"</constant>
         <constant name="pauseEtbControl">"false"</constant>
-        <constant cols="1" digits="0" name="pedalToTpsPedalBins" rows="12">
+        <constant cols="1" digits="0" name="pedalToTpsPedalBins" rows="14">
          0.0
-         9.0
-         18.0
-         27.0
-         36.0
-         45.0
-         55.0
-         64.0
-         73.0
-         82.0
-         91.0
+         8.0
+         15.0
+         23.0
+         31.0
+         38.0
+         46.0
+         54.0
+         62.0
+         69.0
+         77.0
+         85.0
+         92.0
          100.0
 </constant>
-        <constant cols="1" digits="0" name="pedalToTpsRpmBins" rows="12">
+        <constant cols="1" digits="0" name="pedalToTpsRpmBins" rows="14">
          700.0
          800.0
-         1300.0
-         1700.0
+         1200.0
+         1500.0
+         1900.0
          2200.0
          2600.0
-         3100.0
-         3500.0
+         2900.0
+         3300.0
+         3600.0
          4000.0
-         4400.0
-         4900.0
+         4300.0
+         4700.0
          7000.0
 </constant>
-        <constant cols="12" digits="0" name="pedalToTpsTable" rows="12">
-         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
-         9.0 9.0 9.0 9.0 9.0 9.0 9.0 9.0 9.0 9.0 9.0 9.0
-         18.0 18.0 18.0 18.0 18.0 18.0 18.0 18.0 18.0 18.0 18.0 18.0
-         27.0 27.0 27.0 27.0 27.0 27.0 27.0 27.0 27.0 27.0 27.0 27.0
-         36.0 36.0 36.0 36.0 36.0 36.0 36.0 36.0 36.0 36.0 36.0 36.0
-         45.0 45.0 45.0 45.0 45.0 45.0 45.0 45.0 45.0 45.0 45.0 45.0
-         55.0 55.0 55.0 55.0 55.0 55.0 55.0 55.0 55.0 55.0 55.0 55.0
-         64.0 64.0 64.0 64.0 64.0 64.0 64.0 64.0 64.0 64.0 64.0 64.0
-         73.0 73.0 73.0 73.0 73.0 73.0 73.0 73.0 73.0 73.0 73.0 73.0
-         82.0 82.0 82.0 82.0 82.0 82.0 82.0 82.0 82.0 82.0 82.0 82.0
-         91.0 91.0 91.0 91.0 91.0 91.0 91.0 91.0 91.0 91.0 91.0 91.0
-         100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0
+        <constant cols="14" digits="0" name="pedalToTpsTable" rows="14">
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         8.0 8.0 8.0 8.0 8.0 8.0 8.0 8.0 8.0 8.0 8.0 8.0 8.0 8.0
+         15.0 15.0 15.0 15.0 15.0 15.0 15.0 15.0 15.0 15.0 15.0 15.0 15.0 15.0
+         23.0 23.0 23.0 23.0 23.0 23.0 23.0 23.0 23.0 23.0 23.0 23.0 23.0 23.0
+         31.0 31.0 31.0 31.0 31.0 31.0 31.0 31.0 31.0 31.0 31.0 31.0 31.0 31.0
+         38.0 38.0 38.0 38.0 38.0 38.0 38.0 38.0 38.0 38.0 38.0 38.0 38.0 38.0
+         46.0 46.0 46.0 46.0 46.0 46.0 46.0 46.0 46.0 46.0 46.0 46.0 46.0 46.0
+         54.0 54.0 54.0 54.0 54.0 54.0 54.0 54.0 54.0 54.0 54.0 54.0 54.0 54.0
+         62.0 62.0 62.0 62.0 62.0 62.0 62.0 62.0 62.0 62.0 62.0 62.0 62.0 62.0
+         69.0 69.0 69.0 69.0 69.0 69.0 69.0 69.0 69.0 69.0 69.0 69.0 69.0 69.0
+         77.0 77.0 77.0 77.0 77.0 77.0 77.0 77.0 77.0 77.0 77.0 77.0 77.0 77.0
+         85.0 85.0 85.0 85.0 85.0 85.0 85.0 85.0 85.0 85.0 85.0 85.0 85.0 85.0
+         92.0 92.0 92.0 92.0 92.0 92.0 92.0 92.0 92.0 92.0 92.0 92.0 92.0 92.0
+         100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0
 </constant>
         <constant digits="0" name="pidExtraForLowRpm" units="%">0.0</constant>
         <constant cols="1" digits="0" name="postCrankingCLTBins" rows="6">
@@ -4899,6 +4905,24 @@ end</constant>
          0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
 </constant>
         <constant name="veBlends4_yAxisOverride">"Zero"</constant>
+        <constant cols="16" digits="1" name="veFrontTable" rows="16">
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+</constant>
         <constant name="vehicleSpeedSensorInputPin">"NONE"</constant>
         <constant cols="1" digits="0" name="veLoadBins" rows="16">
          10.0
@@ -4928,24 +4952,6 @@ end</constant>
         <constant name="verboseTLE8888">"false"</constant>
         <constant name="verboseTriggerSynchDetails">"false"</constant>
         <constant name="verboseVVTDecoding">"false"</constant>
-        <constant cols="16" digits="1" name="veRearTable" rows="16">
-         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
-         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
-         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
-         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
-         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
-         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
-         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
-         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
-         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
-         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
-         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
-         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
-         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
-         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
-         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
-         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
-</constant>
         <constant cols="1" digits="0" name="veRpmBins" rows="16">
          650.0
          800.0
@@ -5166,7 +5172,7 @@ end</constant>
 </constant>
         <constant name="yesUnderstandLocking">"no"</constant>
     </page>
-    <versionInfo firmwareInfo="20250521" nPages="1" signature="rusEFI main.2025.09.30.hellen-bremen.3557528371" version="5.0"/>
+    <versionInfo firmwareInfo="20250521" nPages="1" signature="rusEFI main.2025.10.01.hellen-bremen.4141311057" version="5.0"/>
     <bibliography author="rusEFI 20250521" writeDate="date"/>
     <settings/>
     <userComments/>
