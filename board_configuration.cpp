@@ -1,14 +1,13 @@
 #include "pch.h"
 #include "hellen_meta.h"
 #include "defaults.h"
-#include "can_msg_tx.h" // CanTxMessage
-#include "unused.h"
 #include "board_overrides.h"
+#include "unused.h"
 
 #define HARLEY_V_TWIN 45.0
 
 // board-specific configuration setup
-void setBoardDefaultConfiguration() {
+static void boardDefaultConfiguration() {
     // Trigger
     engineConfiguration->overrideTriggerGaps = true;
     engineConfiguration->gapTrackingLengthOverride = 3;
@@ -59,7 +58,7 @@ void setBoardDefaultConfiguration() {
 	engineConfiguration->oilTempSensor.adcChannel = EFI_ADC_17; // PA1 MUX = 1 // ETS
 }
 
-void setBoardConfigOverrides() {
+static void boardConfigOverrides() {
     setHellenAnalogDividers();
     setHellenCan();
     setDefaultHellenAtPullUps();
@@ -372,7 +371,6 @@ static void handleHarleyCAN(CanCycle cycle) {
 void boardUpdateDash(CanCycle cycle) {
   handleHarleyCAN(cycle);
 }
-custom_board_update_dash = boardUpdateDash;
 
 void boardProcessCanRx(const size_t busIndex, const CANRxFrame &frame, efitick_t nowNt) {
   UNUSED(busIndex);
@@ -381,4 +379,11 @@ void boardProcessCanRx(const size_t busIndex, const CANRxFrame &frame, efitick_t
     harleyKeepAlive = frame.data8[0];
   }
 }
-custom_board_can_rx = boardProcessCanRx;
+
+
+void setup_custom_board_overrides() {
+	custom_board_DefaultConfiguration = boardDefaultConfiguration;
+	custom_board_ConfigOverrides = boardConfigOverrides;
+	custom_board_can_rx = boardProcessCanRx;
+	custom_board_update_dash = boardUpdateDash;
+}
