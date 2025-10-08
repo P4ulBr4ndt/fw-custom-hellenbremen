@@ -381,23 +381,33 @@ struct engine_state_s {
 	/**
 	 * offset 138
 	 */
+	scaled_channel<int16_t, 10, 1> veTableIdleYAxis = (int16_t)0;
+	/**
+	 * offset 140
+	 */
 	uint8_t overDwellCounter = (uint8_t)0;
 	/**
-	 * offset 139
+	 * offset 141
 	 */
 	uint8_t overDwellNotScheduledCounter = (uint8_t)0;
 	/**
-	 * offset 140
+	 * offset 142
 	 */
 	uint8_t sparkOutOfOrderCounter = (uint8_t)0;
 	/**
 	 * need 4 byte alignment
 	 * units: units
-	 * offset 141
+	 * offset 143
 	 */
-	uint8_t alignmentFill_at_141[3] = {};
+	uint8_t alignmentFill_at_143[1] = {};
+	/**
+	 * STFT: Bank
+	 * units: %
+	 * offset 144
+	 */
+	float stftCorrection[FT_BANK_COUNT] = {};
 };
-static_assert(sizeof(engine_state_s) == 144);
+static_assert(sizeof(engine_state_s) == 152);
 
 // end
 // this section was generated automatically by rusEFI tool config_definition_base-all.jar based on (unknown script) controllers/algo/engine_state.txt
