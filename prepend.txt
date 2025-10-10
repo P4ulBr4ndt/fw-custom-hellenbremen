@@ -1,5 +1,10 @@
 #define MAIN_HELP_URL "https://don-performance.com"
 
+#define GAUGE_NAME_AUX_TEMP1 "Engine Temperature"
+#define MENU_NAME_AUX_TEMP1 "Engine Temperature Sensor"
+#define COIL_1_NAME "Rear Spark"
+#define COIL_2_NAME "Front Spark"
+
 #define PEDAL_TO_TPS_SIZE 14
 #define FUEL_RPM_COUNT 19
 #define FUEL_LOAD_COUNT 14
@@ -19,8 +24,8 @@
 #define ts_show_clt_iat_pullup false
 #define ts_show_egt false
 #define ts_show_rotary false
-#define ts_show_sd_card false
-#define ts_show_sd_pins false
+#define ts_show_sd_card true
+#define ts_show_sd_pins true
 #define ts_show_maf false
 #define ts_show_gdi false
 #define ts_show_gdi_low_level false

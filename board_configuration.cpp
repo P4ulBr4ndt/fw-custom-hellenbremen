@@ -24,8 +24,8 @@ static void boardDefaultConfiguration() {
 
     // Aux Outputs
     engineConfiguration->fanPin = Gpio::C7;
-    engineConfiguration->fanOnTemperature = 80.f;
-    engineConfiguration->fanOffTemperature = 70.f;
+    engineConfiguration->fanOnTemperature = 0.f;
+    engineConfiguration->fanOffTemperature = 0.f;
 	engineConfiguration->fan2Pin = Gpio::C8;
     engineConfiguration->fan2OnTemperature = 80.f;
     engineConfiguration->fan2OffTemperature = 70.f;
@@ -39,10 +39,15 @@ static void boardDefaultConfiguration() {
     setCustomMap(/*lowValue*/ 20, /*mapLowValueVoltage*/ 0.79, /*highValue*/ 101.3, /*mapHighValueVoltage*/ 4);
 
     // TPS
-    engineConfiguration->tpsMin = 100;
-    engineConfiguration->tpsMax = 900;
+    engineConfiguration->tpsMin = 0.50;
+    engineConfiguration->tpsMax = 4.54;
+	engineConfiguration->tps1SecondaryMin = 4.53;
+	engineConfiguration->tps1SecondaryMax = 0.47;
+
     engineConfiguration->throttlePedalUpVoltage = 1.36;
     engineConfiguration->throttlePedalWOTVoltage = 4.46;
+	engineConfiguration->throttlePedalSecondaryUpVoltage = 1.37;
+	engineConfiguration->throttlePedalSecondaryWOTVoltage = 4.48;
 
     // Injection
     engineConfiguration->injectionPins[0] = Gpio::G8;
@@ -124,9 +129,7 @@ static void boardConfigOverrides() {
     engineConfiguration->minimumIgnitionTiming = -90;
 }
 
-#define CAN_HD_RPM_ID 0x142
 #define CAN_HD_VSS_ID 0x142
-#define CAN_HD_GEAR_ID 0x142
 #define CAN_HD_THROTTLE_ID 0x144
 
 #define CAN_HD_RPM_OFFSET 0x0
@@ -204,7 +207,7 @@ static uint8_t calculateHarleyGearValue() {
 static void handleHarleyCAN(CanCycle cycle) {
   if (cycle.isInterval(CI::_10ms)) {
     {
-      CanTxMessage msg(CanCategory::NBC, CAN_HD_RPM_ID);
+      CanTxMessage msg(CanCategory::NBC, CAN_HD_VSS_ID);
       msg.setShortValueMsb(Sensor::getOrZero(SensorType::Rpm), CAN_HD_RPM_OFFSET);
       msg.setShortValueMsb(Sensor::getOrZero(SensorType::VehicleSpeed) * 10.f, CAN_HD_VSS_OFFSET);
       msg[CAN_HD_GEAR_OFFSET] = calculateHarleyGearValue();
