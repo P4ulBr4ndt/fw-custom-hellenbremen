@@ -341,8 +341,8 @@
 #define CMD_TRIGGERINFO "triggerinfo"
 #define CMD_VSS_PIN "vss_pin"
 #define CMD_WRITECONFIG "writeconfig"
-#define COIL_1_NAME "Spark #1"
-#define COIL_2_NAME "Spark #2"
+#define COIL_1_NAME "Rear Spark"
+#define COIL_2_NAME "Front Spark"
 #define COMMANDS_FROM_FILE 
 #define COMPOSITE_PACKET_SIZE 5
 #define CONSOLE_DATA_PROTOCOL_TAG " @"
@@ -674,7 +674,7 @@
 #define GAUGE_NAME_AUX_LINEAR_2 "Aux linear #2"
 #define GAUGE_NAME_AUX_LINEAR_3 "Aux linear #3"
 #define GAUGE_NAME_AUX_LINEAR_4 "Aux linear #4"
-#define GAUGE_NAME_AUX_TEMP1 "Aux temp 1"
+#define GAUGE_NAME_AUX_TEMP1 "Engine Temperature"
 #define GAUGE_NAME_AUX_TEMP2 "Aux temp 2"
 #define GAUGE_NAME_BARO_PRESSURE "Barometric pressure"
 #define GAUGE_NAME_BOOST_CLOSED_LOOP "Boost: Closed loop"
@@ -1395,7 +1395,7 @@
 #define mc33810maxDwellTimer_e_DWELL_64MS 5
 #define mc33810maxDwellTimer_e_DWELL_8MS 2
 #define MEMBER_FLOW flow
-#define MENU_NAME_AUX_TEMP1 "AuxTemp1 sensor"
+#define MENU_NAME_AUX_TEMP1 "Engine Temperature Sensor"
 #define MENU_NAME_AUX_TEMP2 "AuxTemp2 sensor"
 #define MLQ_FIELD_HEADER_SIZE 89
 #define MLQ_HEADER_SIZE 24
@@ -1532,7 +1532,7 @@
 #define SentInput_NONE 0
 #define show_tcu_gauges false
 #define show_vvt_output_pin true
-#define SIGNATURE_HASH 261353260
+#define SIGNATURE_HASH 2185804509
 #define SIMULATOR_TUNE_BIN_FILE_NAME "generated/simulator_tune_image.bin"
 #define SIMULATOR_TUNE_BIN_FILE_NAME_PREFIX "generated/simulator_tune_image"
 #define SIMULATOR_TUNE_BIN_FILE_NAME_SUFFIX ".bin"
@@ -2037,8 +2037,8 @@
 #define ts_show_reboot_to_dfu true
 #define ts_show_reset_calibrations true
 #define ts_show_rotary false
-#define ts_show_sd_card false
-#define ts_show_sd_pins false
+#define ts_show_sd_card true
+#define ts_show_sd_pins true
 #define ts_show_second_bank true
 #define ts_show_sent true
 #define ts_show_software_knock true
@@ -2099,7 +2099,7 @@
 #define ts_show_wastegate_sensor true
 #define ts_show_wbo_canbus_index true
 #define ts_show_wbo_canbus_set_index true
-#define TS_SIGNATURE "rusEFI main.2025.10.09.hellen-bremen.261353260"
+#define TS_SIGNATURE "rusEFI main.2025.10.10.hellen-bremen.2185804509"
 #define TS_SIMULATE_CAN '>'
 #define TS_SIMULATE_CAN_char >
 #define TS_TEST_COMMAND 't'
