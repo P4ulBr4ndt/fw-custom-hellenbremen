@@ -371,10 +371,6 @@ static void handleHarleyCAN(CanCycle cycle) {
   }
 }
 
-void boardUpdateDash(CanCycle cycle) {
-  handleHarleyCAN(cycle);
-}
-
 void boardProcessCanRx(const size_t busIndex, const CANRxFrame &frame, efitick_t nowNt) {
   UNUSED(busIndex);
   UNUSED(nowNt);
@@ -388,5 +384,5 @@ void setup_custom_board_overrides() {
 	custom_board_DefaultConfiguration = boardDefaultConfiguration;
 	custom_board_ConfigOverrides = boardConfigOverrides;
 	custom_board_can_rx = boardProcessCanRx;
-	custom_board_update_dash = boardUpdateDash;
+	custom_board_update_dash = handleHarleyCAN;
 }
