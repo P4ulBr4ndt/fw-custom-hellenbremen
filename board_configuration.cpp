@@ -67,6 +67,7 @@ static void boardConfigOverrides() {
     setHellenAnalogDividers();
     setHellenCan();
     setDefaultHellenAtPullUps();
+	hellenMegaSdWithAccelerometer();
 
 	// VBATT is on PA0
 	engineConfiguration->vbattAdcChannel = EFI_ADC_0;
