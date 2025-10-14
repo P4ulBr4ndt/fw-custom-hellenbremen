@@ -48,25 +48,11 @@ static void boardDefaultConfiguration() {
     engineConfiguration->throttlePedalWOTVoltage = 4.46;
 	engineConfiguration->throttlePedalSecondaryUpVoltage = 1.37;
 	engineConfiguration->throttlePedalSecondaryWOTVoltage = 4.48;
-
-    // Injection
-    engineConfiguration->injectionPins[0] = Gpio::G8;
-    engineConfiguration->injectionPins[1] = Gpio::G7;
-
-    // Ignition
-    engineConfiguration->ignitionPins[0] = Gpio::E5;
-    engineConfiguration->ignitionPins[1] = Gpio::C13;
-
-	// Temp sensor
-	// Some harleys have CLT, others not, all have ETS
-	engineConfiguration->clt.adcChannel = EFI_ADC_5; // PA5
-	engineConfiguration->oilTempSensor.adcChannel = EFI_ADC_17; // PA1 MUX = 1 // ETS
 }
 
 static void boardConfigOverrides() {
     setHellenAnalogDividers();
     setHellenCan();
-    setDefaultHellenAtPullUps();
 	hellenMegaSdWithAccelerometer();
 
 	// VBATT is on PA0
@@ -105,15 +91,31 @@ static void boardConfigOverrides() {
     engineConfiguration->throttlePedalPositionAdcChannel = EFI_ADC_10;
     engineConfiguration->throttlePedalPositionSecondAdcChannel = EFI_ADC_12;
 
+	// Temp Sensor Pullups
+	// As CLT we use ETS because thats the important figure for us
+	// We have 820 against GND and 4700 against +5VA = 698 OHM for CLT
+	engineConfiguration->clt.config.bias_resistor = 698; // ETS
+	engineConfiguration->auxTempSensor1.config.bias_resistor = 698; // ETS
+	engineConfiguration->auxTempSensor2.config.bias_resistor = 2350; // CLT
+	engineConfiguration->ambientTempSensor.config.bias_resistor = 2350; // AAT
+	engineConfiguration->iat.config.bias_resistor = 2350; // IAT
+
     // Temp Sensors
-    engineConfiguration->iat.adcChannel = EFI_ADC_18; // PA2 MUX = 1
+	engineConfiguration->clt.adcChannel = EFI_ADC_17; // ETS PA1 MUX = 1
+	engineConfiguration->auxTempSensor1.adcChannel = EFI_ADC_17; // ETS
+	engineConfiguration->auxTempSensor2.adcChannel = EFI_ADC_5; // CLT
 	engineConfiguration->ambientTempSensor.adcChannel = EFI_ADC_1; // PA1 // AAT for CANBUS
+    engineConfiguration->iat.adcChannel = EFI_ADC_18; // PA2 MUX = 1
 
     // Injection
     engineConfiguration->injectionMode = IM_SEQUENTIAL;
+    engineConfiguration->injectionPins[0] = Gpio::G8;
+    engineConfiguration->injectionPins[1] = Gpio::G7;
 
     // Ignition
     engineConfiguration->ignitionMode = IM_INDIVIDUAL_COILS;
+    engineConfiguration->ignitionPins[0] = Gpio::E5;
+    engineConfiguration->ignitionPins[1] = Gpio::C13;
 
     // Trigger
     engineConfiguration->triggerInputPins[0] = Gpio::B0;
