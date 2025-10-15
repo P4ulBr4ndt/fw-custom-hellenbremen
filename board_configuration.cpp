@@ -94,11 +94,11 @@ static void boardConfigOverrides() {
 	// Temp Sensor Pullups
 	// As CLT we use ETS because thats the important figure for us
 	// We have 820 against GND and 4700 against +5VA = 698 OHM for CLT
-	engineConfiguration->clt.config.bias_resistor = 698; // ETS
-	engineConfiguration->auxTempSensor1.config.bias_resistor = 698; // ETS
-	engineConfiguration->auxTempSensor2.config.bias_resistor = 2350; // CLT
-	engineConfiguration->ambientTempSensor.config.bias_resistor = 2350; // AAT
-	engineConfiguration->iat.config.bias_resistor = 2350; // IAT
+	engineConfiguration->clt.config.bias_resistor = 820; // ETS
+	engineConfiguration->auxTempSensor1.config.bias_resistor = 820; // ETS
+	engineConfiguration->auxTempSensor2.config.bias_resistor = 4700; // CLT
+	engineConfiguration->ambientTempSensor.config.bias_resistor = 4700; // AAT
+	engineConfiguration->iat.config.bias_resistor = 4700; // IAT
 
     // Temp Sensors
 	engineConfiguration->clt.adcChannel = EFI_ADC_17; // ETS PA1 MUX = 1
