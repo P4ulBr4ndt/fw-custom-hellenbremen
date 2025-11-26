@@ -9,6 +9,9 @@ include $(BOARD_DIR)/meta-info.env
 # this includes knock and mux control settings
 include $(BOARDS_DIR)/hellen/hellen-common-mega144.mk
 
+# We dont need this kind of board detection?
+DDEFS += -HW_HELLEN_SKIP_BOARD_TYPE=TRUE
+
 # Just making sure
 DDEFS += -DADC_MUX_PIN=Gpio::F2
 

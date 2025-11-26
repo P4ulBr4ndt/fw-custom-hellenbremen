@@ -93,7 +93,6 @@ static void boardConfigOverrides() {
 
 	// Temp Sensor Pullups
 	// As CLT we use ETS because thats the important figure for us
-	// We have 820 against GND and 4700 against +5VA = 698 OHM for CLT
 	engineConfiguration->clt.config.bias_resistor = 820; // ETS
 	engineConfiguration->auxTempSensor1.config.bias_resistor = 820; // ETS
 	engineConfiguration->auxTempSensor2.config.bias_resistor = 4700; // CLT
@@ -271,8 +270,8 @@ static void handleHarleyCAN(CanCycle cycle) {
     {
       CanTxMessage msg(CanCategory::NBC, 0x344);
       msg[0] = 0x00;
-      msg[1] = Sensor::getOrZero(SensorType::OilTemperature) + 40; // ENGINE TEMPERATURE
-      msg[2] = Sensor::getOrZero(SensorType::Clt) + 40; // CLT WHEN AVAILABLE
+      msg[1] = Sensor::getOrZero(SensorType::Clt) + 40; // ENGINE TEMPERATURE
+      msg[2] = Sensor::getOrZero(SensorType::AuxTemp2) + 40; // CLT WHEN AVAILABLE
       msg[3] = 0xFF;
       msg[4] = 0xCC; // Mostly 0xCC, in the end of log 0xCB, Ambient Pressure * 2 ?? 204 / 2 = 102 = 1020hPa?
       msg[5] = 0x21;
