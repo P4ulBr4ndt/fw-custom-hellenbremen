@@ -285,9 +285,9 @@ static void handleHarleyCAN(CanCycle cycle) {
     {
       CanTxMessage msg(CanCategory::NBC, 0x540); // THIS IS ODOMETER AS WELL
       msg[0] = 0x00; // ODOMETER 0x000A8658 = 689752 Displayed as 689.8KM on PAM AMERICA ST
-      msg[1] = 0x0A; // ODOMETER
-      msg[2] = 0x86; // ODOMETER
-      msg[3] = 0x58; // ODOMETER
+      msg[1] = 0x00; // ODOMETER
+      msg[2] = 0x00; // ODOMETER
+      msg[3] = 0x00; // ODOMETER
       msg[4] = 0x00;
       msg[5] = 0x00;
       msg[6] = 0x00;
@@ -345,9 +345,9 @@ static void handleHarleyCAN(CanCycle cycle) {
     {
       CanTxMessage msg(CanCategory::NBC, 0x346);
       msg[0] = 0x00; // ODOMETER 0x000A8658 = 689752 Displayed as 689.8KM on PAM AMERICA ST
-      msg[1] = 0x0A; // ODOMETER
-      msg[2] = 0x86; // ODOMETER
-      msg[3] = 0x58; // ODOMETER
+      msg[1] = 0x00; // ODOMETER
+      msg[2] = 0x00; // ODOMETER
+      msg[3] = 0x00; // ODOMETER
       msg[4] = 0x00;
       msg[5] = Sensor::getOrZero(SensorType::AmbientTemperature) * 2 + 80;
       msg[6] = 0x80;
