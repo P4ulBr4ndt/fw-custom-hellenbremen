@@ -2,6 +2,7 @@
 #include "hellen_meta.h"
 #include "defaults.h"
 #include "board_overrides.h"
+#include "shutdown_controller.h"
 #include "unused.h"
 
 #define HARLEY_V_TWIN 45.0
@@ -151,6 +152,8 @@ static uint8_t frameCounter146_342 = 0x0;
 static uint8_t frameCounter148 = 0x40;
 
 static bool harleyKeepAlive = true;
+static bool harleyIgnitionOffRequested = false;
+static bool harleyIgnitionOffRequestedPrev = false;
 
 /*
 TODO CLUTCH looks like 0xD0
@@ -379,8 +382,15 @@ void boardProcessCanRx(const size_t busIndex, const CANRxFrame &frame, efitick_t
   if (CAN_SID(frame) == 0x500) {
     harleyKeepAlive = frame.data8[0];
   }
+  if (CAN_SID(frame) == 0x15A) {
+    harleyIgnitionOffRequested = (frame.data8[1] & 0x01) != 0 && (frame.data8[2] & 0x01) == 0;
+    if (harleyIgnitionOffRequested && !harleyIgnitionOffRequestedPrev) {
+      // Request a graceful engine stop when the ignition-off button is pressed.
+      doScheduleStopEngine(StopRequestedReason::StartButton);
+    }
+    harleyIgnitionOffRequestedPrev = harleyIgnitionOffRequested;
+  }
 }
-
 
 void setup_custom_board_overrides() {
 	custom_board_DefaultConfiguration = boardDefaultConfiguration;

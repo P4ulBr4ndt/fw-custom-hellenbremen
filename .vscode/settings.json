@@ -1,5 +1,5 @@
 {
-    "files.associations": {
+	"files.associations": {
 		"*.input": "ini",
 		"__bit_reference": "cpp",
 		"__hash_table": "cpp",
@@ -66,23 +66,26 @@
 		"**/.dep": true,
 		"**/build/lst": true,
 		"**/build/obj": true,
-		"hardware/": true,
+		"hardware/": true
 	},
 	"search.exclude": {
 		"**/.dep": true,
 		"**/build/lst": true,
 		"**/build/obj": true,
 		"hardware/": true,
-		"firmware/ChibiOS/demos": true,
+		"firmware/ChibiOS/demos": true
 	},
 	"cSpell.words": [
 		"IACV"
 	],
-	"files.associations": {
-		"*.input": "ini"
-	},
 	"C_Cpp.formatting": "vcFormat",
+	"C_Cpp.intelliSenseEngine": "disabled",
+	"clangd.arguments": [
+		"--background-index",
+		"--clang-tidy",
+		"--completion-style=detailed"
+	],
 	"Lua.diagnostics.disable": [
 		"lowercase-global"
-	],
+	]
 }
