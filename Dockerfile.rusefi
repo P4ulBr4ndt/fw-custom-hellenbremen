@@ -1,0 +1,39 @@
+FROM ubuntu:24.04
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG ARM_GCC_VERSION=14.2.rel1
+ARG ARM_GCC_BASENAME=""
+ARG TARGETARCH
+
+SHELL ["/bin/bash", "-c"]
+
+RUN apt-get update && apt-get install -y \
+  ca-certificates curl wget xz-utils git \
+  build-essential make python3 \
+  openjdk-17-jdk \
+  mtools sshpass zip dosfstools \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN set -euo pipefail; \
+  if [ -n "${ARM_GCC_BASENAME}" ]; then \
+    TOOLCHAIN="${ARM_GCC_BASENAME}"; \
+  else \
+    case "${TARGETARCH}" in \
+      amd64) TOOLCHAIN="arm-gnu-toolchain-${ARM_GCC_VERSION}-x86_64-arm-none-eabi" ;; \
+      arm64) TOOLCHAIN="arm-gnu-toolchain-${ARM_GCC_VERSION}-aarch64-arm-none-eabi" ;; \
+      *) echo "Unsupported TARGETARCH: ${TARGETARCH}" >&2; exit 1 ;; \
+    esac; \
+  fi; \
+  curl -L -o /tmp/arm.tar.xz \
+    https://developer.arm.com/-/media/Files/downloads/gnu/${ARM_GCC_VERSION}/binrel/${TOOLCHAIN}.tar.xz \
+  && mkdir -p /opt/arm \
+  && tar -C /opt/arm -xf /tmp/arm.tar.xz \
+  && ln -s "/opt/arm/${TOOLCHAIN}" /opt/arm/current \
+  && rm /tmp/arm.tar.xz
+
+ENV LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    JAVA_TOOL_OPTIONS="-Dfile.encoding=UTF-8" \
+    PATH="/opt/arm/current/bin:${PATH}"
+
+WORKDIR /work
