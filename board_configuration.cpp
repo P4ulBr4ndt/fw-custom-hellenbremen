@@ -3,9 +3,15 @@
 #include "defaults.h"
 #include "board_overrides.h"
 #include "shutdown_controller.h"
+#include "injection_gpio.h"
 #include "unused.h"
 
 #define HARLEY_V_TWIN 45.0
+#define INSTANT_ACCEL_SHOT_WINDOW_MS 50
+#define INSTANT_ACCEL_SHOT_WINDOW_MAX_MS 500
+
+static constexpr float instantAccelShotDefaultTpsDeltaBins[] = {5.0f, 10.0f, 25.0f, 40.0f, 60.0f, 80.0f};
+static constexpr float instantAccelShotDefaultPulseMs[] = {0.5f, 1.0f, 2.0f, 4.0f, 6.0f, 10.0f};
 
 // board-specific configuration setup
 static void boardDefaultConfiguration() {
@@ -47,8 +53,24 @@ static void boardDefaultConfiguration() {
 
     engineConfiguration->throttlePedalUpVoltage = 1.36;
     engineConfiguration->throttlePedalWOTVoltage = 4.46;
-	engineConfiguration->throttlePedalSecondaryUpVoltage = 1.37;
-	engineConfiguration->throttlePedalSecondaryWOTVoltage = 4.48;
+    engineConfiguration->throttlePedalSecondaryUpVoltage = 1.37;
+    engineConfiguration->throttlePedalSecondaryWOTVoltage = 4.48;
+
+	config->instantAccelShotWindowMs = INSTANT_ACCEL_SHOT_WINDOW_MS;
+	for (size_t i = 0; i < efi::size(config->instantAccelShotTpsDeltaBins); i++) {
+		config->instantAccelShotTpsDeltaBins[i] = 0;
+		config->instantAccelShotPulseMs[i] = 0;
+	}
+
+	size_t defaultCount = efi::size(config->instantAccelShotTpsDeltaBins);
+	size_t defaultValues = efi::size(instantAccelShotDefaultTpsDeltaBins);
+	if (defaultValues < defaultCount) {
+		defaultCount = defaultValues;
+	}
+	for (size_t i = 0; i < defaultCount; i++) {
+		config->instantAccelShotTpsDeltaBins[i] = instantAccelShotDefaultTpsDeltaBins[i];
+		config->instantAccelShotPulseMs[i] = instantAccelShotDefaultPulseMs[i];
+	}
 }
 
 static void boardConfigOverrides() {
@@ -398,6 +420,122 @@ void boardProcessCanRx(const size_t busIndex, const CANRxFrame &frame, efitick_t
     harleyIgnitionOffRequestedPrev = harleyIgnitionOffRequested;
     harleyIgnitionOnRequestedPrev = harleyIgnitionOnRequested;
   }
+}
+
+struct InstantAccelShotState {
+	static constexpr int kRawSamples = static_cast<int>(INSTANT_ACCEL_SHOT_WINDOW_MAX_MS / FAST_CALLBACK_PERIOD_MS) + 2;
+	static constexpr int kSamples = (kRawSamples < 2) ? 2 : kRawSamples;
+
+	float tps[kSamples];
+	efitick_t timeNt[kSamples];
+	int head;
+	int count;
+	bool latched;
+};
+
+static InstantAccelShotState instantAccelShotState;
+
+static void resetInstantAccelShot() {
+	instantAccelShotState.head = 0;
+	instantAccelShotState.count = 0;
+	instantAccelShotState.latched = false;
+}
+
+static bool getInstantAccelShotPulse(float deltaTps, float& pulseMs) {
+	bool found = false;
+	float bestBin = -1;
+	float bestPulse = 0;
+
+	for (size_t i = 0; i < efi::size(config->instantAccelShotTpsDeltaBins); i++) {
+		float bin = config->instantAccelShotTpsDeltaBins[i];
+		if (bin <= 0) {
+			continue;
+		}
+		if (deltaTps >= bin && bin >= bestBin) {
+			bestBin = bin;
+			bestPulse = config->instantAccelShotPulseMs[i];
+			found = true;
+		}
+	}
+
+	pulseMs = bestPulse;
+	return found;
+}
+
+static void updateInstantAccelShot() {
+	if (!engine->rpmCalculator.isRunning()) {
+		resetInstantAccelShot();
+		return;
+	}
+
+	auto tps = Sensor::get(SensorType::Tps1);
+	if (!tps) {
+		resetInstantAccelShot();
+		return;
+	}
+
+	float windowMs = config->instantAccelShotWindowMs;
+	if (windowMs <= 0) {
+		instantAccelShotState.latched = false;
+		return;
+	}
+
+	if (windowMs > INSTANT_ACCEL_SHOT_WINDOW_MAX_MS) {
+		windowMs = INSTANT_ACCEL_SHOT_WINDOW_MAX_MS;
+	}
+
+	auto nowNt = getTimeNowNt();
+
+	instantAccelShotState.tps[instantAccelShotState.head] = tps.Value;
+	instantAccelShotState.timeNt[instantAccelShotState.head] = nowNt;
+	instantAccelShotState.head = (instantAccelShotState.head + 1) % InstantAccelShotState::kSamples;
+	if (instantAccelShotState.count < InstantAccelShotState::kSamples) {
+		instantAccelShotState.count++;
+	}
+
+	efitick_t earliestNt = nowNt - MSF2NT(windowMs);
+	float minTps = tps.Value;
+	int validSamples = 0;
+
+	for (int i = 0; i < instantAccelShotState.count; i++) {
+		int idx = instantAccelShotState.head - 1 - i;
+		if (idx < 0) {
+			idx += InstantAccelShotState::kSamples;
+		}
+		if (instantAccelShotState.timeNt[idx] < earliestNt) {
+			continue;
+		}
+		float sampleTps = instantAccelShotState.tps[idx];
+		if (sampleTps < minTps) {
+			minTps = sampleTps;
+		}
+		validSamples++;
+	}
+
+	if (validSamples < 2) {
+		instantAccelShotState.latched = false;
+		return;
+	}
+
+	float deltaTps = tps.Value - minTps;
+	float pulseMs = 0;
+	bool aboveThreshold = getInstantAccelShotPulse(deltaTps, pulseMs);
+
+	if (aboveThreshold && !instantAccelShotState.latched) {
+		if (pulseMs > 0) {
+			startSimultaneousInjection();
+			auto endTime = sumTickAndFloat(nowNt, MSF2NT(pulseMs));
+			getScheduler()->schedule("instantAccelShot", nullptr, endTime,
+				action_s::make<endSimultaneousInjectionOnlyTogglePins>());
+		}
+		instantAccelShotState.latched = true;
+	} else if (!aboveThreshold) {
+		instantAccelShotState.latched = false;
+	}
+}
+
+void boardPeriodicFastCallback() {
+	updateInstantAccelShot();
 }
 
 void setup_custom_board_overrides() {
