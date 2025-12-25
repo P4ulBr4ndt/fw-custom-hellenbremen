@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <msq xmlns="http://www.msefi.com/:msq">
     <page/>
-    <page number="0" size="24396">
+    <page number="0" size="24448">
         <constant name="accelEnrichmentMode">"MS Adder"</constant>
         <constant name="accelerometerCsPin">"NONE"</constant>
         <constant name="accelerometerCsPinMode">"default"</constant>
@@ -2385,6 +2385,23 @@
          4700.0
          7000.0
 </constant>
+        <constant cols="1" digits="2" name="instantAccelShotPulseMs" rows="6" units="ms">
+         0.0
+         0.0
+         0.0
+         0.0
+         0.0
+         0.0
+</constant>
+        <constant cols="1" digits="1" name="instantAccelShotTpsDeltaBins" rows="6" units="%">
+         0.0
+         0.0
+         0.0
+         0.0
+         0.0
+         0.0
+</constant>
+        <constant digits="0" name="instantAccelShotWindowMs" units="ms">0.0</constant>
         <constant name="invertCamVVTSignal">"Rising"</constant>
         <constant name="invertExhaustCamVVTSignal">"Rising"</constant>
         <constant name="invertPrimaryTriggerSignal">"Rising"</constant>
@@ -5024,7 +5041,7 @@ end</constant>
 </constant>
         <constant name="yesUnderstandLocking">"no"</constant>
     </page>
-    <versionInfo firmwareInfo="20251001" nPages="1" signature="rusEFI main.2025.12.25.hellen-bremen.2185804509" version="5.0"/>
+    <versionInfo firmwareInfo="20251001" nPages="1" signature="rusEFI main.2025.12.25.hellen-bremen.696787998" version="5.0"/>
     <bibliography author="rusEFI 20251001" writeDate="date"/>
     <settings/>
     <userComments/>
