@@ -2,6 +2,8 @@
 
 #define GAUGE_NAME_AUX_TEMP1 "Engine Temperature"
 #define MENU_NAME_AUX_TEMP1 "Engine Temperature Sensor"
+#define GAUGE_NAME_AUX_TEMP2 "Coolant Temperature"
+#define MENU_NAME_AUX_TEMP2 "Coolant Temperature Sensor"
 #define COIL_1_NAME "Rear Spark"
 #define COIL_2_NAME "Front Spark"
 

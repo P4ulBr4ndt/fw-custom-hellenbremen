@@ -527,6 +527,7 @@ static void updateInstantAccelShot() {
 			auto endTime = sumTickAndFloat(nowNt, MSF2NT(pulseMs));
 			getScheduler()->schedule("instantAccelShot", nullptr, endTime,
 				action_s::make<endSimultaneousInjectionOnlyTogglePins>());
+			efiPrintf("Instant accel shot: dTPS=%.2f pulse=%.2fms", deltaTps, pulseMs);
 		}
 		instantAccelShotState.latched = true;
 	} else if (!aboveThreshold) {
