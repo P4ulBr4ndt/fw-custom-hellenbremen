@@ -7,11 +7,12 @@
 #include "unused.h"
 
 #define HARLEY_V_TWIN 45.0
-#define INSTANT_ACCEL_SHOT_WINDOW_MS 50
-#define INSTANT_ACCEL_SHOT_WINDOW_MAX_MS 500
+#define INSTANT_ACCEL_SHOT_WINDOW_MS 80
+#define INSTANT_ACCEL_SHOT_WINDOW_MAX_MS 200
+#define INSTANT_ACCEL_SHOT_TOPUP_MIN_INCREMENT_MS 2.0f
 
-static constexpr float instantAccelShotDefaultTpsDeltaBins[] = {5.0f, 10.0f, 25.0f, 40.0f, 60.0f, 80.0f};
-static constexpr float instantAccelShotDefaultPulseMs[] = {0.5f, 1.0f, 2.0f, 4.0f, 6.0f, 10.0f};
+static constexpr float instantAccelShotDefaultTpsDeltaBins[] = {5.0f, 20.0f, 35.0f, 50.0f, 65.0f, 80.0f};
+static constexpr float instantAccelShotDefaultPulseMs[] = {8.0f, 10.0f, 13.0f, 16.0f, 18.0f, 20.0f};
 
 // board-specific configuration setup
 static void boardDefaultConfiguration() {
@@ -431,6 +432,9 @@ struct InstantAccelShotState {
 	int head;
 	int count;
 	bool latched;
+	float deliveredPulseMs;
+	efitick_t shotStartTimeNt;
+	efitick_t plannedEndTimeNt;
 };
 
 static InstantAccelShotState instantAccelShotState;
@@ -439,6 +443,9 @@ static void resetInstantAccelShot() {
 	instantAccelShotState.head = 0;
 	instantAccelShotState.count = 0;
 	instantAccelShotState.latched = false;
+	instantAccelShotState.deliveredPulseMs = 0;
+	instantAccelShotState.shotStartTimeNt = 0;
+	instantAccelShotState.plannedEndTimeNt = 0;
 }
 
 static bool getInstantAccelShotPulse(float deltaTps, float& pulseMs) {
@@ -521,17 +528,42 @@ static void updateInstantAccelShot() {
 	float pulseMs = 0;
 	bool aboveThreshold = getInstantAccelShotPulse(deltaTps, pulseMs);
 
-	if (aboveThreshold && !instantAccelShotState.latched) {
-		if (pulseMs > 0) {
-			startSimultaneousInjection();
-			auto endTime = sumTickAndFloat(nowNt, MSF2NT(pulseMs));
-			getScheduler()->schedule("instantAccelShot", nullptr, endTime,
-				action_s::make<endSimultaneousInjectionOnlyTogglePins>());
-			efiPrintf("Instant accel shot: dTPS=%.2f pulse=%.2fms", deltaTps, pulseMs);
+	if (aboveThreshold) {
+		if (!instantAccelShotState.latched) {
+			if (pulseMs > 0) {
+				startSimultaneousInjection();
+				auto endTime = sumTickAndFloat(nowNt, MSF2NT(pulseMs));
+				getScheduler()->schedule("instantAccelShot", nullptr, endTime,
+					action_s::make<endSimultaneousInjectionOnlyTogglePins>());
+				efiPrintf("Instant accel shot: dTPS=%.2f pulse=%.2fms", deltaTps, pulseMs);
+				instantAccelShotState.deliveredPulseMs = pulseMs;
+				instantAccelShotState.shotStartTimeNt = nowNt;
+				instantAccelShotState.plannedEndTimeNt = endTime;
+			}
+			instantAccelShotState.latched = true;
+		} else {
+			float extraPulseMs = pulseMs - instantAccelShotState.deliveredPulseMs;
+			if (extraPulseMs >= INSTANT_ACCEL_SHOT_TOPUP_MIN_INCREMENT_MS) {
+				auto desiredEndNt = sumTickAndFloat(instantAccelShotState.shotStartTimeNt,
+					MSF2NT(pulseMs));
+				if (desiredEndNt > instantAccelShotState.plannedEndTimeNt) {
+					efitick_t remainingNt = desiredEndNt - nowNt;
+					if (remainingNt > 0) {
+						startSimultaneousInjection();
+						auto endTime = nowNt + remainingNt;
+						getScheduler()->schedule("instantAccelShotExtend", nullptr, endTime,
+							action_s::make<endSimultaneousInjectionOnlyTogglePins>());
+						efiPrintf("Instant accel extend: dTPS=%.2f total=%.2fms", deltaTps, pulseMs);
+						instantAccelShotState.deliveredPulseMs = pulseMs;
+						instantAccelShotState.plannedEndTimeNt = desiredEndNt;
+					}
+				}
+			}
 		}
-		instantAccelShotState.latched = true;
-	} else if (!aboveThreshold) {
+	} else {
 		instantAccelShotState.latched = false;
+		instantAccelShotState.deliveredPulseMs = 0;
+		instantAccelShotState.plannedEndTimeNt = 0;
 	}
 }
 
