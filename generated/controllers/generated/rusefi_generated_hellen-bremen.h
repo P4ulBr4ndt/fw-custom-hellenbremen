@@ -674,7 +674,7 @@
 #define GAUGE_NAME_AUX_LINEAR_3 "Aux linear #3"
 #define GAUGE_NAME_AUX_LINEAR_4 "Aux linear #4"
 #define GAUGE_NAME_AUX_TEMP1 "Engine Temperature"
-#define GAUGE_NAME_AUX_TEMP2 "Aux temp 2"
+#define GAUGE_NAME_AUX_TEMP2 "Coolant Temperature"
 #define GAUGE_NAME_BARO_PRESSURE "Barometric pressure"
 #define GAUGE_NAME_BOOST_CLOSED_LOOP "Boost: Closed loop"
 #define GAUGE_NAME_BOOST_OPEN_LOOP "Boost: Open loop"
@@ -1396,7 +1396,7 @@
 #define mc33810maxDwellTimer_e_DWELL_8MS 2
 #define MEMBER_FLOW flow
 #define MENU_NAME_AUX_TEMP1 "Engine Temperature Sensor"
-#define MENU_NAME_AUX_TEMP2 "AuxTemp2 sensor"
+#define MENU_NAME_AUX_TEMP2 "Coolant Temperature Sensor"
 #define MLQ_FIELD_HEADER_SIZE 89
 #define MLQ_HEADER_SIZE 24
 #define MsIoBox_config_s_size 4
@@ -1532,7 +1532,7 @@
 #define SentInput_NONE 0
 #define show_tcu_gauges false
 #define show_vvt_output_pin true
-#define SIGNATURE_HASH 696787998
+#define SIGNATURE_HASH 1185576855
 #define SIMULATOR_TUNE_BIN_FILE_NAME "generated/simulator_tune_image.bin"
 #define SIMULATOR_TUNE_BIN_FILE_NAME_PREFIX "generated/simulator_tune_image"
 #define SIMULATOR_TUNE_BIN_FILE_NAME_SUFFIX ".bin"
@@ -2099,7 +2099,7 @@
 #define ts_show_wastegate_sensor true
 #define ts_show_wbo_canbus_index true
 #define ts_show_wbo_canbus_set_index true
-#define TS_SIGNATURE "rusEFI main.2025.12.28.hellen-bremen.696787998"
+#define TS_SIGNATURE "rusEFI main.2025.12.29.hellen-bremen.1185576855"
 #define TS_SIMULATE_CAN '>'
 #define TS_SIMULATE_CAN_char >
 #define TS_TEST_COMMAND 't'
