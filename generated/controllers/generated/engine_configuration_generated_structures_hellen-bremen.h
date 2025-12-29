@@ -7125,17 +7125,29 @@ struct persistent_config_s {
 	 */
 	float instantAccelShotWindowMs;
 	/**
-	 * units: %
+	 * Instant accel top-up min spacing
+	 * units: ms
 	 * offset 24400
+	 */
+	float instantAccelShotTopupMinSpacingMs;
+	/**
+	 * Instant accel top-up min increment
+	 * units: ms
+	 * offset 24404
+	 */
+	float instantAccelShotTopupMinIncrementMs;
+	/**
+	 * units: %
+	 * offset 24408
 	 */
 	float instantAccelShotTpsDeltaBins[INSTANT_ACCEL_SHOT_TPS_COUNT] = {};
 	/**
 	 * units: ms
-	 * offset 24424
+	 * offset 24432
 	 */
 	float instantAccelShotPulseMs[INSTANT_ACCEL_SHOT_TPS_COUNT] = {};
 };
-static_assert(sizeof(persistent_config_s) == 24448);
+static_assert(sizeof(persistent_config_s) == 24456);
 
 // end
 // this section was generated automatically by rusEFI tool config_definition-all.jar based on (unknown script) integration/rusefi_config.txt

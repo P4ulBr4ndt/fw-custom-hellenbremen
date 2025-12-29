@@ -1,5 +1,7 @@
 uint16_t[VE_LOAD_COUNT x VE_RPM_COUNT] autoscale veFrontTable;;"%", 0.1, 0, 0, 999, 1
 #define INSTANT_ACCEL_SHOT_TPS_COUNT 6
 float instantAccelShotWindowMs;Instant accel window length;"ms", 1, 0, 0, 500, 0
+float instantAccelShotTopupMinSpacingMs;Instant accel top-up min spacing;"ms", 1, 0, 0, 100, 2
+float instantAccelShotTopupMinIncrementMs;Instant accel top-up min increment;"ms", 1, 0, 0, 20, 2
 float[INSTANT_ACCEL_SHOT_TPS_COUNT] instantAccelShotTpsDeltaBins;;"%", 1, 0, 0, 100, 1
 float[INSTANT_ACCEL_SHOT_TPS_COUNT] instantAccelShotPulseMs;;"ms", 1, 0, 0, 20, 2
