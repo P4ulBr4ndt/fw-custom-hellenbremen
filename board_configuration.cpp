@@ -11,6 +11,7 @@
 #define INSTANT_ACCEL_SHOT_WINDOW_MAX_MS 200
 #define INSTANT_ACCEL_SHOT_TOPUP_MIN_SPACING_MS 5.0f
 #define INSTANT_ACCEL_SHOT_TOPUP_MIN_INCREMENT_MS 2.0f
+#define INSTANT_ACCEL_SHOT_MIN_DELTA_TPS 3.0f
 
 static constexpr float instantAccelShotDefaultTpsBins[] = {0.0f, 20.0f, 40.0f, 60.0f, 80.0f, 100.0f};
 static constexpr int16_t instantAccelShotDefaultCltCorrBins[] = {-40, -20, 0, 20, 40, 60, 80, 100, 125, 150};
@@ -62,6 +63,7 @@ static void boardDefaultConfiguration() {
 	config->instantAccelShotWindowMs = INSTANT_ACCEL_SHOT_WINDOW_MS;
 	config->instantAccelShotTopupMinSpacingMs = INSTANT_ACCEL_SHOT_TOPUP_MIN_SPACING_MS;
 	config->instantAccelShotTopupMinIncrementMs = INSTANT_ACCEL_SHOT_TOPUP_MIN_INCREMENT_MS;
+	config->instantAccelShotMinDeltaTps = INSTANT_ACCEL_SHOT_MIN_DELTA_TPS;
 	for (auto& row : config->instantAccelShotTpsTable) {
 		for (auto& cell : row) {
 			cell = 0;
@@ -552,9 +554,10 @@ static void updateInstantAccelShot() {
 	float deltaTps = tpsTo - tpsFrom;
 	float pulseMs = 0;
 	bool aboveThreshold = false;
-	if (deltaTps > 0) {
+	float minDeltaTps = std::max(0.0f, config->instantAccelShotMinDeltaTps);
+	if (deltaTps >= minDeltaTps) {
 		pulseMs = getInstantAccelShotPulse(tpsFrom, tpsTo);
-		aboveThreshold = pulseMs > 0;
+		aboveThreshold = pulseMs > 2.0f; // This could also be user editable, for now no relevance
 	}
 	float spacingMs = std::max(0.0f, config->instantAccelShotTopupMinSpacingMs);
 	float minIncrementMs = std::max(0.0f, config->instantAccelShotTopupMinIncrementMs);
@@ -566,7 +569,7 @@ static void updateInstantAccelShot() {
 				auto endTime = sumTickAndFloat(nowNt, MSF2NT(pulseMs));
 				getScheduler()->schedule("instantAccelShot", nullptr, endTime,
 					action_s::make<endSimultaneousInjectionOnlyTogglePins>());
-				efiPrintf("Instant accel shot: dTPS=%.2f pulse=%.2fms", deltaTps, pulseMs);
+				efiPrintf("Instant accel shot: tpsFrom=%.2f tpsTo=%.2f pulse=%.2fms", tpsFrom, tpsTo, pulseMs);
 				instantAccelShotState.deliveredPulseMs = pulseMs;
 				instantAccelShotState.lastShotTimeNt = nowNt;
 			}
@@ -579,7 +582,7 @@ static void updateInstantAccelShot() {
 				auto endTime = sumTickAndFloat(nowNt, MSF2NT(extraPulseMs));
 				getScheduler()->schedule("instantAccelShotTopup", nullptr, endTime,
 					action_s::make<endSimultaneousInjectionOnlyTogglePins>());
-				efiPrintf("Instant accel top-up: dTPS=%.2f extra=%.2fms total=%.2fms", deltaTps, extraPulseMs, pulseMs);
+				efiPrintf("Instant accel top-up: tpsFrom=%.2f tpsTo=%.2f extra=%.2fms total=%.2fms", tpsFrom, tpsTo, extraPulseMs, pulseMs);
 				instantAccelShotState.deliveredPulseMs += extraPulseMs;
 				instantAccelShotState.lastShotTimeNt = nowNt;
 			}
