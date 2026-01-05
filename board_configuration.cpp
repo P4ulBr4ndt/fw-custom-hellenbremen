@@ -12,8 +12,9 @@
 #define INSTANT_ACCEL_SHOT_TOPUP_MIN_SPACING_MS 5.0f
 #define INSTANT_ACCEL_SHOT_TOPUP_MIN_INCREMENT_MS 2.0f
 
-static constexpr float instantAccelShotDefaultTpsDeltaBins[] = {5.0f, 20.0f, 35.0f, 50.0f, 65.0f, 80.0f};
-static constexpr float instantAccelShotDefaultPulseMs[] = {8.0f, 10.0f, 13.0f, 16.0f, 18.0f, 20.0f};
+static constexpr float instantAccelShotDefaultTpsBins[] = {0.0f, 20.0f, 40.0f, 60.0f, 80.0f, 100.0f};
+static constexpr int16_t instantAccelShotDefaultCltCorrBins[] = {-40, -20, 0, 20, 40, 60, 80, 100, 125, 150};
+static constexpr float instantAccelShotDefaultCltCorrMult[] = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
 
 // board-specific configuration setup
 static void boardDefaultConfiguration() {
@@ -61,19 +62,43 @@ static void boardDefaultConfiguration() {
 	config->instantAccelShotWindowMs = INSTANT_ACCEL_SHOT_WINDOW_MS;
 	config->instantAccelShotTopupMinSpacingMs = INSTANT_ACCEL_SHOT_TOPUP_MIN_SPACING_MS;
 	config->instantAccelShotTopupMinIncrementMs = INSTANT_ACCEL_SHOT_TOPUP_MIN_INCREMENT_MS;
-	for (size_t i = 0; i < efi::size(config->instantAccelShotTpsDeltaBins); i++) {
-		config->instantAccelShotTpsDeltaBins[i] = 0;
-		config->instantAccelShotPulseMs[i] = 0;
+	for (auto& row : config->instantAccelShotTpsTable) {
+		for (auto& cell : row) {
+			cell = 0;
+		}
 	}
 
-	size_t defaultCount = efi::size(config->instantAccelShotTpsDeltaBins);
-	size_t defaultValues = efi::size(instantAccelShotDefaultTpsDeltaBins);
+	for (size_t i = 0; i < efi::size(config->instantAccelShotTpsFromBins); i++) {
+		config->instantAccelShotTpsFromBins[i] = 0;
+	}
+
+	for (size_t i = 0; i < efi::size(config->instantAccelShotTpsToBins); i++) {
+		config->instantAccelShotTpsToBins[i] = 0;
+	}
+
+	for (size_t i = 0; i < efi::size(config->instantAccelShotCltCorrBins); i++) {
+		config->instantAccelShotCltCorrBins[i] = 0;
+		config->instantAccelShotCltCorrMult[i] = 1.0f;
+	}
+
+	size_t defaultCount = efi::size(config->instantAccelShotTpsFromBins);
+	size_t defaultValues = efi::size(instantAccelShotDefaultTpsBins);
 	if (defaultValues < defaultCount) {
 		defaultCount = defaultValues;
 	}
 	for (size_t i = 0; i < defaultCount; i++) {
-		config->instantAccelShotTpsDeltaBins[i] = instantAccelShotDefaultTpsDeltaBins[i];
-		config->instantAccelShotPulseMs[i] = instantAccelShotDefaultPulseMs[i];
+		config->instantAccelShotTpsFromBins[i] = instantAccelShotDefaultTpsBins[i];
+		config->instantAccelShotTpsToBins[i] = instantAccelShotDefaultTpsBins[i];
+	}
+
+	size_t cltDefaultCount = efi::size(config->instantAccelShotCltCorrBins);
+	size_t cltDefaultValues = efi::size(instantAccelShotDefaultCltCorrBins);
+	if (cltDefaultValues < cltDefaultCount) {
+		cltDefaultCount = cltDefaultValues;
+	}
+	for (size_t i = 0; i < cltDefaultCount; i++) {
+		config->instantAccelShotCltCorrBins[i] = instantAccelShotDefaultCltCorrBins[i];
+		config->instantAccelShotCltCorrMult[i] = instantAccelShotDefaultCltCorrMult[i];
 	}
 }
 
@@ -449,25 +474,22 @@ static void resetInstantAccelShot() {
 	instantAccelShotState.lastShotTimeNt = 0;
 }
 
-static bool getInstantAccelShotPulse(float deltaTps, float& pulseMs) {
-	bool found = false;
-	float bestBin = -1;
-	float bestPulse = 0;
-
-	for (size_t i = 0; i < efi::size(config->instantAccelShotTpsDeltaBins); i++) {
-		float bin = config->instantAccelShotTpsDeltaBins[i];
-		if (bin <= 0) {
-			continue;
-		}
-		if (deltaTps >= bin && bin >= bestBin) {
-			bestBin = bin;
-			bestPulse = config->instantAccelShotPulseMs[i];
-			found = true;
-		}
+static float getInstantAccelShotPulse(float tpsFrom, float tpsTo) {
+	float basePulseMs = interpolate3d(config->instantAccelShotTpsTable,
+		config->instantAccelShotTpsToBins, tpsTo,
+		config->instantAccelShotTpsFromBins, tpsFrom);
+	if (basePulseMs < 0) {
+		basePulseMs = 0;
 	}
 
-	pulseMs = bestPulse;
-	return found;
+	float clt = Sensor::getOrZero(SensorType::Clt);
+	float cltMult = interpolate2d(clt, config->instantAccelShotCltCorrBins,
+		config->instantAccelShotCltCorrMult);
+	if (cltMult < 0) {
+		cltMult = 0;
+	}
+
+	return basePulseMs * cltMult;
 }
 
 static void updateInstantAccelShot() {
@@ -525,9 +547,15 @@ static void updateInstantAccelShot() {
 		return;
 	}
 
-	float deltaTps = tps.Value - minTps;
+	float tpsFrom = minTps;
+	float tpsTo = tps.Value;
+	float deltaTps = tpsTo - tpsFrom;
 	float pulseMs = 0;
-	bool aboveThreshold = getInstantAccelShotPulse(deltaTps, pulseMs);
+	bool aboveThreshold = false;
+	if (deltaTps > 0) {
+		pulseMs = getInstantAccelShotPulse(tpsFrom, tpsTo);
+		aboveThreshold = pulseMs > 0;
+	}
 	float spacingMs = std::max(0.0f, config->instantAccelShotTopupMinSpacingMs);
 	float minIncrementMs = std::max(0.0f, config->instantAccelShotTopupMinIncrementMs);
 
@@ -551,8 +579,7 @@ static void updateInstantAccelShot() {
 				auto endTime = sumTickAndFloat(nowNt, MSF2NT(extraPulseMs));
 				getScheduler()->schedule("instantAccelShotTopup", nullptr, endTime,
 					action_s::make<endSimultaneousInjectionOnlyTogglePins>());
-				// efiPrintf("Instant accel top-up: dTPS=%.2f extra=%.2fms total=%.2fms",
-					deltaTps, extraPulseMs, pulseMs);
+				// efiPrintf("Instant accel top-up: dTPS=%.2f extra=%.2fms total=%.2fms", deltaTps, extraPulseMs, pulseMs);
 				instantAccelShotState.deliveredPulseMs += extraPulseMs;
 				instantAccelShotState.lastShotTimeNt = nowNt;
 			}
