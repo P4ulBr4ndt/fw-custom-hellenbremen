@@ -9,4 +9,4 @@ float[INSTANT_ACCEL_SHOT_TPS_COUNT x INSTANT_ACCEL_SHOT_TPS_COUNT] instantAccelS
 float[INSTANT_ACCEL_SHOT_TPS_COUNT] instantAccelShotTpsFromBins;;"%", 1, 0, 0, 100, 1
 float[INSTANT_ACCEL_SHOT_TPS_COUNT] instantAccelShotTpsToBins;;"%", 1, 0, 0, 100, 1
 int16_t[INSTANT_ACCEL_SHOT_CLT_CORR_COUNT] instantAccelShotCltCorrBins;;"SPECIAL_CASE_TEMPERATURE", 1, 0, -40, 150, 0
-float[INSTANT_ACCEL_SHOT_CLT_CORR_COUNT] instantAccelShotCltCorrMult;;"multiplier", 0.01, 0, 0, 5, 2
+float[INSTANT_ACCEL_SHOT_CLT_CORR_COUNT] instantAccelShotCltCorrMult;;"multiplier", 1, 0, 0, 5, 2
