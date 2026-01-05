@@ -7137,32 +7137,38 @@ struct persistent_config_s {
 	 */
 	float instantAccelShotTopupMinIncrementMs;
 	/**
-	 * units: ms
+	 * Instant accel min delta TPS
+	 * units: %
 	 * offset 24408
+	 */
+	float instantAccelShotMinDeltaTps;
+	/**
+	 * units: ms
+	 * offset 24412
 	 */
 	float instantAccelShotTpsTable[INSTANT_ACCEL_SHOT_TPS_COUNT][INSTANT_ACCEL_SHOT_TPS_COUNT] = {};
 	/**
 	 * units: %
-	 * offset 24552
+	 * offset 24556
 	 */
 	float instantAccelShotTpsFromBins[INSTANT_ACCEL_SHOT_TPS_COUNT] = {};
 	/**
 	 * units: %
-	 * offset 24576
+	 * offset 24580
 	 */
 	float instantAccelShotTpsToBins[INSTANT_ACCEL_SHOT_TPS_COUNT] = {};
 	/**
 	 * units: SPECIAL_CASE_TEMPERATURE
-	 * offset 24600
+	 * offset 24604
 	 */
 	int16_t instantAccelShotCltCorrBins[INSTANT_ACCEL_SHOT_CLT_CORR_COUNT] = {};
 	/**
 	 * units: multiplier
-	 * offset 24620
+	 * offset 24624
 	 */
 	float instantAccelShotCltCorrMult[INSTANT_ACCEL_SHOT_CLT_CORR_COUNT] = {};
 };
-static_assert(sizeof(persistent_config_s) == 24660);
+static_assert(sizeof(persistent_config_s) == 24664);
 
 // end
 // this section was generated automatically by rusEFI tool config_definition-all.jar based on (unknown script) integration/rusefi_config.txt
