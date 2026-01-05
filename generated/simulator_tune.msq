@@ -5076,7 +5076,7 @@ end</constant>
 </constant>
         <constant name="yesUnderstandLocking">"no"</constant>
     </page>
-    <versionInfo firmwareInfo="20251001" nPages="1" signature="rusEFI main.2026.01.05.hellen-bremen.2052019872" version="5.0"/>
+    <versionInfo firmwareInfo="20251001" nPages="1" signature="rusEFI main.2026.01.05.hellen-bremen.646680351" version="5.0"/>
     <bibliography author="rusEFI 20251001" writeDate="date"/>
     <settings/>
     <userComments/>
