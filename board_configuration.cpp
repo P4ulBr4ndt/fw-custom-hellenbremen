@@ -569,7 +569,7 @@ static void updateInstantAccelShot() {
 				auto endTime = sumTickAndFloat(nowNt, MSF2NT(pulseMs));
 				getScheduler()->schedule("instantAccelShot", nullptr, endTime,
 					action_s::make<endSimultaneousInjectionOnlyTogglePins>());
-				efiPrintf("Instant accel shot: tpsFrom=%.2f tpsTo=%.2f pulse=%.2fms", tpsFrom, tpsTo, pulseMs);
+				// efiPrintf("Instant accel shot: tpsFrom=%.2f tpsTo=%.2f pulse=%.2fms", tpsFrom, tpsTo, pulseMs);
 				instantAccelShotState.deliveredPulseMs = pulseMs;
 				instantAccelShotState.lastShotTimeNt = nowNt;
 			}
@@ -582,7 +582,7 @@ static void updateInstantAccelShot() {
 				auto endTime = sumTickAndFloat(nowNt, MSF2NT(extraPulseMs));
 				getScheduler()->schedule("instantAccelShotTopup", nullptr, endTime,
 					action_s::make<endSimultaneousInjectionOnlyTogglePins>());
-				efiPrintf("Instant accel top-up: tpsFrom=%.2f tpsTo=%.2f extra=%.2fms total=%.2fms", tpsFrom, tpsTo, extraPulseMs, pulseMs);
+				// efiPrintf("Instant accel top-up: tpsFrom=%.2f tpsTo=%.2f extra=%.2fms total=%.2fms", tpsFrom, tpsTo, extraPulseMs, pulseMs);
 				instantAccelShotState.deliveredPulseMs += extraPulseMs;
 				instantAccelShotState.lastShotTimeNt = nowNt;
 			}
