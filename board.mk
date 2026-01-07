@@ -1,5 +1,9 @@
-BOARDCPPSRC =  $(BOARD_DIR)/board_configuration.cpp \
-
+ifneq ($(findstring EFI_BOOTLOADER,$(DDEFS)),)
+  # Bootloader build: skip app-only board configuration
+  BOARDCPPSRC =
+else
+  BOARDCPPSRC = $(BOARD_DIR)/board_configuration.cpp
+endif
 
 BOARDINC += $(BOARD_DIR)/generated/controllers/generated
 

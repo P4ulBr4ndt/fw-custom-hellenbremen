@@ -7,6 +7,7 @@ META_INFO="${ROOT_DIR}/meta-info.env"
 
 MODE="full"
 DFU_MODE="auto"
+BUILD_BOOTLOADER="0"
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -14,6 +15,7 @@ while [ $# -gt 0 ]; do
     --bin-hex) MODE="bin-hex" ;;
     --no-dfu) DFU_MODE="skip" ;;
     --with-dfu) DFU_MODE="force" ;;
+    --bootloader) BUILD_BOOTLOADER="1" ;;
     *) echo "Unknown argument: $1" >&2; exit 2 ;;
   esac
   shift
@@ -56,6 +58,9 @@ misc/git_scripts/common_submodule_init.sh
 
 cd "${RUSEFI_DIR}/firmware"
 bash bin/compile.sh "${META_INFO}" config
+if [ "${BUILD_BOOTLOADER}" = "1" ]; then
+  bash bin/compile.sh "${META_INFO}" bootloader
+fi
 bash bin/compile.sh "${META_INFO}" --output-sync=recurse "${ARTIFACTS[@]}"
 
 if [ "${DFU_MODE}" = "skip" ]; then
