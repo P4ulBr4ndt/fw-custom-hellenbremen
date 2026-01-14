@@ -433,7 +433,7 @@ static void handleHarleyCAN(CanCycle cycle) {
 }
 
 void boardProcessCanRx(const size_t busIndex, const CANRxFrame &frame, efitick_t nowNt) {
-  handleCalibrationUdsCanRx(busIndex, frame, nowNt);
+  handleUdsCanRx(busIndex, frame, nowNt);
   if (CAN_SID(frame) == 0x500) {
     harleyKeepAlive = frame.data8[0];
   }

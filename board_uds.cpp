@@ -17,6 +17,7 @@
 
 namespace {
 constexpr uint32_t kUdsReqId = 0x7E0;
+constexpr uint32_t kUdsBroadcastId = 0x7DF;
 constexpr uint32_t kUdsRespId = 0x7E8;
 
 constexpr size_t kMaxTransferDataPayload = 255;
@@ -41,7 +42,13 @@ constexpr uint8_t kNrcInvalidKey = 0x35;
 constexpr uint8_t kNrcGeneralProgrammingFailure = 0x72;
 
 constexpr uint16_t kDidBasicEngineData = 0x0200;
+constexpr uint16_t kDidVin = 0xF190;
+constexpr uint16_t kDidProgrammingDate = 0xF199;
+constexpr uint16_t kDidCalibrationId = 0xF1ED;
 constexpr size_t kDidBasicEngineDataSize = 10;
+constexpr size_t kDidStringMaxLen = 11;
+constexpr size_t kDidProgrammingDateLen = 8;
+constexpr size_t kVinLength = sizeof(engineConfiguration->vinNumber);
 constexpr size_t kMaxUdsTxPayload = 32;
 
 struct IsoTpRxState {
@@ -99,6 +106,39 @@ static uint16_t readU16be(const uint8_t* data) {
 static void writeU16be(uint8_t* dest, uint16_t value) {
 	dest[0] = static_cast<uint8_t>((value >> 8) & 0xFF);
 	dest[1] = static_cast<uint8_t>(value & 0xFF);
+}
+
+static size_t copyDidStringTail(uint8_t* dest, size_t maxLen, const char* src) {
+	if (!src || maxLen == 0) {
+		return 0;
+	}
+
+	size_t len = std::strlen(src);
+	if (len <= maxLen) {
+		std::memcpy(dest, src, len);
+		return len;
+	}
+
+	const char* start = src + (len - maxLen);
+	std::memcpy(dest, start, maxLen);
+	return maxLen;
+}
+
+static size_t writeProgrammingDate(uint8_t* dest, size_t maxLen) {
+	if (maxLen == 0) {
+		return 0;
+	}
+
+	int value = engineConfiguration->calibrationBirthday;
+	char tmp[kDidProgrammingDateLen];
+	for (int i = static_cast<int>(kDidProgrammingDateLen) - 1; i >= 0; i--) {
+		tmp[i] = static_cast<char>('0' + (value % 10));
+		value /= 10;
+	}
+
+	size_t len = std::min(maxLen, kDidProgrammingDateLen);
+	std::memcpy(dest, tmp, len);
+	return len;
 }
 
 static uint16_t clampU16(int32_t value) {
@@ -250,6 +290,8 @@ static const char* serviceToString(uint8_t service) {
 			return "TransferData";
 		case 0x37:
 			return "TransferExit";
+		case 0x3E:
+			return "TesterPresent";
 		default:
 			return "UnknownService";
 	}
@@ -263,6 +305,17 @@ static void sendUdsNegativeResponse(size_t busIndex, uint8_t service, uint8_t nr
 	sendIsoTpResponse(busIndex, payload, sizeof(payload));
 }
 
+static bool handleTesterPresent(size_t busIndex, const uint8_t* data, size_t len) {
+	if (len != 3 || data[0] != 0x3E || data[1] != 0x00 || data[2] != 0x01) {
+		sendUdsNegativeResponse(busIndex, 0x3E, kNrcIncorrectLength, "tester present format invalid");
+		return true;
+	}
+
+	const uint8_t response[] = {0x7E, 0x00, 0x01};
+	sendIsoTpResponse(busIndex, response, sizeof(response));
+	return true;
+}
+
 static bool handleReadDataByIdentifier(size_t busIndex, const uint8_t* data, size_t len) {
 	if (len != 3) {
 		sendUdsNegativeResponse(busIndex, 0x22, kNrcIncorrectLength,
@@ -271,33 +324,63 @@ static bool handleReadDataByIdentifier(size_t busIndex, const uint8_t* data, siz
 	}
 
 	uint16_t did = readU16be(&data[1]);
-	if (did != kDidBasicEngineData) {
-		sendUdsNegativeResponse(busIndex, 0x22, kNrcRequestOutOfRange,
-			"identifier not supported");
-		return true;
+
+	switch (did) {
+		case kDidBasicEngineData: {
+			std::array<uint8_t, 3 + kDidBasicEngineDataSize> response{};
+			response[0] = 0x62;
+			response[1] = static_cast<uint8_t>((did >> 8) & 0xFF);
+			response[2] = static_cast<uint8_t>(did & 0xFF);
+
+			// DID 0x0200 payload: RPM (1 rpm), vehicle speed (0.1 kph), CLT (0.1 C), AFR1/AFR2 (0.01 AFR)
+			uint16_t rpm = clampU16(static_cast<int32_t>(Sensor::getOrZero(SensorType::Rpm) + 0.5f));
+			uint16_t vss = clampU16(static_cast<int32_t>(Sensor::getOrZero(SensorType::VehicleSpeed) * 10.0f + 0.5f));
+			int16_t clt = clampI16(static_cast<int32_t>(Sensor::getOrZero(SensorType::Clt) * 10.0f));
+			float stoich = engine->fuelComputer.getStoichiometricRatio();
+			uint16_t afr1 = clampU16(static_cast<int32_t>(Sensor::getOrZero(SensorType::Lambda1) * stoich * 100.0f + 0.5f));
+			uint16_t afr2 = clampU16(static_cast<int32_t>(Sensor::getOrZero(SensorType::Lambda2) * stoich * 100.0f + 0.5f));
+
+			writeU16be(&response[3], rpm);
+			writeU16be(&response[5], vss);
+			writeU16be(&response[7], static_cast<uint16_t>(clt));
+			writeU16be(&response[9], afr1);
+			writeU16be(&response[11], afr2);
+
+			sendIsoTpResponse(busIndex, response.data(), response.size());
+			return true;
+		}
+		case kDidVin: {
+			std::array<uint8_t, 3 + kVinLength> response{};
+			response[0] = 0x62;
+			response[1] = static_cast<uint8_t>((did >> 8) & 0xFF);
+			response[2] = static_cast<uint8_t>(did & 0xFF);
+			std::memcpy(&response[3], engineConfiguration->vinNumber, kVinLength);
+			sendIsoTpResponse(busIndex, response.data(), response.size());
+			return true;
+		}
+		case kDidProgrammingDate: {
+			std::array<uint8_t, 3 + kDidProgrammingDateLen> response{};
+			response[0] = 0x62;
+			response[1] = static_cast<uint8_t>((did >> 8) & 0xFF);
+			response[2] = static_cast<uint8_t>(did & 0xFF);
+			size_t dateLen = writeProgrammingDate(&response[3], kDidProgrammingDateLen);
+			sendIsoTpResponse(busIndex, response.data(), 3 + dateLen);
+			return true;
+		}
+		case kDidCalibrationId: {
+			std::array<uint8_t, 3 + kDidStringMaxLen> response{};
+			response[0] = 0x62;
+			response[1] = static_cast<uint8_t>((did >> 8) & 0xFF);
+			response[2] = static_cast<uint8_t>(did & 0xFF);
+			size_t strLen = copyDidStringTail(&response[3], kDidStringMaxLen, getTsSignature());
+			sendIsoTpResponse(busIndex, response.data(), 3 + strLen);
+			return true;
+		}
+		default:
+			sendUdsNegativeResponse(busIndex, 0x22, kNrcRequestOutOfRange,
+				"identifier not supported");
+			return true;
 	}
-
-	std::array<uint8_t, 3 + kDidBasicEngineDataSize> response{};
-	response[0] = 0x62;
-	response[1] = static_cast<uint8_t>((did >> 8) & 0xFF);
-	response[2] = static_cast<uint8_t>(did & 0xFF);
-
-	// DID 0x0200 payload: RPM (1 rpm), vehicle speed (0.1 kph), CLT (0.1 C), AFR1/AFR2 (0.01 AFR)
-	uint16_t rpm = clampU16(static_cast<int32_t>(Sensor::getOrZero(SensorType::Rpm) + 0.5f));
-	uint16_t vss = clampU16(static_cast<int32_t>(Sensor::getOrZero(SensorType::VehicleSpeed) * 10.0f + 0.5f));
-	int16_t clt = clampI16(static_cast<int32_t>(Sensor::getOrZero(SensorType::Clt) * 10.0f));
-	float stoich = engine->fuelComputer.getStoichiometricRatio();
-	uint16_t afr1 = clampU16(static_cast<int32_t>(Sensor::getOrZero(SensorType::Lambda1) * stoich * 100.0f + 0.5f));
-	uint16_t afr2 = clampU16(static_cast<int32_t>(Sensor::getOrZero(SensorType::Lambda2) * stoich * 100.0f + 0.5f));
-
-	writeU16be(&response[3], rpm);
-	writeU16be(&response[5], vss);
-	writeU16be(&response[7], static_cast<uint16_t>(clt));
-	writeU16be(&response[9], afr1);
-	writeU16be(&response[11], afr2);
-
-	sendIsoTpResponse(busIndex, response.data(), response.size());
-	return true;
 }
 
 static bool isProgrammingAllowed() {
@@ -599,7 +682,7 @@ static bool handleTransferExit(size_t busIndex, const uint8_t* data, size_t len)
 }
 
 static bool handleSecurityAccess(size_t busIndex, const uint8_t* data, size_t len) {
-	if (len != 2) {
+	if (len < 2) {
 		sendUdsNegativeResponse(busIndex, 0x27, kNrcIncorrectLength,
 			"security access length invalid");
 		return true;
@@ -607,6 +690,11 @@ static bool handleSecurityAccess(size_t busIndex, const uint8_t* data, size_t le
 
 	uint8_t subFunction = data[1];
 	if (subFunction == 0x01) {
+		if (len != 2) {
+			sendUdsNegativeResponse(busIndex, 0x27, kNrcIncorrectLength,
+				"security seed length invalid");
+			return true;
+		}
 		udsState.seed = static_cast<uint16_t>((getTimeNowNt() ^ 0xA5A5) & 0xFFFF);
 		uint8_t response[] = {0x67, 0x01,
 			static_cast<uint8_t>((udsState.seed >> 8) & 0xFF),
@@ -683,6 +771,8 @@ static bool handleUdsRequest(size_t busIndex, const uint8_t* data, size_t len) {
 			return handleReadDataByIdentifier(busIndex, data, len);
 		case 0x27:
 			return handleSecurityAccess(busIndex, data, len);
+		case 0x3E:
+			return handleTesterPresent(busIndex, data, len);
 		case 0x34:
 			return handleRequestDownload(busIndex, data, len);
 		case 0x36:
@@ -780,14 +870,14 @@ static void handleIsoTpFrame(size_t busIndex, const CANRxFrame& frame, efitick_t
 }
 } // namespace
 
-void handleCalibrationUdsCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt) {
+void handleUdsCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt) {
 	if (CAN_ISX(frame)) {
 		return;
 	}
 
-	if (CAN_SID(frame) != kUdsReqId) {
+	uint32_t sid = CAN_SID(frame);
+	if (sid == kUdsReqId || sid == kUdsBroadcastId) {
+		handleIsoTpFrame(busIndex, frame, nowNt);
 		return;
 	}
-
-	handleIsoTpFrame(busIndex, frame, nowNt);
 }
