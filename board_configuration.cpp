@@ -5,6 +5,7 @@
 #include "shutdown_controller.h"
 #include "injection_gpio.h"
 #include "unused.h"
+#include "board_uds.h"
 
 #define HARLEY_V_TWIN 45.0
 #define INSTANT_ACCEL_SHOT_WINDOW_MS 80
@@ -432,8 +433,7 @@ static void handleHarleyCAN(CanCycle cycle) {
 }
 
 void boardProcessCanRx(const size_t busIndex, const CANRxFrame &frame, efitick_t nowNt) {
-  UNUSED(busIndex);
-  UNUSED(nowNt);
+  handleCalibrationUdsCanRx(busIndex, frame, nowNt);
   if (CAN_SID(frame) == 0x500) {
     harleyKeepAlive = frame.data8[0];
   }
