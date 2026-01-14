@@ -45,7 +45,7 @@ constexpr uint16_t kDidBasicEngineData = 0x0200;
 constexpr uint16_t kDidVin = 0xF190;
 constexpr uint16_t kDidProgrammingDate = 0xF199;
 constexpr uint16_t kDidCalibrationId = 0xF1ED;
-constexpr size_t kDidBasicEngineDataSize = 10;
+constexpr size_t kDidBasicEngineDataSize = 14;
 constexpr size_t kDidStringMaxLen = 11;
 constexpr size_t kDidProgrammingDateLen = 8;
 constexpr size_t kVinLength = sizeof(engineConfiguration->vinNumber);
@@ -332,19 +332,24 @@ static bool handleReadDataByIdentifier(size_t busIndex, const uint8_t* data, siz
 			response[1] = static_cast<uint8_t>((did >> 8) & 0xFF);
 			response[2] = static_cast<uint8_t>(did & 0xFF);
 
-			// DID 0x0200 payload: RPM (1 rpm), vehicle speed (0.1 kph), CLT (0.1 C), AFR1/AFR2 (0.01 AFR)
+			// DID 0x0200 payload: RPM (1 rpm), vehicle speed (0.1 kph), CLT (0.1 C),
+			// AFR1/AFR2 (0.01 AFR), TPS (0.1 %), MAP (0.1 kPa)
 			uint16_t rpm = clampU16(static_cast<int32_t>(Sensor::getOrZero(SensorType::Rpm) + 0.5f));
 			uint16_t vss = clampU16(static_cast<int32_t>(Sensor::getOrZero(SensorType::VehicleSpeed) * 10.0f + 0.5f));
 			int16_t clt = clampI16(static_cast<int32_t>(Sensor::getOrZero(SensorType::Clt) * 10.0f));
 			float stoich = engine->fuelComputer.getStoichiometricRatio();
 			uint16_t afr1 = clampU16(static_cast<int32_t>(Sensor::getOrZero(SensorType::Lambda1) * stoich * 100.0f + 0.5f));
 			uint16_t afr2 = clampU16(static_cast<int32_t>(Sensor::getOrZero(SensorType::Lambda2) * stoich * 100.0f + 0.5f));
+			uint16_t tps = clampU16(static_cast<int32_t>(Sensor::getOrZero(SensorType::Tps1) * 10.0f + 0.5f));
+			uint16_t map = clampU16(static_cast<int32_t>(Sensor::getOrZero(SensorType::Map) * 10.0f + 0.5f));
 
 			writeU16be(&response[3], rpm);
 			writeU16be(&response[5], vss);
 			writeU16be(&response[7], static_cast<uint16_t>(clt));
 			writeU16be(&response[9], afr1);
 			writeU16be(&response[11], afr2);
+			writeU16be(&response[13], tps);
+			writeU16be(&response[15], map);
 
 			sendIsoTpResponse(busIndex, response.data(), response.size());
 			return true;
