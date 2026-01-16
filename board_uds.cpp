@@ -70,7 +70,7 @@ struct IsoTpTxState {
 	std::array<uint8_t, kMaxUdsTxPayload> buffer{};
 };
 
-struct CalibrationUdsState {
+struct UdsReflashState {
 	bool programmingSession = false;
 	bool securityUnlocked = false;
 	bool downloadActive = false;
@@ -86,7 +86,7 @@ struct CalibrationUdsState {
 
 IsoTpRxState isoTpRx;
 IsoTpTxState isoTpTx;
-CalibrationUdsState udsState;
+UdsReflashState udsState;
 std::array<uint8_t, kMaxTransferDataPayload> flashBlockBuffer{};
 
 static_assert(kConfigOffset + sizeof(persistent_config_s) <= kContainerSize,
@@ -280,6 +280,8 @@ static const char* serviceToString(uint8_t service) {
 	switch (service) {
 		case 0x10:
 			return "DiagnosticSessionControl";
+		case 0x11:
+			return "EcuReset";
 		case 0x22:
 			return "ReadDataByIdentifier";
 		case 0x27:
@@ -314,6 +316,58 @@ static bool handleTesterPresent(size_t busIndex, const uint8_t* data, size_t len
 	const uint8_t response[] = {0x7E, 0x00, 0x01};
 	sendIsoTpResponse(busIndex, response, sizeof(response));
 	return true;
+}
+
+static bool handleEcuReset(size_t busIndex, const uint8_t* data, size_t len) {
+	if (len < 2) {
+		sendUdsNegativeResponse(busIndex, 0x11, kNrcIncorrectLength,
+			"ecu reset length invalid");
+		return true;
+	}
+
+	uint8_t subFunction = data[1];
+	bool suppressResponse = (subFunction & 0x80) != 0;
+	subFunction &= 0x7F;
+
+	auto sendPositive = [&]() {
+		if (suppressResponse) {
+			return;
+		}
+		const uint8_t response[] = {0x51, subFunction};
+		sendIsoTpResponse(busIndex, response, sizeof(response));
+	};
+
+	switch (subFunction) {
+		case 0x01: // Hard reset
+		case 0x03: // Soft reset
+			sendPositive();
+			scheduleReboot();
+			return true;
+		case 0x02: // Key off/on reset -> use DFU bootloader when available
+#if EFI_DFU_JUMP
+			sendPositive();
+			jump_to_bootloader();
+			return true;
+#else
+			sendUdsNegativeResponse(busIndex, 0x11, kNrcRequestOutOfRange,
+				"dfu bootloader jump not enabled");
+			return true;
+#endif
+		case 0x04: // Rapid power shutdown -> use OpenBLT when available
+#if EFI_USE_OPENBLT
+			sendPositive();
+			jump_to_openblt();
+			return true;
+#else
+			sendUdsNegativeResponse(busIndex, 0x11, kNrcRequestOutOfRange,
+				"openblt jump not enabled");
+			return true;
+#endif
+		default:
+			sendUdsNegativeResponse(busIndex, 0x11, kNrcRequestOutOfRange,
+				"ecu reset subfunction not supported");
+			return true;
+	}
 }
 
 static bool handleReadDataByIdentifier(size_t busIndex, const uint8_t* data, size_t len) {
@@ -436,10 +490,12 @@ static void stopProgrammingSession() {
 }
 
 static bool eraseFlashRegion(flashaddr_t base, size_t size) {
+	engine->configBurnTimer.reset();
 	return intFlashErase(base, size) == FLASH_RETURN_SUCCESS;
 }
 
 static bool writeFlashRegion(flashaddr_t base, const void* data, size_t size) {
+	engine->configBurnTimer.reset();
 	return intFlashWrite(base, reinterpret_cast<const char*>(data), size) == FLASH_RETURN_SUCCESS;
 }
 
@@ -767,6 +823,8 @@ static bool handleUdsRequest(size_t busIndex, const uint8_t* data, size_t len) {
 	switch (data[0]) {
 		case 0x10:
 			return handleDiagnosticSessionControl(busIndex, data, len);
+		case 0x11:
+			return handleEcuReset(busIndex, data, len);
 		case 0x22:
 			return handleReadDataByIdentifier(busIndex, data, len);
 		case 0x27:
