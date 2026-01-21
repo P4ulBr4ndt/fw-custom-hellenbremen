@@ -10,6 +10,7 @@
 
 #include "efitime.h"
 #include "can_msg_tx.h"
+#include "flash_main.h"
 #include "flash_int.h"
 #include "mpu_watchdog.h"
 #include "persistent_configuration.h"
@@ -106,6 +107,39 @@ static uint16_t readU16be(const uint8_t* data) {
 static void writeU16be(uint8_t* dest, uint16_t value) {
 	dest[0] = static_cast<uint8_t>((value >> 8) & 0xFF);
 	dest[1] = static_cast<uint8_t>(value & 0xFF);
+}
+
+static bool validateVin(const uint8_t* vin, size_t len, std::array<uint8_t, kVinLength>& normalized) {
+	if (len != kVinLength) {
+		return false;
+	}
+
+	for (size_t i = 0; i < len; i++) {
+		char value = static_cast<char>(vin[i]);
+		if (value >= 'a' && value <= 'z') {
+			value = static_cast<char>(value - 'a' + 'A');
+		}
+
+		bool isDigit = value >= '0' && value <= '9';
+		bool isUpper = value >= 'A' && value <= 'Z';
+		if (!isDigit && !isUpper) {
+			return false;
+		}
+
+		normalized[i] = static_cast<uint8_t>(value);
+	}
+
+	return true;
+}
+
+static bool storeVin(const std::array<uint8_t, kVinLength>& vin) {
+	if (std::memcmp(engineConfiguration->vinNumber, vin.data(), kVinLength) == 0) {
+		return true;
+	}
+
+	std::memcpy(engineConfiguration->vinNumber, vin.data(), kVinLength);
+	setNeedToWriteConfiguration();
+	return true;
 }
 
 static size_t copyDidStringTail(uint8_t* dest, size_t maxLen, const char* src) {
@@ -286,6 +320,8 @@ static const char* serviceToString(uint8_t service) {
 			return "ReadDataByIdentifier";
 		case 0x27:
 			return "SecurityAccess";
+		case 0x2E:
+			return "WriteDataByIdentifier";
 		case 0x34:
 			return "RequestDownload";
 		case 0x36:
@@ -448,6 +484,54 @@ static bool isProgrammingAllowed() {
 
 	float vbatt = Sensor::getOrZero(SensorType::BatteryVoltage);
 	return vbatt >= kMinBatteryVoltage;
+}
+
+static bool handleWriteDataByIdentifier(size_t busIndex, const uint8_t* data, size_t len) {
+	if (len < 3) {
+		sendUdsNegativeResponse(busIndex, 0x2E, kNrcIncorrectLength,
+			"write data by identifier length invalid");
+		return true;
+	}
+
+	uint16_t did = readU16be(&data[1]);
+	if (did != kDidVin) {
+		sendUdsNegativeResponse(busIndex, 0x2E, kNrcRequestOutOfRange,
+			"identifier not supported");
+		return true;
+	}
+
+	if (len != (3 + kVinLength)) {
+		sendUdsNegativeResponse(busIndex, 0x2E, kNrcIncorrectLength,
+			"vin length invalid");
+		return true;
+	}
+
+	if (!isProgrammingAllowed()) {
+		sendUdsNegativeResponse(busIndex, 0x2E, kNrcConditionsNotCorrect,
+			"programming conditions not met");
+		return true;
+	}
+
+	std::array<uint8_t, kVinLength> normalized{};
+	if (!validateVin(&data[3], kVinLength, normalized)) {
+		sendUdsNegativeResponse(busIndex, 0x2E, kNrcRequestOutOfRange,
+			"vin invalid");
+		return true;
+	}
+
+	if (!storeVin(normalized)) {
+		sendUdsNegativeResponse(busIndex, 0x2E, kNrcGeneralProgrammingFailure,
+			"vin write failed");
+		return true;
+	}
+
+	const uint8_t response[] = {
+		0x6E,
+		static_cast<uint8_t>((did >> 8) & 0xFF),
+		static_cast<uint8_t>(did & 0xFF),
+	};
+	sendIsoTpResponse(busIndex, response, sizeof(response));
+	return true;
 }
 
 static void resetIsoTpState() {
@@ -829,6 +913,8 @@ static bool handleUdsRequest(size_t busIndex, const uint8_t* data, size_t len) {
 			return handleReadDataByIdentifier(busIndex, data, len);
 		case 0x27:
 			return handleSecurityAccess(busIndex, data, len);
+		case 0x2E:
+			return handleWriteDataByIdentifier(busIndex, data, len);
 		case 0x3E:
 			return handleTesterPresent(busIndex, data, len);
 		case 0x34:
