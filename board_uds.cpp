@@ -15,6 +15,7 @@
 #include "mpu_watchdog.h"
 #include "persistent_configuration.h"
 #include "storage.h"
+#include "serial_can.h"
 
 namespace {
 constexpr uint32_t kUdsReqId = 0x7E0;
@@ -51,6 +52,12 @@ constexpr size_t kDidStringMaxLen = 11;
 constexpr size_t kDidProgrammingDateLen = 8;
 constexpr size_t kVinLength = sizeof(engineConfiguration->vinNumber);
 constexpr size_t kMaxUdsTxPayload = 32;
+constexpr uint8_t kTsSessionControl = 0x40;
+
+enum class UdsCanMode : uint8_t {
+	Uds,
+	TunerStudio
+};
 
 struct IsoTpRxState {
 	bool active = false;
@@ -89,6 +96,7 @@ IsoTpRxState isoTpRx;
 IsoTpTxState isoTpTx;
 UdsReflashState udsState;
 std::array<uint8_t, kMaxTransferDataPayload> flashBlockBuffer{};
+UdsCanMode udsCanMode = UdsCanMode::Uds;
 
 static_assert(kConfigOffset + sizeof(persistent_config_s) <= kContainerSize,
 	"persistent_config_container_s layout is smaller than persistent_config_s");
@@ -573,6 +581,16 @@ static void stopProgrammingSession() {
 	resetUdsDownloadState();
 }
 
+static void switchToTunerStudioOverUds() {
+#if EFI_CAN_SERIAL
+	setCanSerialOverrideIds(kUdsReqId, kUdsRespId);
+#endif
+	stopProgrammingSession();
+	resetIsoTpState();
+	resetIsoTpTx();
+	udsCanMode = UdsCanMode::TunerStudio;
+}
+
 static bool eraseFlashRegion(flashaddr_t base, size_t size) {
 	engine->configBurnTimer.reset();
 	return intFlashErase(base, size) == FLASH_RETURN_SUCCESS;
@@ -894,6 +912,13 @@ static bool handleDiagnosticSessionControl(size_t busIndex, const uint8_t* data,
 		return true;
 	}
 
+	if (sessionType == kTsSessionControl) {
+		const uint8_t response[] = {0x50, kTsSessionControl};
+		sendIsoTpSingleFrame(busIndex, response, sizeof(response));
+		switchToTunerStudioOverUds();
+		return true;
+	}
+
 	sendUdsNegativeResponse(busIndex, 0x10, kNrcRequestOutOfRange,
 		"session type not supported");
 	return true;
@@ -1012,6 +1037,10 @@ static void handleIsoTpFrame(size_t busIndex, const CANRxFrame& frame, efitick_t
 } // namespace
 
 void handleUdsCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt) {
+	if (udsCanMode != UdsCanMode::Uds) {
+		return;
+	}
+
 	if (CAN_ISX(frame)) {
 		return;
 	}
