@@ -8,7 +8,9 @@
 #define COIL_2_NAME "Front Spark"
 
 #define PEDAL_TO_TPS_SIZE 14
-#define FUEL_RPM_COUNT 19
+
+#define FUEL_RPM_COUNT 24
+#define VE_RPM_COUNT 24
 #define FUEL_LOAD_COUNT 14
 
 #define ts_show_etb_pins true
