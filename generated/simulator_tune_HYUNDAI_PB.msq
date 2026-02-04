@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <msq xmlns="http://www.msefi.com/:msq">
     <page/>
-    <page number="0" size="25272">
+    <page number="0" size="25296">
         <constant name="accelEnrichmentMode">"MS Adder"</constant>
         <constant name="accelerometerCsPin">"NONE"</constant>
         <constant name="accelerometerCsPinMode">"default"</constant>
@@ -869,6 +869,15 @@
          1.0
          1.0
 </constant>
+        <constant digits="0" name="cruiseMaxSpeed" units="kmh">0.0</constant>
+        <constant digits="0" name="cruiseMinSpeed" units="kmh">0.0</constant>
+        <constant digits="4" name="cruisePid_dFactor" units="">0.0</constant>
+        <constant digits="4" name="cruisePid_iFactor" units="">0.05</constant>
+        <constant digits="0" name="cruisePid_maxValue" units="">30.0</constant>
+        <constant digits="0" name="cruisePid_minValue" units="">-30.0</constant>
+        <constant digits="0" name="cruisePid_offset" units="">0.0</constant>
+        <constant digits="0" name="cruisePid_periodMs" units="ms">5.0</constant>
+        <constant digits="4" name="cruisePid_pFactor" units="">0.5</constant>
         <constant digits="0" name="customSentTpsMax" units="">0.0</constant>
         <constant digits="0" name="customSentTpsMin" units="">0.0</constant>
         <constant name="cutFuelOnHardLimit">"yes"</constant>
@@ -5181,7 +5190,7 @@ end</constant>
 </constant>
         <constant name="yesUnderstandLocking">"no"</constant>
     </page>
-    <versionInfo firmwareInfo="20251001" nPages="1" signature="rusEFI main.2026.02.04.hellen-bremen.1454037487" version="5.0"/>
+    <versionInfo firmwareInfo="20251001" nPages="1" signature="rusEFI main.2026.02.04.hellen-bremen.1984856566" version="5.0"/>
     <bibliography author="rusEFI 20251001" writeDate="date"/>
     <settings/>
     <userComments/>
