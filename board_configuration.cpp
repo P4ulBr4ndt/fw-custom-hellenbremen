@@ -4,8 +4,8 @@
 #include "board_overrides.h"
 #include "shutdown_controller.h"
 #include "injection_gpio.h"
-#include "unused.h"
 #include "board_uds.h"
+#include "cruise_control.h"
 
 #define HARLEY_V_TWIN 45.0
 #define INSTANT_ACCEL_SHOT_WINDOW_MS 80
@@ -210,6 +210,9 @@ static bool harleyIgnitionOffRequested = false;
 static bool harleyIgnitionOffRequestedPrev = false;
 static bool harleyIgnitionOnRequested = false;
 static bool harleyIgnitionOnRequestedPrev = false;
+static bool cruiseEnablePressedPrev = false;
+static bool cruiseDecPressedPrev = false;
+static bool cruiseIncPressedPrev = false;
 
 /*
 TODO CLUTCH looks like 0xD0
@@ -316,7 +319,20 @@ static void handleHarleyCAN(CanCycle cycle) {
     
     {
       CanTxMessage msg(CanCategory::NBC, 0x342);
-      msg[0] = 0x54; // 0x54 tempo aus, 0x64 tempo gelb, 0x84 tempo grün. Bit4: Jiffy Warning, Bit7: Turn on HAZARDLIGHT, Bit0: Tempo Grün, Bit 1+2: Tempo Gelb
+      // 0x54 tempo aus, 0x64 tempo gelb, 0x84 tempo grün.
+      // Bit4: Jiffy Warning, Bit7: Turn on HAZARDLIGHT, Bit0: Tempo Grün, Bit 1+2: Tempo Gelb
+      switch (getStatus()) {
+        case CruiseControlStatus::Enabled:
+          msg[0] = 0x84;
+          break;
+        case CruiseControlStatus::Standby:
+          msg[0] = 0x64;
+          break;
+        case CruiseControlStatus::Disabled:
+        default:
+          msg[0] = 0x54;
+          break;
+      }
       msg[1] = running ? 0x2A : 0x04; // MILES VS KM & DISPLAY RANGE POPUP,  16 = KM 17= MI, 0x18 = OIL LAMP
       msg[2] = 0x54;
       msg[3] = 0x00; // BATTERY RED LED, REMAINING RANGE MSB
@@ -450,6 +466,35 @@ void boardProcessCanRx(const size_t busIndex, const CANRxFrame &frame, efitick_t
     }
     harleyIgnitionOffRequestedPrev = harleyIgnitionOffRequested;
     harleyIgnitionOnRequestedPrev = harleyIgnitionOnRequested;
+  }
+  if (CAN_SID(frame) == 0x154) {
+	bool cruiseEnablePressed = (frame.data8[2] & 0x10) != 0;
+	bool cruiseDecPressed = (frame.data8[1] & 0x01) != 0;
+	bool cruiseIncPressed = (frame.data8[1] & 0x10) != 0;
+
+	if (cruiseEnablePressed && !cruiseEnablePressedPrev) {
+		if (getStatus() == CruiseControlStatus::Enabled) {
+			setStatus(CruiseControlStatus::Disabled);
+		} else {
+			setStatus(CruiseControlStatus::Enabled);
+		}
+	}
+
+	if (cruiseDecPressed && !cruiseDecPressedPrev) {
+		if (getDesiredSpeed() <= 0) {
+			engageAtCurrentSpeed();
+		} else {
+			DecreaseDesiredSpeed();
+		}
+	}
+
+	if (cruiseIncPressed && !cruiseIncPressedPrev) {
+		IncreaseDesiredSpeed();
+	}
+
+	cruiseEnablePressedPrev = cruiseEnablePressed;
+	cruiseDecPressedPrev = cruiseDecPressed;
+	cruiseIncPressedPrev = cruiseIncPressed;
   }
 }
 
