@@ -1243,298 +1243,321 @@ struct output_channels_s {
 	 */
 	scaled_channel<uint16_t, 100, 1> vehicleSpeedKph = (uint16_t)0;
 	/**
-	 * units: %
+	 * Cruise: Desired speed
+	 * units: kph
 	 * offset 740
+	 */
+	float cruiseDesiredSpeed = (float)0;
+	/**
+	 * Cruise: Status
+	 * offset 744
+	 */
+	uint8_t cruiseStatus = (uint8_t)0;
+	/**
+	 * need 4 byte alignment
+	 * units: units
+	 * offset 745
+	 */
+	uint8_t alignmentFill_at_745[3] = {};
+	/**
+	 * Cruise: Throttle offset
+	 * units: %
+	 * offset 748
+	 */
+	float cruiseThrottleOffset = (float)0;
+	/**
+	 * units: %
+	 * offset 752
 	 */
 	scaled_channel<uint16_t, 100, 1> Gego = (uint16_t)0;
 	/**
 	 * units: count
-	 * offset 742
+	 * offset 754
 	 */
 	uint16_t testBenchIter = (uint16_t)0;
 	/**
 	 * units: deg C
-	 * offset 744
+	 * offset 756
 	 */
 	scaled_channel<int16_t, 100, 1> oilTemp = (int16_t)0;
 	/**
 	 * units: deg C
-	 * offset 746
+	 * offset 758
 	 */
 	scaled_channel<int16_t, 100, 1> fuelTemp = (int16_t)0;
 	/**
 	 * units: deg C
-	 * offset 748
+	 * offset 760
 	 */
 	scaled_channel<int16_t, 100, 1> ambientTemp = (int16_t)0;
 	/**
 	 * units: deg C
-	 * offset 750
+	 * offset 762
 	 */
 	scaled_channel<int16_t, 100, 1> compressorDischargeTemp = (int16_t)0;
 	/**
 	 * units: kPa
-	 * offset 752
+	 * offset 764
 	 */
 	scaled_channel<uint16_t, 30, 1> compressorDischargePressure = (uint16_t)0;
 	/**
 	 * units: kPa
-	 * offset 754
+	 * offset 766
 	 */
 	scaled_channel<uint16_t, 30, 1> throttleInletPressure = (uint16_t)0;
 	/**
 	 * units: sec
-	 * offset 756
+	 * offset 768
 	 */
 	uint16_t ignitionOnTime = (uint16_t)0;
 	/**
 	 * units: sec
-	 * offset 758
+	 * offset 770
 	 */
 	uint16_t engineRunTime = (uint16_t)0;
 	/**
 	 * units: km
-	 * offset 760
+	 * offset 772
 	 */
 	scaled_channel<uint16_t, 10, 1> distanceTraveled = (uint16_t)0;
 	/**
 	 * @@GAUGE_NAME_AFR_GAS_SCALE@@
 	 * units: AFR
-	 * offset 762
+	 * offset 774
 	 */
 	scaled_channel<uint16_t, 1000, 1> afrGasolineScale = (uint16_t)0;
 	/**
 	 * @@GAUGE_NAME_AFR2_GAS_SCALE@@
 	 * units: AFR
-	 * offset 764
+	 * offset 776
 	 */
 	scaled_channel<uint16_t, 1000, 1> afr2GasolineScale = (uint16_t)0;
 	/**
 	 * need 4 byte alignment
 	 * units: units
-	 * offset 766
+	 * offset 778
 	 */
-	uint8_t alignmentFill_at_766[2] = {};
+	uint8_t alignmentFill_at_778[2] = {};
 	/**
-	 * offset 768
+	 * offset 780
 	 */
 	float wheelSlipRatio = (float)0;
 	/**
-	 * offset 772
+	 * offset 784
 	 */
 	uint8_t ignitorDiagnostic[MAX_CYLINDER_COUNT] = {};
 	/**
-	 * offset 784
+	 * offset 796
 	 */
 	uint8_t injectorDiagnostic[MAX_CYLINDER_COUNT] = {};
 	/**
 	 * @@GAUGE_NAME_FUEL_LAST_INJECTION_STAGE_2@@
 	 * units: ms
-	 * offset 796
+	 * offset 808
 	 */
 	scaled_channel<uint16_t, 300, 1> actualLastInjectionStage2 = (uint16_t)0;
 	/**
 	 * need 4 byte alignment
 	 * units: units
-	 * offset 798
+	 * offset 810
 	 */
-	uint8_t alignmentFill_at_798[2] = {};
+	uint8_t alignmentFill_at_810[2] = {};
 	/**
 	 * @@GAUGE_NAME_FUEL_LAST_INJECTION_RATIO_STAGE_2@@
-	 * offset 800
+	 * offset 812
 	 */
 	float actualLastInjectionRatioStage2 = (float)0;
 	/**
 	 * @@GAUGE_NAME_FUEL_INJ_DUTY_STAGE_2@@
 	 * units: %
-	 * offset 804
+	 * offset 816
 	 */
 	scaled_channel<uint8_t, 2, 1> injectorDutyCycleStage2 = (uint8_t)0;
 	/**
-	 * offset 805
+	 * offset 817
 	 */
 	uint8_t rawFlexFreq = (uint8_t)0;
 	/**
-	 * offset 806
+	 * offset 818
 	 */
 	uint8_t canReWidebandCmdStatus = (uint8_t)0;
 	/**
-	 * offset 807
+	 * offset 819
 	 */
 	uint8_t deviceUid = (uint8_t)0;
 	/**
-	 * offset 808
+	 * offset 820
 	 */
 	uint16_t mc33810spiErrorCounter = (uint16_t)0;
 	/**
-	 * offset 810
+	 * offset 822
 	 */
 	uint8_t sadDwellRatioCounter = (uint8_t)0;
 	/**
-	 * offset 811
+	 * offset 823
 	 */
 	uint8_t injectionPrimingCounter = (uint8_t)0;
 	/**
-	 * offset 812
+	 * offset 824
 	 */
 	uint8_t tempLogging2 = (uint8_t)0;
 	/**
 	 * need 4 byte alignment
 	 * units: units
-	 * offset 813
+	 * offset 825
 	 */
-	uint8_t alignmentFill_at_813[3] = {};
+	uint8_t alignmentFill_at_825[3] = {};
 	/**
 	 * @@GAUGE_NAME_AC_PRESSURE@@
 	 * units: kPa
-	 * offset 816
+	 * offset 828
 	 */
 	float acPressure = (float)0;
 	/**
 	 * units: V
-	 * offset 820
+	 * offset 832
 	 */
 	scaled_channel<int16_t, 1000, 1> rawAuxAnalog1 = (int16_t)0;
 	/**
 	 * units: V
-	 * offset 822
+	 * offset 834
 	 */
 	scaled_channel<int16_t, 1000, 1> rawAuxAnalog2 = (int16_t)0;
 	/**
 	 * units: V
-	 * offset 824
+	 * offset 836
 	 */
 	scaled_channel<int16_t, 1000, 1> rawAuxAnalog3 = (int16_t)0;
 	/**
 	 * units: V
-	 * offset 826
+	 * offset 838
 	 */
 	scaled_channel<int16_t, 1000, 1> rawAuxAnalog4 = (int16_t)0;
 	/**
 	 * ECU: Fast ADC errors
-	 * offset 828
+	 * offset 840
 	 */
 	uint8_t fastAdcErrorCount = (uint8_t)0;
 	/**
 	 * ECU: Slow ADC errors
-	 * offset 829
+	 * offset 841
 	 */
 	uint8_t slowAdcErrorCount = (uint8_t)0;
 	/**
 	 * units: V
-	 * offset 830
+	 * offset 842
 	 */
 	scaled_channel<int16_t, 1000, 1> rawAuxTemp1 = (int16_t)0;
 	/**
 	 * units: V
-	 * offset 832
+	 * offset 844
 	 */
 	scaled_channel<int16_t, 1000, 1> rawAuxTemp2 = (int16_t)0;
 	/**
 	 * units: V
-	 * offset 834
+	 * offset 846
 	 */
 	scaled_channel<int16_t, 1000, 1> rawAmbientTemp = (int16_t)0;
 	/**
-	 * offset 836
+	 * offset 848
 	 */
 	uint32_t rtcUnixEpochTime = (uint32_t)0;
 	/**
-	 * offset 840
+	 * offset 852
 	 */
 	int8_t sparkCutReasonBlinker = (int8_t)0;
 	/**
-	 * offset 841
+	 * offset 853
 	 */
 	int8_t fuelCutReasonBlinker = (int8_t)0;
 	/**
-	 * offset 842
+	 * offset 854
 	 */
 	int16_t hp = (int16_t)0;
 	/**
-	 * offset 844
+	 * offset 856
 	 */
 	int16_t torque = (int16_t)0;
 	/**
 	 * need 4 byte alignment
 	 * units: units
-	 * offset 846
+	 * offset 858
 	 */
-	uint8_t alignmentFill_at_846[2] = {};
+	uint8_t alignmentFill_at_858[2] = {};
 	/**
-	 * offset 848
+	 * offset 860
 	 */
 	float throttlePressureRatio = (float)0;
 	/**
-	 * offset 852
+	 * offset 864
 	 */
 	float throttleEffectiveAreaOpening = (float)0;
 	/**
-	 * offset 856
+	 * offset 868
 	 */
 	uint32_t mcuSerial = (uint32_t)0;
 	/**
-	 * offset 860
+	 * offset 872
 	 */
 	uint8_t sd_error = (uint8_t)0;
 	/**
 	 * ECU: Fast ADC overruns
-	 * offset 861
+	 * offset 873
 	 */
 	uint8_t fastAdcOverrunCount = (uint8_t)0;
 	/**
 	 * ECU: Slow ADC overruns
-	 * offset 862
+	 * offset 874
 	 */
 	uint8_t slowAdcOverrunCount = (uint8_t)0;
 	/**
 	 * ECU: Fast ADC error type
-	 * offset 863
+	 * offset 875
 	 */
 	uint8_t fastAdcLastError = (uint8_t)0;
 	/**
 	 * ECU: Fast ADC period
 	 * units: ticks
-	 * offset 864
+	 * offset 876
 	 */
 	uint16_t fastAdcPeriod = (uint16_t)0;
 	/**
 	 * ECU: Fast ADC conversions
 	 * units: N
-	 * offset 866
+	 * offset 878
 	 */
 	uint16_t fastAdcConversionCount = (uint16_t)0;
 	/**
-	 * offset 868
+	 * offset 880
 	 */
 	uint8_t canReWidebandVersion = (uint8_t)0;
 	/**
-	 * offset 869
+	 * offset 881
 	 */
 	uint8_t canReWidebandFwDay = (uint8_t)0;
 	/**
-	 * offset 870
+	 * offset 882
 	 */
 	uint8_t canReWidebandFwMon = (uint8_t)0;
 	/**
-	 * offset 871
+	 * offset 883
 	 */
 	uint8_t canReWidebandFwYear = (uint8_t)0;
 	/**
-	 * offset 872
+	 * offset 884
 	 */
 	uint16_t transitionEventCode = (uint16_t)0;
 	/**
-	 * offset 874
+	 * offset 886
 	 */
 	uint16_t transitionEventsCounter = (uint16_t)0;
 	/**
 	 * units: kPa
-	 * offset 876
+	 * offset 888
 	 */
 	uint8_t mapPerCylinder[MAX_CYLINDER_COUNT] = {};
 };
-static_assert(sizeof(output_channels_s) == 888);
+static_assert(sizeof(output_channels_s) == 900);
 
 // end
 // this section was generated automatically by rusEFI tool config_definition_base-all.jar based on (unknown script) console/binary/output_channels.txt
