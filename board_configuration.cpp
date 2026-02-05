@@ -308,8 +308,17 @@ static void handleHarleyCAN(CanCycle cycle) {
     {
       CanTxMessage msg(CanCategory::NBC, 0x146);
       msg[0] = 0x11; // JIFFY STAND somehow in here 0x11 = UP, 0x12 = DOWN
-      msg[1] = 0x00; // CC MSB
-      msg[2] = 0x00; // CC LSB
+      if (getCCStatus() == CruiseControlStatus::Enabled) {
+        msg[0] = 0x21;
+      }
+
+      float desiredSpeed = getDesiredCCSpeed();
+      if (desiredSpeed < 0) {
+        desiredSpeed = 0;
+      }
+      uint16_t desiredSpeed10 = static_cast<uint16_t>(minF(desiredSpeed * 10.0f, 65535.0f));
+      msg[1] = (desiredSpeed10 >> 8) & 0xFF; // CC set speed * 10 integer MSB
+      msg[2] = desiredSpeed10 & 0xFF; // CC set speed * 10 integer LSB
       msg[3] = running ? 0x44 : 0x04; // ENGINE LIGHT: 0x80 vs 0x40
       msg[4] = 0x00;
       msg[5] = 0x00;
@@ -321,7 +330,7 @@ static void handleHarleyCAN(CanCycle cycle) {
       CanTxMessage msg(CanCategory::NBC, 0x342);
       // 0x54 tempo aus, 0x64 tempo gelb, 0x84 tempo grün.
       // Bit4: Jiffy Warning, Bit7: Turn on HAZARDLIGHT, Bit0: Tempo Grün, Bit 1+2: Tempo Gelb
-      switch (getStatus()) {
+      switch (getCCStatus()) {
         case CruiseControlStatus::Enabled:
           msg[0] = 0x84;
           break;
@@ -473,23 +482,23 @@ void boardProcessCanRx(const size_t busIndex, const CANRxFrame &frame, efitick_t
 	bool cruiseIncPressed = (frame.data8[1] & 0x10) != 0;
 
 	if (cruiseEnablePressed && !cruiseEnablePressedPrev) {
-		if (getStatus() == CruiseControlStatus::Enabled) {
-			setStatus(CruiseControlStatus::Disabled);
+		if (getCCStatus() == CruiseControlStatus::Disabled) {
+			setCCStatus(CruiseControlStatus::Standby);
 		} else {
-			setStatus(CruiseControlStatus::Enabled);
+			setCCStatus(CruiseControlStatus::Disabled);
 		}
 	}
 
 	if (cruiseDecPressed && !cruiseDecPressedPrev) {
-		if (getDesiredSpeed() <= 0) {
-			engageAtCurrentSpeed();
+		if (getDesiredCCSpeed() <= 0) {
+			engageCCAtCurrentSpeed();
 		} else {
-			DecreaseDesiredSpeed();
+			decreaseDesiredCCSpeed();
 		}
 	}
 
 	if (cruiseIncPressed && !cruiseIncPressedPrev) {
-		IncreaseDesiredSpeed();
+		increaseDesiredCCSpeed();
 	}
 
 	cruiseEnablePressedPrev = cruiseEnablePressed;
