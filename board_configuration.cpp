@@ -137,6 +137,8 @@ static void boardConfigOverrides() {
 	// Switch Inputs
 	engineConfiguration->jssPin = Gpio::G11;
 	engineConfiguration->opsPin = Gpio::G12;
+	engineConfiguration->jssPinMode = PI_PULLDOWN;
+  	engineConfiguration->opsPinMode = PI_PULLDOWN;
 
     // ETB
     engineConfiguration->etb_use_two_wires = false;
@@ -346,11 +348,14 @@ static void handleHarleyCAN(CanCycle cycle) {
           msg[0] = 0x54;
           break;
       }
-      msg[1] = running ? 0x24 : 0x08; // MILES VS KM & DISPLAY RANGE POPUP, 16 = KM 17= MI, 0x18 = OIL LAMP
+      msg[1] = running ? 0x24 : 0x00; // MILES VS KM ? 16 = KM 17= MI, 0x18 = OIL LAMP
 	  // 0x2 = fuel range reminder with km
 	  // 0x3 = fuel range final without km
-	  // 0x8 = OIL LAMP
-	  // AFTER Engine of 0x24 -> 0x34 -> 0x14 -> 0x18 TODO
+	  // 0x8 = OIL LAMP OEM: 0V without pressure 5V with pressure
+	  // AFTER Engine off 0x24 -> 0x34 -> 0x14 -> 0x18 TODO
+	  if (engine->opsSwitchedState) {
+		msg[1] |= 0x8;
+	  }
 	  if (remainingRangeKM < 60.f) {
 		msg[1] |= 0x2;
 	  }
@@ -516,7 +521,7 @@ void boardProcessCanRx(const size_t busIndex, const CANRxFrame &frame, efitick_t
 	if (cruiseDecPressed && !cruiseDecPressedPrev) {
 		if (getDesiredCCSpeed() > 0 && getCCStatus() == CruiseControlStatus::Enabled) {
 			decreaseDesiredCCSpeed();
-		} else if (getCCStatus() == CruiseControlStatus::Enabled) {
+		} else if (getCCStatus() == CruiseControlStatus::Standby) {
 			engageCCAtCurrentSpeed();
 		}
 	}
