@@ -561,7 +561,7 @@
         <constant name="brakePedalPin">"NONE"</constant>
         <constant name="brakePedalPinMode">"PULLUP"</constant>
         <constant digits="0" name="byFirmwareVersion" units="index">0.0</constant>
-        <constant digits="0" name="calibrationBirthday" units="">2.0260204E7</constant>
+        <constant digits="0" name="calibrationBirthday" units="">2.0260206E7</constant>
         <constant digits="0" name="camDecoder2jzPosition" units="angle">95.0</constant>
         <constant digits="0" name="camDecoder2jzPrecision" units="">40.0</constant>
         <constant name="camInputs1">"NONE"</constant>
@@ -869,8 +869,8 @@
          1.0
          1.0
 </constant>
-        <constant digits="0" name="cruiseMaxSpeed" units="kmh">0.0</constant>
-        <constant digits="0" name="cruiseMinSpeed" units="kmh">0.0</constant>
+        <constant digits="0" name="cruiseMaxSpeed" units="kmh">146.0</constant>
+        <constant digits="0" name="cruiseMinSpeed" units="kmh">42.0</constant>
         <constant digits="4" name="cruisePid_dFactor" units="">0.0</constant>
         <constant digits="4" name="cruisePid_iFactor" units="">0.05</constant>
         <constant digits="0" name="cruisePid_maxValue" units="">30.0</constant>
@@ -5099,7 +5099,7 @@ end</constant>
 </constant>
         <constant name="yesUnderstandLocking">"no"</constant>
     </page>
-    <versionInfo firmwareInfo="20251001" nPages="1" signature="rusEFI main.2026.02.04.hellen-bremen.1984856566" version="5.0"/>
+    <versionInfo firmwareInfo="20251001" nPages="1" signature="rusEFI main.2026.02.06.hellen-bremen.1133502867" version="5.0"/>
     <bibliography author="rusEFI 20251001" writeDate="date"/>
     <settings/>
     <userComments/>
