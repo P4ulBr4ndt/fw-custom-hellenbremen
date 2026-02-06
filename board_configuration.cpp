@@ -531,7 +531,7 @@ void boardProcessCanRx(const size_t busIndex, const CANRxFrame &frame, efitick_t
   }
 
   if (CAN_SID(frame) == 0x152) {
-	bool clutchReleased = (frame.data8[3] == 0x10);
+	// bool clutchReleased = (frame.data8[3] == 0x10);
 	bool clutchEngagedLight = (frame.data8[3] == 0x20);
 	bool clutchEngagedStrong = (frame.data8[3] == 0x30);
 	if (getCCStatus() == CruiseControlStatus::Enabled && (clutchEngagedLight || clutchEngagedStrong)) { // if cc active and clutch is engaged
