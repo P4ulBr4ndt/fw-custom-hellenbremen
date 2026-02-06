@@ -1,3 +1,4 @@
+#include "modules/cruise_control/cruise_control.h"
 #include "pch.h"
 #include "hellen_meta.h"
 #include "defaults.h"
@@ -6,6 +7,7 @@
 #include "injection_gpio.h"
 #include "board_uds.h"
 #include "cruise_control.h"
+#include <cstdint>
 
 #define HARLEY_V_TWIN 45.0
 #define INSTANT_ACCEL_SHOT_WINDOW_MS 80
@@ -328,11 +330,13 @@ static void handleHarleyCAN(CanCycle cycle) {
     
     {
       CanTxMessage msg(CanCategory::NBC, 0x342);
+	  uint16_t remainingRangeKM = static_cast<uint16_t>(minF(22.7f * (Sensor::getOrZero(SensorType::FuelLevel) / 100) * (100.0f / 5.5f), 65535.0f)); // 18.18 km/l
+	  msg[0] = 0x54;
       // 0x54 tempo aus, 0x64 tempo gelb, 0x84 tempo grün.
       // Bit4: Jiffy Warning, Bit7: Turn on HAZARDLIGHT, Bit0: Tempo Grün, Bit 1+2: Tempo Gelb
       switch (getCCStatus()) {
         case CruiseControlStatus::Enabled:
-          msg[0] = 0x84;
+          msg[0] = 0xA4;
           break;
         case CruiseControlStatus::Standby:
           msg[0] = 0x64;
@@ -342,10 +346,21 @@ static void handleHarleyCAN(CanCycle cycle) {
           msg[0] = 0x54;
           break;
       }
-      msg[1] = running ? 0x2A : 0x04; // MILES VS KM & DISPLAY RANGE POPUP,  16 = KM 17= MI, 0x18 = OIL LAMP
+      msg[1] = running ? 0x24 : 0x08; // MILES VS KM & DISPLAY RANGE POPUP, 16 = KM 17= MI, 0x18 = OIL LAMP
+	  // 0x2 = fuel range reminder with km
+	  // 0x3 = fuel range final without km
+	  // 0x8 = OIL LAMP
+	  // AFTER Engine of 0x24 -> 0x34 -> 0x14 -> 0x18 TODO
+	  if (remainingRangeKM < 60.f) {
+		msg[1] |= 0x2;
+	  }
+	  if (remainingRangeKM < 30.f) {
+		msg[1] |= 0x3;
+	  }
       msg[2] = 0x54;
-      msg[3] = 0x00; // BATTERY RED LED, REMAINING RANGE MSB
-      msg[4] = 21.0f * (Sensor::getOrZero(SensorType::FuelLevel) / 100) * (100.0f / 5.5f); // REMAINING RANGE LSB in KM. 6.0f = l/100km 21.0f = tank volume TODO: Make tank volume and fuel usage somewhat dynamic
+	  msg[3] = 0x10;
+      msg[3] |= ((remainingRangeKM >> 8) & 0x0F); // BATTERY RED LED, REMAINING RANGE MSB
+      msg[4] = remainingRangeKM & 0xFF; // REMAINING RANGE LSB
       msg[5] = Sensor::getOrZero(SensorType::FuelLevel);
       msg[6] = frameCounter146_342;
       msg[7] = crc8(msg.getFrame()->data8, 7);
@@ -462,12 +477,15 @@ void boardProcessCanRx(const size_t busIndex, const CANRxFrame &frame, efitick_t
   if (CAN_SID(frame) == 0x500) {
     harleyKeepAlive = frame.data8[0];
   }
+
   if (CAN_SID(frame) == 0x15A) {
     harleyIgnitionOffRequested = (frame.data8[1] & 0x01) == 1 && (frame.data8[2] & 0x01) == 0;
     harleyIgnitionOnRequested = (frame.data8[1] & 0x01) == 0 && (frame.data8[2] & 0x01) == 1;
     if (harleyIgnitionOffRequested && !harleyIgnitionOffRequestedPrev) {
       // Request a graceful engine stop when the ignition-off button is pressed.
       doScheduleStopEngine(StopRequestedReason::StartButton);
+	  setCCStatus(CruiseControlStatus::Disabled);
+	  setDesiredCCSpeed(0.0f);
     }
     if (harleyIgnitionOnRequested && !harleyIgnitionOnRequestedPrev) {
       // Cancel the stop request to restore fuel immediately on ignition-on.
@@ -475,7 +493,12 @@ void boardProcessCanRx(const size_t busIndex, const CANRxFrame &frame, efitick_t
     }
     harleyIgnitionOffRequestedPrev = harleyIgnitionOffRequested;
     harleyIgnitionOnRequestedPrev = harleyIgnitionOnRequested;
+	bool rightHandBrake = frame.data8[5] == 0x40;
+	if (getCCStatus() == CruiseControlStatus::Enabled && rightHandBrake) { // if cc active and brake is engaged
+		setCCStatus(CruiseControlStatus::Standby);
+	}
   }
+
   if (CAN_SID(frame) == 0x154) {
 	bool cruiseEnablePressed = (frame.data8[2] & 0x10) != 0;
 	bool cruiseDecPressed = (frame.data8[1] & 0x01) != 0;
@@ -485,15 +508,16 @@ void boardProcessCanRx(const size_t busIndex, const CANRxFrame &frame, efitick_t
 		if (getCCStatus() == CruiseControlStatus::Disabled) {
 			setCCStatus(CruiseControlStatus::Standby);
 		} else {
+	  		setDesiredCCSpeed(0.0f);
 			setCCStatus(CruiseControlStatus::Disabled);
 		}
 	}
 
 	if (cruiseDecPressed && !cruiseDecPressedPrev) {
-		if (getDesiredCCSpeed() <= 0) {
-			engageCCAtCurrentSpeed();
-		} else {
+		if (getDesiredCCSpeed() > 0 && getCCStatus() == CruiseControlStatus::Enabled) {
 			decreaseDesiredCCSpeed();
+		} else if (getCCStatus() == CruiseControlStatus::Enabled) {
+			engageCCAtCurrentSpeed();
 		}
 	}
 
@@ -504,6 +528,22 @@ void boardProcessCanRx(const size_t busIndex, const CANRxFrame &frame, efitick_t
 	cruiseEnablePressedPrev = cruiseEnablePressed;
 	cruiseDecPressedPrev = cruiseDecPressed;
 	cruiseIncPressedPrev = cruiseIncPressed;
+  }
+
+  if (CAN_SID(frame) == 0x152) {
+	bool clutchReleased = (frame.data8[3] == 0x10);
+	bool clutchEngagedLight = (frame.data8[3] == 0x20);
+	bool clutchEngagedStrong = (frame.data8[3] == 0x30);
+	if (getCCStatus() == CruiseControlStatus::Enabled && (clutchEngagedLight || clutchEngagedStrong)) { // if cc active and clutch is engaged
+		setCCStatus(CruiseControlStatus::Standby);
+	}
+  }
+
+  if (CAN_SID(frame) == 0x133) {
+	bool footBrakeEngaged = (frame.data8[3] & 0x10) != 0;
+	if (getCCStatus() == CruiseControlStatus::Enabled && footBrakeEngaged) { // if cc active and foot brake is engaged
+		setCCStatus(CruiseControlStatus::Standby);
+	}
   }
 }
 
