@@ -498,7 +498,7 @@ void boardProcessCanRx(const size_t busIndex, const CANRxFrame &frame, efitick_t
     }
     harleyIgnitionOffRequestedPrev = harleyIgnitionOffRequested;
     harleyIgnitionOnRequestedPrev = harleyIgnitionOnRequested;
-	bool rightHandBrake = frame.data8[5] == 0x40;
+	bool rightHandBrake = frame.data8[5] & 0x40;
 	if (getCCStatus() == CruiseControlStatus::Enabled && rightHandBrake) { // if cc active and brake is engaged
 		setCCStatus(CruiseControlStatus::Standby);
 	}
@@ -527,7 +527,11 @@ void boardProcessCanRx(const size_t busIndex, const CANRxFrame &frame, efitick_t
 	}
 
 	if (cruiseIncPressed && !cruiseIncPressedPrev) {
-		increaseDesiredCCSpeed();
+		if (getCCStatus() == CruiseControlStatus::Standby) {
+			engageCCAtCurrentSpeed();
+		} else if (getCCStatus() == CruiseControlStatus::Enabled) {
+			increaseDesiredCCSpeed();
+		}
 	}
 
 	cruiseEnablePressedPrev = cruiseEnablePressed;
@@ -537,8 +541,8 @@ void boardProcessCanRx(const size_t busIndex, const CANRxFrame &frame, efitick_t
 
   if (CAN_SID(frame) == 0x152) {
 	// bool clutchReleased = (frame.data8[3] == 0x10);
-	bool clutchEngagedLight = (frame.data8[3] == 0x20);
-	bool clutchEngagedStrong = (frame.data8[3] == 0x30);
+	bool clutchEngagedLight = (frame.data8[3] & 0x20);
+	bool clutchEngagedStrong = (frame.data8[3] & 0x30);
 	if (getCCStatus() == CruiseControlStatus::Enabled && (clutchEngagedLight || clutchEngagedStrong)) { // if cc active and clutch is engaged
 		setCCStatus(CruiseControlStatus::Standby);
 	}
