@@ -217,6 +217,10 @@ static bool harleyIgnitionOnRequestedPrev = false;
 static bool cruiseEnablePressedPrev = false;
 static bool cruiseDecPressedPrev = false;
 static bool cruiseIncPressedPrev = false;
+static efitick_t cruiseDecPressStartNt = 0;
+static efitick_t cruiseIncPressStartNt = 0;
+static efitick_t cruiseDecLastRepeatNt = 0;
+static efitick_t cruiseIncLastRepeatNt = 0;
 
 /*
 TODO CLUTCH looks like 0xD0
@@ -508,6 +512,8 @@ void boardProcessCanRx(const size_t busIndex, const CANRxFrame &frame, efitick_t
 	bool cruiseEnablePressed = (frame.data8[2] & 0x10) != 0;
 	bool cruiseDecPressed = (frame.data8[1] & 0x01) != 0;
 	bool cruiseIncPressed = (frame.data8[1] & 0x10) != 0;
+	const efitick_t cruiseHoldDelayNt = MS2NT(500);
+	const efitick_t cruiseRepeatDelayNt = MS2NT(200);
 
 	if (cruiseEnablePressed && !cruiseEnablePressedPrev) {
 		if (getCCStatus() == CruiseControlStatus::Disabled) {
@@ -519,18 +525,48 @@ void boardProcessCanRx(const size_t busIndex, const CANRxFrame &frame, efitick_t
 	}
 
 	if (cruiseDecPressed && !cruiseDecPressedPrev) {
+		cruiseDecPressStartNt = nowNt;
+		cruiseDecLastRepeatNt = nowNt;
 		if (getDesiredCCSpeed() > 0 && getCCStatus() == CruiseControlStatus::Enabled) {
 			decreaseDesiredCCSpeed();
 		} else if (getCCStatus() == CruiseControlStatus::Standby) {
 			engageCCAtCurrentSpeed();
 		}
 	}
+	if (!cruiseDecPressed && cruiseDecPressedPrev) {
+		cruiseDecPressStartNt = 0;
+		cruiseDecLastRepeatNt = 0;
+	}
+	if (cruiseDecPressed && cruiseDecPressStartNt != 0) {
+		if ((nowNt - cruiseDecPressStartNt) >= cruiseHoldDelayNt &&
+			(nowNt - cruiseDecLastRepeatNt) >= cruiseRepeatDelayNt) {
+			if (getDesiredCCSpeed() > 0 && getCCStatus() == CruiseControlStatus::Enabled) {
+				decreaseDesiredCCSpeed();
+			}
+			cruiseDecLastRepeatNt = nowNt;
+		}
+	}
 
 	if (cruiseIncPressed && !cruiseIncPressedPrev) {
+		cruiseIncPressStartNt = nowNt;
+		cruiseIncLastRepeatNt = nowNt;
 		if (getCCStatus() == CruiseControlStatus::Standby) {
 			engageCCAtCurrentSpeed();
 		} else if (getCCStatus() == CruiseControlStatus::Enabled) {
 			increaseDesiredCCSpeed();
+		}
+	}
+	if (!cruiseIncPressed && cruiseIncPressedPrev) {
+		cruiseIncPressStartNt = 0;
+		cruiseIncLastRepeatNt = 0;
+	}
+	if (cruiseIncPressed && cruiseIncPressStartNt != 0) {
+		if ((nowNt - cruiseIncPressStartNt) >= cruiseHoldDelayNt &&
+			(nowNt - cruiseIncLastRepeatNt) >= cruiseRepeatDelayNt) {
+			if (getCCStatus() == CruiseControlStatus::Enabled) {
+				increaseDesiredCCSpeed();
+			}
+			cruiseIncLastRepeatNt = nowNt;
 		}
 	}
 
