@@ -551,7 +551,7 @@ void boardProcessCanRx(const size_t busIndex, const CANRxFrame &frame, efitick_t
 		cruiseIncPressStartNt = nowNt;
 		cruiseIncLastRepeatNt = nowNt;
 		if (getCCStatus() == CruiseControlStatus::Standby) {
-			engageCCAtCurrentSpeed();
+			resumeCC();
 		} else if (getCCStatus() == CruiseControlStatus::Enabled) {
 			increaseDesiredCCSpeed();
 		}

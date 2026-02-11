@@ -38,5 +38,8 @@ DDEFS += -DTS_PRIMARY_UxART_PORT=SD2 -DEFI_TS_PRIMARY_IS_SERIAL=TRUE -DSTM32_SER
 # Our custom code that only relates to our "special use cases"
 DDEFS += -DEFI_HD_DP=TRUE
 
+# Store LTFT in internal flash (not SD storage backend)
+DDEFS += -DEFI_STORAGE_SD=FALSE
+
 # OpenBLT CAN IDs (standard 11-bit)
 DDEFS += -DBOOT_COM_CAN_RX_MSG_ID=0x7E0 -DBOOT_COM_CAN_TX_MSG_ID=0x7E8 -DBOOT_COM_CAN_EXT=0
