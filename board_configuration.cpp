@@ -1,4 +1,3 @@
-#include "modules/cruise_control/cruise_control.h"
 #include "pch.h"
 #include "hellen_meta.h"
 #include "defaults.h"
