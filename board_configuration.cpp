@@ -221,6 +221,12 @@ static efitick_t cruiseIncPressStartNt = 0;
 static efitick_t cruiseDecLastRepeatNt = 0;
 static efitick_t cruiseIncLastRepeatNt = 0;
 
+struct CruiseGearLimits {
+	bool allowCruise;
+	float minSpeedKph;
+	float maxSpeedKph;
+};
+
 /*
 TODO CLUTCH looks like 0xD0
 N: 0.872V => 17.44% => 0xA0
@@ -232,7 +238,7 @@ N: 0.872V => 17.44% => 0xA0
 6: 4.439V => 88,78% => 0x60
 */
 static float harleyGearValues[] = { 17.44f, 9.86f, 25.24f, 41.96f, 57.48f, 72.96f, 88.78f };
-static uint8_t calculateHarleyGearValue() {
+static uint8_t calculateHarleyGearIndex() {
   float sensorValue = Sensor::getOrZero(SensorType::AuxLinear1);
   float bestMatch = 0.0f;
   uint8_t bestOffs = 0;
@@ -244,6 +250,12 @@ static uint8_t calculateHarleyGearValue() {
       bestOffs = i;
     }
   }
+
+  return bestOffs;
+}
+
+static uint8_t calculateHarleyGearValue() {
+  uint8_t bestOffs = calculateHarleyGearIndex();
 
   switch (bestOffs)
   {
@@ -275,7 +287,105 @@ static uint8_t calculateHarleyGearValue() {
   }
 }
 
+static CruiseGearLimits getCruiseGearLimitsForCurrentGear() {
+	switch (calculateHarleyGearIndex()) {
+		case 2: // 2nd
+			return { true, 42.0f, 98.0f };
+		case 3: // 3rd
+			return { true, 42.0f, 132.0f };
+		case 4: // 4th
+			return { true, 42.0f, 148.0f };
+		case 5: // 5th
+			return { true, 50.0f, 148.0f };
+		case 6: // 6th
+			return { true, 60.0f, 148.0f };
+		case 0: // N
+		case 1: // 1st
+		default:
+			return { false, 0.0f, 0.0f };
+	}
+}
+
+static float clampDesiredCcSpeedForCurrentGear(float requestedKph) {
+	auto limits = getCruiseGearLimitsForCurrentGear();
+	if (!limits.allowCruise) {
+		return 0.0f;
+	}
+
+	return clampF(limits.minSpeedKph, requestedKph, limits.maxSpeedKph);
+}
+
+static bool isCurrentSpeedAllowedForCurrentGear() {
+	auto speed = Sensor::get(SensorType::VehicleSpeed);
+	if (!speed.Valid) {
+		return false;
+	}
+
+	auto limits = getCruiseGearLimitsForCurrentGear();
+	if (!limits.allowCruise) {
+		return false;
+	}
+
+	return speed.Value >= limits.minSpeedKph && speed.Value <= limits.maxSpeedKph;
+}
+
+static void engageCCAtCurrentSpeedForCurrentGear() {
+	auto speed = Sensor::get(SensorType::VehicleSpeed);
+	if (!speed.Valid) {
+		return;
+	}
+
+	if (!isCurrentSpeedAllowedForCurrentGear()) {
+		return;
+	}
+
+	setDesiredCCSpeed(clampDesiredCcSpeedForCurrentGear(speed.Value));
+	setCCStatus(CruiseControlStatus::Enabled);
+}
+
+static void resumeCCForCurrentGear() {
+	auto limits = getCruiseGearLimitsForCurrentGear();
+	if (!limits.allowCruise) {
+		return;
+	}
+
+	float desiredSpeed = getDesiredCCSpeed();
+	if (desiredSpeed <= 0) {
+		return;
+	}
+
+	float clampedDesired = clampF(limits.minSpeedKph, desiredSpeed, limits.maxSpeedKph);
+	setDesiredCCSpeed(clampedDesired);
+
+	if (isCurrentSpeedAllowedForCurrentGear()) {
+		resumeCC();
+	}
+}
+
+static void increaseDesiredCCSpeedForCurrentGear() {
+	if (!getCruiseGearLimitsForCurrentGear().allowCruise) {
+		setCCStatus(CruiseControlStatus::Standby);
+		return;
+	}
+
+	setDesiredCCSpeed(clampDesiredCcSpeedForCurrentGear(getDesiredCCSpeed() + 1.0f));
+}
+
+static void decreaseDesiredCCSpeedForCurrentGear() {
+	if (!getCruiseGearLimitsForCurrentGear().allowCruise) {
+		setCCStatus(CruiseControlStatus::Standby);
+		return;
+	}
+
+	setDesiredCCSpeed(clampDesiredCcSpeedForCurrentGear(getDesiredCCSpeed() - 1.0f));
+}
+
 static void handleHarleyCAN(CanCycle cycle) {
+  uint32_t tripDistanceMeters = 0;
+#ifdef MODULE_ODOMETER
+  tripDistanceMeters = engine->module<TripOdometer>()->getDistanceMeters();
+#endif // MODULE_ODOMETER
+
   if (cycle.isInterval(CI::_10ms)) {
     {
       CanTxMessage msg(CanCategory::NBC, CAN_HD_VSS_ID);
@@ -311,6 +421,10 @@ static void handleHarleyCAN(CanCycle cycle) {
   }
 
   if (cycle.isInterval(CI::_50ms)) {
+    if (getCCStatus() == CruiseControlStatus::Enabled && !isCurrentSpeedAllowedForCurrentGear()) {
+      setCCStatus(CruiseControlStatus::Standby);
+    }
+
     bool running = engine->rpmCalculator.isRunning();
     {
       CanTxMessage msg(CanCategory::NBC, 0x146);
@@ -391,10 +505,10 @@ static void handleHarleyCAN(CanCycle cycle) {
   if (cycle.isInterval(CI::_200ms)) {
     {
       CanTxMessage msg(CanCategory::NBC, 0x540); // THIS IS ODOMETER AS WELL
-      msg[0] = 0x00; // ODOMETER 0x000A8658 = 689752 Displayed as 689.8KM on PAM AMERICA ST
-      msg[1] = 0x00; // ODOMETER
-      msg[2] = 0x00; // ODOMETER
-      msg[3] = 0x00; // ODOMETER
+      msg[0] = (tripDistanceMeters >> 24) & 0xFF; // ODOMETER 0x000A8658 = 689752 Displayed as 689.8KM on PAM AMERICA ST
+      msg[1] = (tripDistanceMeters >> 16) & 0xFF; // ODOMETER
+      msg[2] = (tripDistanceMeters >> 8) & 0xFF; // ODOMETER
+      msg[3] = tripDistanceMeters & 0xFF; // ODOMETER
       msg[4] = 0x00;
       msg[5] = 0x00;
       msg[6] = 0x00;
@@ -451,10 +565,10 @@ static void handleHarleyCAN(CanCycle cycle) {
 
     {
       CanTxMessage msg(CanCategory::NBC, 0x346);
-      msg[0] = 0x00; // ODOMETER 0x000A8658 = 689752 Displayed as 689.8KM on PAM AMERICA ST
-      msg[1] = 0x00; // ODOMETER
-      msg[2] = 0x00; // ODOMETER
-      msg[3] = 0x00; // ODOMETER
+      msg[0] = (tripDistanceMeters >> 24) & 0xFF; // ODOMETER 0x000A8658 = 689752 Displayed as 689.8KM on PAM AMERICA ST
+      msg[1] = (tripDistanceMeters >> 16) & 0xFF; // ODOMETER
+      msg[2] = (tripDistanceMeters >> 8) & 0xFF; // ODOMETER
+      msg[3] = tripDistanceMeters & 0xFF; // ODOMETER
       msg[4] = 0x00;
       msg[5] = Sensor::getOrZero(SensorType::AmbientTemperature) * 2 + 80;
       msg[6] = 0x80;
@@ -527,9 +641,9 @@ void boardProcessCanRx(const size_t busIndex, const CANRxFrame &frame, efitick_t
 		cruiseDecPressStartNt = nowNt;
 		cruiseDecLastRepeatNt = nowNt;
 		if (getDesiredCCSpeed() > 0 && getCCStatus() == CruiseControlStatus::Enabled) {
-			decreaseDesiredCCSpeed();
+			decreaseDesiredCCSpeedForCurrentGear();
 		} else if (getCCStatus() == CruiseControlStatus::Standby) {
-			engageCCAtCurrentSpeed();
+			engageCCAtCurrentSpeedForCurrentGear();
 		}
 	}
 	if (!cruiseDecPressed && cruiseDecPressedPrev) {
@@ -540,7 +654,7 @@ void boardProcessCanRx(const size_t busIndex, const CANRxFrame &frame, efitick_t
 		if ((nowNt - cruiseDecPressStartNt) >= cruiseHoldDelayNt &&
 			(nowNt - cruiseDecLastRepeatNt) >= cruiseRepeatDelayNt) {
 			if (getDesiredCCSpeed() > 0 && getCCStatus() == CruiseControlStatus::Enabled) {
-				decreaseDesiredCCSpeed();
+				decreaseDesiredCCSpeedForCurrentGear();
 			}
 			cruiseDecLastRepeatNt = nowNt;
 		}
@@ -550,9 +664,9 @@ void boardProcessCanRx(const size_t busIndex, const CANRxFrame &frame, efitick_t
 		cruiseIncPressStartNt = nowNt;
 		cruiseIncLastRepeatNt = nowNt;
 		if (getCCStatus() == CruiseControlStatus::Standby) {
-			resumeCC();
+			resumeCCForCurrentGear();
 		} else if (getCCStatus() == CruiseControlStatus::Enabled) {
-			increaseDesiredCCSpeed();
+			increaseDesiredCCSpeedForCurrentGear();
 		}
 	}
 	if (!cruiseIncPressed && cruiseIncPressedPrev) {
@@ -563,7 +677,7 @@ void boardProcessCanRx(const size_t busIndex, const CANRxFrame &frame, efitick_t
 		if ((nowNt - cruiseIncPressStartNt) >= cruiseHoldDelayNt &&
 			(nowNt - cruiseIncLastRepeatNt) >= cruiseRepeatDelayNt) {
 			if (getCCStatus() == CruiseControlStatus::Enabled) {
-				increaseDesiredCCSpeed();
+				increaseDesiredCCSpeedForCurrentGear();
 			}
 			cruiseIncLastRepeatNt = nowNt;
 		}
