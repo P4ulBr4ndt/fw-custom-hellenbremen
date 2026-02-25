@@ -220,6 +220,9 @@ static efitick_t cruiseDecPressStartNt = 0;
 static efitick_t cruiseIncPressStartNt = 0;
 static efitick_t cruiseDecLastRepeatNt = 0;
 static efitick_t cruiseIncLastRepeatNt = 0;
+static bool tripResetPressedPrev = false;
+static bool tripResetHoldHandled = false;
+static efitick_t tripResetPressStartNt = 0;
 
 struct CruiseGearLimits {
 	bool allowCruise;
@@ -382,9 +385,7 @@ static void decreaseDesiredCCSpeedForCurrentGear() {
 
 static void handleHarleyCAN(CanCycle cycle) {
   uint32_t tripDistanceMeters = 0;
-#ifdef MODULE_ODOMETER
   tripDistanceMeters = engine->module<TripOdometer>()->getDistanceMeters();
-#endif // MODULE_ODOMETER
 
   if (cycle.isInterval(CI::_10ms)) {
     {
@@ -703,6 +704,28 @@ void boardProcessCanRx(const size_t busIndex, const CANRxFrame &frame, efitick_t
 	if (getCCStatus() == CruiseControlStatus::Enabled && footBrakeEngaged) { // if cc active and foot brake is engaged
 		setCCStatus(CruiseControlStatus::Standby);
 	}
+  }
+
+  if (CAN_SID(frame) == 0x354) {
+	bool resetTripOdometer = (frame.data8[0] & 0x01) != 0;
+	const efitick_t tripResetHoldDelayNt = MS2NT(2000);
+
+	if (resetTripOdometer && !tripResetPressedPrev) {
+		tripResetPressStartNt = nowNt;
+		tripResetHoldHandled = false;
+	}
+	if (!resetTripOdometer && tripResetPressedPrev) {
+		tripResetPressStartNt = 0;
+		tripResetHoldHandled = false;
+	}
+	if (resetTripOdometer && tripResetPressStartNt != 0 && !tripResetHoldHandled) {
+		if ((nowNt - tripResetPressStartNt) >= tripResetHoldDelayNt) {
+			engine->module<TripOdometer>()->reset();
+			tripResetHoldHandled = true;
+		}
+	}
+
+	tripResetPressedPrev = resetTripOdometer;
   }
 }
 
