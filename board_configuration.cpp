@@ -869,7 +869,7 @@ static void updateInstantAccelShot() {
 	}
 }
 
-void boardPeriodicFastCallback() {
+static void customBoardPeriodicFastCallback() {
 	updateInstantAccelShot();
 }
 
@@ -878,4 +878,5 @@ void setup_custom_board_overrides() {
 	custom_board_ConfigOverrides = boardConfigOverrides;
 	custom_board_can_rx = boardProcessCanRx;
 	custom_board_update_dash = handleHarleyCAN;
+	custom_board_periodicFastCallback = customBoardPeriodicFastCallback;
 }
