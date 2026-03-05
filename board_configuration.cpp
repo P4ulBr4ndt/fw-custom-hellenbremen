@@ -234,6 +234,8 @@ static constexpr uint8_t HD_MODE_USER_A = 0x8;
 static constexpr uint8_t HD_MODE_USER_B = 0x9;
 static constexpr uint8_t HD_MODE_RAIN = 0xC;
 
+extern StoredValueSensor luaGauges[LUA_GAUGE_COUNT];
+
 struct HarleyRideModeState {
 	uint8_t activeMode = HD_MODE_SPORT;
 	uint8_t requestedMode = HD_MODE_SPORT;
@@ -288,11 +290,12 @@ static bool isValidHarleyThrottleResponse(uint8_t throttleResponse) {
 }
 
 static void updateHarleyRideModeOutputs() {
-	engine->outputChannels.debugIntField1 = harleyRideModeState.activeMode;
-	engine->outputChannels.debugIntField2 = harleyRideModeState.requestedMode;
-	engine->outputChannels.debugIntField3 = harleyRideModeState.engineMap;
-	engine->outputChannels.debugIntField4 = harleyRideModeState.engineBrake;
-	engine->outputChannels.debugIntField5 = harleyRideModeState.throttleResponse;
+	const efitick_t nowNt = getTimeNowNt();
+	luaGauges[0].setValidValue(harleyRideModeState.activeMode, nowNt);
+	luaGauges[1].setValidValue(harleyRideModeState.requestedMode, nowNt);
+	luaGauges[2].setValidValue(harleyRideModeState.engineMap, nowNt);
+	luaGauges[3].setValidValue(harleyRideModeState.engineBrake, nowNt);
+	luaGauges[4].setValidValue(harleyRideModeState.throttleResponse, nowNt);
 }
 
 static void decodeHarleyRideModeCanFrame(const CANRxFrame& frame) {
