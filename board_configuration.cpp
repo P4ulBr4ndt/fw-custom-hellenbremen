@@ -202,6 +202,8 @@ static void boardConfigOverrides() {
 #define CAN_HD_VIN_ID_1 0x34D
 #define CAN_HD_VIN_ID_2 0x34E
 #define CAN_HD_VIN_ID_3 0x34F
+#define CAN_HD_RIDING_MODE_ID 0x134
+#define CAN_HD_RIDING_MODE_CONFIRM_ID 0x148
 
 static uint8_t frameCounter142 = 0x0;
 static uint8_t frameCounter144 = 0x0;
@@ -223,6 +225,102 @@ static efitick_t cruiseIncLastRepeatNt = 0;
 static bool tripResetPressedPrev = false;
 static bool tripResetHoldHandled = false;
 static efitick_t tripResetPressStartNt = 0;
+
+static constexpr uint8_t HD_MODE_ROAD = 0x1;
+static constexpr uint8_t HD_MODE_SPORT = 0x3;
+static constexpr uint8_t HD_MODE_TRACK = 0x4;
+static constexpr uint8_t HD_MODE_TRACK_PLUS = 0x7;
+static constexpr uint8_t HD_MODE_USER_A = 0x8;
+static constexpr uint8_t HD_MODE_USER_B = 0x9;
+static constexpr uint8_t HD_MODE_RAIN = 0xC;
+
+struct HarleyRideModeState {
+	uint8_t activeMode = HD_MODE_SPORT;
+	uint8_t requestedMode = HD_MODE_SPORT;
+	uint8_t engineMap = 0x3;
+	uint8_t engineBrake = 0x1;
+	uint8_t throttleResponse = 0x1;
+};
+
+static HarleyRideModeState harleyRideModeState;
+
+static uint8_t highNibble(uint8_t value) {
+	return (value >> 4) & 0x0F;
+}
+
+static uint8_t lowNibble(uint8_t value) {
+	return value & 0x0F;
+}
+
+static bool isValidHarleyRideMode(uint8_t mode) {
+	switch (mode) {
+		case HD_MODE_ROAD:
+		case HD_MODE_SPORT:
+		case HD_MODE_TRACK:
+		case HD_MODE_TRACK_PLUS:
+		case HD_MODE_USER_A:
+		case HD_MODE_USER_B:
+		case HD_MODE_RAIN:
+			return true;
+		default:
+			return false;
+	}
+}
+
+static bool isValidHarleyEngineMap(uint8_t map) {
+	switch (map) {
+		case 0x1:
+		case 0x2:
+		case 0x3:
+		case 0x5:
+			return true;
+		default:
+			return false;
+	}
+}
+
+static bool isValidHarleyEngineBrake(uint8_t engineBrake) {
+	return engineBrake >= 0x1 && engineBrake <= 0x5;
+}
+
+static bool isValidHarleyThrottleResponse(uint8_t throttleResponse) {
+	return throttleResponse >= 0x1 && throttleResponse <= 0x5;
+}
+
+static void updateHarleyRideModeOutputs() {
+	engine->outputChannels.debugIntField1 = harleyRideModeState.activeMode;
+	engine->outputChannels.debugIntField2 = harleyRideModeState.requestedMode;
+	engine->outputChannels.debugIntField3 = harleyRideModeState.engineMap;
+	engine->outputChannels.debugIntField4 = harleyRideModeState.engineBrake;
+	engine->outputChannels.debugIntField5 = harleyRideModeState.throttleResponse;
+}
+
+static void decodeHarleyRideModeCanFrame(const CANRxFrame& frame) {
+	const uint8_t engineMap = highNibble(frame.data8[0]);
+	const uint8_t engineBrake = lowNibble(frame.data8[0]);
+	const uint8_t throttleResponse = highNibble(frame.data8[1]);
+	const uint8_t activeConfirmedMode = lowNibble(frame.data8[2]);
+	const uint8_t requestedMode = highNibble(frame.data8[3]);
+
+	if (isValidHarleyEngineMap(engineMap)) {
+		harleyRideModeState.engineMap = engineMap;
+	}
+
+	if (isValidHarleyEngineBrake(engineBrake)) {
+		harleyRideModeState.engineBrake = engineBrake;
+	}
+
+	if (isValidHarleyThrottleResponse(throttleResponse)) {
+		harleyRideModeState.throttleResponse = throttleResponse;
+	}
+
+	if (isValidHarleyRideMode(requestedMode)) {
+		harleyRideModeState.requestedMode = requestedMode;
+		harleyRideModeState.activeMode = requestedMode;
+	} else if (isValidHarleyRideMode(activeConfirmedMode)) {
+		harleyRideModeState.activeMode = activeConfirmedMode;
+	}
+}
 
 struct CruiseGearLimits {
 	bool allowCruise;
@@ -384,6 +482,8 @@ static void decreaseDesiredCCSpeedForCurrentGear() {
 }
 
 static void handleHarleyCAN(CanCycle cycle) {
+  updateHarleyRideModeOutputs();
+
   uint32_t tripDistanceMeters = 0;
   tripDistanceMeters = engine->module<TripOdometer>()->getDistanceMeters();
 
@@ -549,9 +649,9 @@ static void handleHarleyCAN(CanCycle cycle) {
     }
 
     {
-      CanTxMessage msg(CanCategory::NBC, 0x148);
-      msg[0] = 0x31; // Sometimes swichtes between 0x31 and 0x11
-      msg[1] = 0x13;
+      CanTxMessage msg(CanCategory::NBC, CAN_HD_RIDING_MODE_CONFIRM_ID);
+      msg[0] = (harleyRideModeState.engineMap << 4) | harleyRideModeState.engineBrake;
+      msg[1] = (harleyRideModeState.throttleResponse << 4);
       msg[2] = 0x00;
       msg[3] = 0x00;
       msg[4] = 0x00;
@@ -597,6 +697,12 @@ static void handleHarleyCAN(CanCycle cycle) {
 
 void boardProcessCanRx(const size_t busIndex, const CANRxFrame &frame, efitick_t nowNt) {
   handleUdsCanRx(busIndex, frame, nowNt);
+
+  if (CAN_SID(frame) == CAN_HD_RIDING_MODE_ID) {
+	decodeHarleyRideModeCanFrame(frame);
+	updateHarleyRideModeOutputs();
+  }
+
   if (CAN_SID(frame) == 0x500) {
     harleyKeepAlive = frame.data8[0];
   }
