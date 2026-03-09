@@ -71,15 +71,15 @@ float getDecelEtbOffsetByEngineBrakeMode(uint8_t engineBrakeMode) {
 	// Higher engineBrakeMode means stronger engine braking (more throttle closing).
 	switch (engineBrakeMode) {
 		case 0x1:
-			return 1.0f;
+			return 1.7f;
 		case 0x2:
-			return 0.0f;
+			return 1.2f;
 		case 0x3:
-			return -1.0f;
+			return 0.8f;
 		case 0x4:
-			return -2.0f;
+			return 0.5f;
 		case 0x5:
-			return -3.0f;
+			return 0.0f;
 		default:
 			return 0.0f;
 	}
@@ -126,6 +126,10 @@ void boardRidingModesProcessRx134(const CANRxFrame& frame) {
 void boardRidingModesComposeTx148(uint8_t& b0, uint8_t& b1) {
 	b0 = (harleyRideModeState.engineMap << 4) | harleyRideModeState.engineBrake;
 	b1 = (harleyRideModeState.throttleResponse << 4);
+}
+
+uint8_t boardGetHarleyEngineMap() {
+	return harleyRideModeState.engineMap;
 }
 
 float boardAdjustEtbTarget(float currentEtbTarget) {

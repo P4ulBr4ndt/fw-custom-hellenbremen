@@ -4,6 +4,7 @@
 
 #include <cstring>
 
+#include "board_etb_maps.h"
 #include "board_instant_accel_shot.h"
 #include "defaults.h"
 #include "hellen_meta.h"
@@ -52,6 +53,7 @@ void boardDefaultConfiguration() {
 	engineConfiguration->throttlePedalSecondaryUpVoltage = 1.37;
 	engineConfiguration->throttlePedalSecondaryWOTVoltage = 4.48;
 
+	boardEtbMapsApplyDefaults();
 	boardInstantAccelApplyDefaults();
 }
 

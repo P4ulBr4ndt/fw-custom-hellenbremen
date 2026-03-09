@@ -6,6 +6,7 @@ else
                 $(BOARD_DIR)/board_config.cpp \
                 $(BOARD_DIR)/board_can.cpp \
                 $(BOARD_DIR)/board_riding_modes.cpp \
+                $(BOARD_DIR)/board_etb_maps.cpp \
                 $(BOARD_DIR)/board_instant_accel_shot.cpp \
                 $(BOARD_DIR)/board_uds.cpp
 endif
