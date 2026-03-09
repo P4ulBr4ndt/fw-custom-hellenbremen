@@ -19,6 +19,7 @@ struct HarleyRideModeState {
 	uint8_t engineMap = 0x3;
 	uint8_t engineBrake = 0x1;
 	uint8_t throttleResponse = 0x1;
+	float engineBrakeEtbOffset = 0.0f;
 };
 
 HarleyRideModeState harleyRideModeState;
@@ -65,6 +66,24 @@ bool isValidHarleyEngineBrake(uint8_t engineBrake) {
 bool isValidHarleyThrottleResponse(uint8_t throttleResponse) {
 	return throttleResponse >= 0x1 && throttleResponse <= 0x5;
 }
+
+float getDecelEtbOffsetByEngineBrakeMode(uint8_t engineBrakeMode) {
+	// Higher engineBrakeMode means stronger engine braking (more throttle closing).
+	switch (engineBrakeMode) {
+		case 0x1:
+			return 1.0f;
+		case 0x2:
+			return 0.0f;
+		case 0x3:
+			return -1.0f;
+		case 0x4:
+			return -2.0f;
+		case 0x5:
+			return -3.0f;
+		default:
+			return 0.0f;
+	}
+}
 } // namespace
 
 void boardRidingModesPublishLive() {
@@ -74,6 +93,7 @@ void boardRidingModesPublishLive() {
 	luaGauges[2].setValidValue(harleyRideModeState.engineMap, nowNt);
 	luaGauges[3].setValidValue(harleyRideModeState.engineBrake, nowNt);
 	luaGauges[4].setValidValue(harleyRideModeState.throttleResponse, nowNt);
+	luaGauges[5].setValidValue(harleyRideModeState.engineBrakeEtbOffset, nowNt);
 }
 
 void boardRidingModesProcessRx134(const CANRxFrame& frame) {
@@ -106,4 +126,33 @@ void boardRidingModesProcessRx134(const CANRxFrame& frame) {
 void boardRidingModesComposeTx148(uint8_t& b0, uint8_t& b1) {
 	b0 = (harleyRideModeState.engineMap << 4) | harleyRideModeState.engineBrake;
 	b1 = (harleyRideModeState.throttleResponse << 4);
+}
+
+float boardAdjustEtbTarget(float currentEtbTarget) {
+	if (!engine->rpmCalculator.isRunning()) {
+		harleyRideModeState.engineBrakeEtbOffset = 0.0f;
+		return currentEtbTarget;
+	}
+
+	auto app = Sensor::get(SensorType::AcceleratorPedal);
+	if (!app || app.Value > 1.0f) {
+		harleyRideModeState.engineBrakeEtbOffset = 0.0f;
+		return currentEtbTarget;
+	}
+
+	float rpm = Sensor::getOrZero(SensorType::Rpm);
+	float vss = Sensor::getOrZero(SensorType::VehicleSpeed);
+
+	bool isCurrentlyCoasting = engine->module<IdleController>().unmock().isIdleCoasting;
+	// Only influence closed-throttle decel, not idle or pedal-driven operation.
+	if (rpm < 1300.0f || vss < 3.0f || currentEtbTarget > 10.0f || !isCurrentlyCoasting) {
+		harleyRideModeState.engineBrakeEtbOffset = 0.0f;
+		return currentEtbTarget;
+	}
+
+	float modeOffset = getDecelEtbOffsetByEngineBrakeMode(harleyRideModeState.engineBrake);
+	float rpmFactor = interpolateClamped(1300.0f, 0.0f, 4500.0f, 1.0f, rpm);
+	harleyRideModeState.engineBrakeEtbOffset = modeOffset * rpmFactor;
+
+	return currentEtbTarget + harleyRideModeState.engineBrakeEtbOffset;
 }
