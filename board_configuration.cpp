@@ -11,6 +11,6 @@ void setup_custom_board_overrides() {
 	custom_board_ConfigOverrides = boardConfigOverrides;
 	custom_board_can_rx = boardProcessCanRx;
 	custom_board_update_dash = boardHandleCan;
-	custom_board_periodicSlowCallback = boardPeriodicSlowCallback;
+	custom_board_periodicSlowCallback = boardPeriodicSlow;
 	custom_board_periodicFastCallback = boardInstantAccelFastCallback;
 }

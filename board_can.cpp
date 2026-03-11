@@ -201,7 +201,7 @@ void decreaseDesiredCCSpeedForCurrentGear() {
 }
 } // namespace
 
-void boardPeriodicSlowCallback() {
+void boardPeriodicSlow() {
 	bool jssDown = engine->engineState.jssState != 0;
 	uint8_t currentGear = calculateHarleyGearIndex();
 	bool isNeutral = currentGear == 0;

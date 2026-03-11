@@ -8,4 +8,4 @@
 
 void boardHandleCan(CanCycle cycle);
 void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt);
-void boardPeriodicSlowCallback();
+void boardPeriodicSlow();
