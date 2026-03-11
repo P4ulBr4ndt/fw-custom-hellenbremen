@@ -46,6 +46,7 @@ static efitick_t cruiseIncLastRepeatNt = 0;
 static bool tripResetPressedPrev = false;
 static bool tripResetHoldHandled = false;
 static efitick_t tripResetPressStartNt = 0;
+static bool jssStopRequestActive = false;
 
 struct CruiseGearLimits {
 	bool allowCruise;
@@ -199,6 +200,20 @@ void decreaseDesiredCCSpeedForCurrentGear() {
 	setDesiredCCSpeed(clampDesiredCcSpeedForCurrentGear(getDesiredCCSpeed() - 1.0f));
 }
 } // namespace
+
+void boardPeriodicSlowCallback() {
+	bool jssDown = engine->engineState.jssState != 0;
+	uint8_t currentGear = calculateHarleyGearIndex();
+	bool isNeutral = currentGear == 0;
+	bool isEngineActive = engine->rpmCalculator.isRunning() || engine->rpmCalculator.isCranking();
+
+	bool shouldRequestStop = jssDown && !isNeutral && isEngineActive;
+	if (shouldRequestStop && !jssStopRequestActive) {
+		doScheduleStopEngine(StopRequestedReason::Board1);
+	}
+
+	jssStopRequestActive = shouldRequestStop;
+}
 
 void boardHandleCan(CanCycle cycle) {
 	boardRidingModesPublishLive();
