@@ -135,6 +135,18 @@ float clampDesiredCcSpeedForCurrentGear(float requestedKph) {
 	return clampF(limits.minSpeedKph, requestedKph, limits.maxSpeedKph);
 }
 
+uint8_t getHarleyTractionControlStatus() {
+	if (engine->engineState.tractionControlSparkSkip != 0) {
+		return 0x40;
+	}
+
+	if (engine->ignitionState.tractionAdvanceDrop != 0) {
+		return 0x10;
+	}
+
+	return 0x00;
+}
+
 bool isCurrentSpeedAllowedForCurrentGear() {
 	auto speed = Sensor::get(SensorType::VehicleSpeed);
 	if (!speed.Valid) {
@@ -235,7 +247,7 @@ void boardHandleCan(CanCycle cycle) {
 		msg.setShortValueMsb(Sensor::getOrZero(SensorType::Tps1Primary), 0); // TARGET TPS?
 		msg.setShortValueMsb(Sensor::getOrZero(SensorType::Tps1Secondary), 2); // ACTUAL TPS?
 		msg[4] = Sensor::getOrZero(SensorType::AcceleratorPedal) / 0.4545; // As OEM does
-		msg[5] = 0x00;
+		msg[5] = getHarleyTractionControlStatus();
 		msg[6] = frameCounter144;
 		msg[7] = crc8(msg.getFrame()->data8, 7);
 		frameCounter144 = (frameCounter144 + 1) % 64;
