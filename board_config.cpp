@@ -6,6 +6,7 @@
 
 #include "board_etb_maps.h"
 #include "board_instant_accel_shot.h"
+#include "board_riding_modes.h"
 #include "defaults.h"
 #include "hellen_meta.h"
 
@@ -55,6 +56,7 @@ void boardDefaultConfiguration() {
 
 	boardEtbMapsApplyDefaults();
 	boardInstantAccelApplyDefaults();
+	boardRidingModesApplyDefaults();
 }
 
 void boardConfigOverrides() {

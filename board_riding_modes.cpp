@@ -13,6 +13,16 @@ static constexpr uint8_t HD_MODE_RAIN = 0xC;
 extern StoredValueSensor luaGauges[LUA_GAUGE_COUNT];
 
 namespace {
+static constexpr float ENGINE_BRAKING_DEFAULT_ETB_OFFSET_MODE_1 = 1.7f;
+static constexpr float ENGINE_BRAKING_DEFAULT_ETB_OFFSET_MODE_2 = 1.2f;
+static constexpr float ENGINE_BRAKING_DEFAULT_ETB_OFFSET_MODE_3 = 0.8f;
+static constexpr float ENGINE_BRAKING_DEFAULT_ETB_OFFSET_MODE_4 = 0.5f;
+static constexpr float ENGINE_BRAKING_DEFAULT_ETB_OFFSET_MODE_5 = 0.0f;
+static constexpr float ENGINE_BRAKING_DEFAULT_RPM_ENGAGE = 1300.0f;
+static constexpr float ENGINE_BRAKING_DEFAULT_RPM_FULL = 4500.0f;
+static constexpr float ENGINE_BRAKING_DEFAULT_MIN_VSS = 3.0f;
+static constexpr float ENGINE_BRAKING_DEFAULT_MAX_BASE_ETB_TARGET = 10.0f;
+
 struct HarleyRideModeState {
 	uint8_t activeMode = HD_MODE_SPORT;
 	uint8_t requestedMode = HD_MODE_SPORT;
@@ -71,20 +81,32 @@ float getDecelEtbOffsetByEngineBrakeMode(uint8_t engineBrakeMode) {
 	// Higher engineBrakeMode means stronger engine braking (more throttle closing).
 	switch (engineBrakeMode) {
 		case 0x1:
-			return 1.7f;
+			return config->engineBrakingEtbOffsetMode1;
 		case 0x2:
-			return 1.2f;
+			return config->engineBrakingEtbOffsetMode2;
 		case 0x3:
-			return 0.8f;
+			return config->engineBrakingEtbOffsetMode3;
 		case 0x4:
-			return 0.5f;
+			return config->engineBrakingEtbOffsetMode4;
 		case 0x5:
-			return 0.0f;
+			return config->engineBrakingEtbOffsetMode5;
 		default:
-			return 0.0f;
+			return config->engineBrakingEtbOffsetMode5;
 	}
 }
 } // namespace
+
+void boardRidingModesApplyDefaults() {
+	config->engineBrakingEtbOffsetMode1 = ENGINE_BRAKING_DEFAULT_ETB_OFFSET_MODE_1;
+	config->engineBrakingEtbOffsetMode2 = ENGINE_BRAKING_DEFAULT_ETB_OFFSET_MODE_2;
+	config->engineBrakingEtbOffsetMode3 = ENGINE_BRAKING_DEFAULT_ETB_OFFSET_MODE_3;
+	config->engineBrakingEtbOffsetMode4 = ENGINE_BRAKING_DEFAULT_ETB_OFFSET_MODE_4;
+	config->engineBrakingEtbOffsetMode5 = ENGINE_BRAKING_DEFAULT_ETB_OFFSET_MODE_5;
+	config->engineBrakingRpmEngage = ENGINE_BRAKING_DEFAULT_RPM_ENGAGE;
+	config->engineBrakingRpmFull = ENGINE_BRAKING_DEFAULT_RPM_FULL;
+	config->engineBrakingMinVss = ENGINE_BRAKING_DEFAULT_MIN_VSS;
+	config->engineBrakingMaxBaseEtbTarget = ENGINE_BRAKING_DEFAULT_MAX_BASE_ETB_TARGET;
+}
 
 void boardRidingModesPublishLive() {
 	const efitick_t nowNt = getTimeNowNt();
@@ -147,15 +169,35 @@ float boardAdjustEtbTarget(float currentEtbTarget) {
 	float rpm = Sensor::getOrZero(SensorType::Rpm);
 	float vss = Sensor::getOrZero(SensorType::VehicleSpeed);
 
+	float minRpmEngage = config->engineBrakingRpmEngage;
+	if (minRpmEngage < 0.0f) {
+		minRpmEngage = 0.0f;
+	}
+
+	float rpmFullEffect = config->engineBrakingRpmFull;
+	if (rpmFullEffect <= minRpmEngage) {
+		rpmFullEffect = minRpmEngage + 1.0f;
+	}
+
+	float minVss = config->engineBrakingMinVss;
+	if (minVss < 0.0f) {
+		minVss = 0.0f;
+	}
+
+	float maxBaseEtbTarget = config->engineBrakingMaxBaseEtbTarget;
+	if (maxBaseEtbTarget < 0.0f) {
+		maxBaseEtbTarget = 0.0f;
+	}
+
 	bool isCurrentlyCoasting = engine->module<IdleController>().unmock().isIdleCoasting;
 	// Only influence closed-throttle decel, not idle or pedal-driven operation.
-	if (rpm < 1300.0f || vss < 3.0f || currentEtbTarget > 10.0f || !isCurrentlyCoasting) {
+	if (rpm < minRpmEngage || vss < minVss || currentEtbTarget > maxBaseEtbTarget || !isCurrentlyCoasting) {
 		harleyRideModeState.engineBrakeEtbOffset = 0.0f;
 		return currentEtbTarget;
 	}
 
 	float modeOffset = getDecelEtbOffsetByEngineBrakeMode(harleyRideModeState.engineBrake);
-	float rpmFactor = interpolateClamped(1300.0f, 0.0f, 4500.0f, 1.0f, rpm);
+	float rpmFactor = interpolateClamped(minRpmEngage, 0.0f, rpmFullEffect, 1.0f, rpm);
 	harleyRideModeState.engineBrakeEtbOffset = modeOffset * rpmFactor;
 
 	return currentEtbTarget + harleyRideModeState.engineBrakeEtbOffset;
