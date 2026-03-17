@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <msq xmlns="http://www.msefi.com/:msq">
     <page/>
-    <page number="0" size="25820">
+    <page number="0" size="25856">
         <constant name="accelEnrichmentMode">"MS Adder"</constant>
         <constant name="accelerometerCsPin">"NONE"</constant>
         <constant name="accelerometerCsPinMode">"default"</constant>
@@ -561,7 +561,7 @@
         <constant name="brakePedalPin">"NONE"</constant>
         <constant name="brakePedalPinMode">"PULLUP"</constant>
         <constant digits="0" name="byFirmwareVersion" units="index">0</constant>
-        <constant digits="0" name="calibrationBirthday" units="">20260316</constant>
+        <constant digits="0" name="calibrationBirthday" units="">20260317</constant>
         <constant digits="0" name="camDecoder2jzPosition" units="angle">95</constant>
         <constant digits="0" name="camDecoder2jzPrecision" units="">40</constant>
         <constant name="camInputs1">"NONE"</constant>
@@ -1011,6 +1011,15 @@
         <constant name="enableStagedInjection">"disabled"</constant>
         <constant name="enableTrailingSparks">"no"</constant>
         <constant name="enableVerboseCanTx">"no"</constant>
+        <constant digits="2" name="engineBrakingEtbOffsetMode1" units="%">0.0</constant>
+        <constant digits="2" name="engineBrakingEtbOffsetMode2" units="%">0.0</constant>
+        <constant digits="2" name="engineBrakingEtbOffsetMode3" units="%">0.0</constant>
+        <constant digits="2" name="engineBrakingEtbOffsetMode4" units="%">0.0</constant>
+        <constant digits="2" name="engineBrakingEtbOffsetMode5" units="%">0.0</constant>
+        <constant digits="1" name="engineBrakingMaxBaseEtbTarget" units="%">0.0</constant>
+        <constant digits="1" name="engineBrakingMinVss" units="kph">0.0</constant>
+        <constant digits="0" name="engineBrakingRpmEngage" units="rpm">0</constant>
+        <constant digits="0" name="engineBrakingRpmFull" units="rpm">0</constant>
         <constant digits="0" name="engineChartSize" units="count">400</constant>
         <constant name="engineCode">K24</constant>
         <constant name="engineMake">Honda</constant>
@@ -5164,7 +5173,7 @@ end</constant>
 </constant>
         <constant name="yesUnderstandLocking">"no"</constant>
     </page>
-    <versionInfo firmwareInfo="20260227" nPages="1" signature="rusEFI main.2026.03.16.hellen-bremen.1379173320" version="5.0"/>
+    <versionInfo firmwareInfo="20260227" nPages="1" signature="rusEFI main.2026.03.17.hellen-bremen.2919056788" version="5.0"/>
     <bibliography author="rusEFI 20260227" writeDate="date"/>
     <settings/>
     <userComments/>
