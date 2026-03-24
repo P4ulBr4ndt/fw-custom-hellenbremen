@@ -22,6 +22,7 @@ static constexpr float ENGINE_BRAKING_DEFAULT_RPM_ENGAGE = 1300.0f;
 static constexpr float ENGINE_BRAKING_DEFAULT_RPM_FULL = 4500.0f;
 static constexpr float ENGINE_BRAKING_DEFAULT_MIN_VSS = 3.0f;
 static constexpr float ENGINE_BRAKING_DEFAULT_MAX_BASE_ETB_TARGET = 10.0f;
+static constexpr float ENGINE_BRAKING_DEFAULT_THROTTLE_REOPEN_TAPER = 0.3f;
 
 struct HarleyRideModeState {
 	uint8_t activeMode = HD_MODE_SPORT;
@@ -30,6 +31,12 @@ struct HarleyRideModeState {
 	uint8_t engineBrake = 0x1;
 	uint8_t throttleResponse = 0x1;
 	float engineBrakeEtbOffset = 0.0f;
+	float lastAdjustedEtbTarget = 0.0f;
+	float throttleReopenStartTarget = 0.0f;
+	efitimeus_t throttleReopenStartTimeUs = 0;
+	bool hasLastAdjustedEtbTarget = false;
+	bool wasInIdleOrCoasting = false;
+	bool throttleReopenTaperActive = false;
 };
 
 HarleyRideModeState harleyRideModeState;
@@ -106,6 +113,7 @@ void boardRidingModesApplyDefaults() {
 	config->engineBrakingRpmFull = ENGINE_BRAKING_DEFAULT_RPM_FULL;
 	config->engineBrakingMinVss = ENGINE_BRAKING_DEFAULT_MIN_VSS;
 	config->engineBrakingMaxBaseEtbTarget = ENGINE_BRAKING_DEFAULT_MAX_BASE_ETB_TARGET;
+	config->engineBrakingThrottleReopenTaper = ENGINE_BRAKING_DEFAULT_THROTTLE_REOPEN_TAPER;
 }
 
 void boardRidingModesPublishLive() {
@@ -155,50 +163,97 @@ uint8_t boardGetHarleyEngineMap() {
 }
 
 float boardAdjustEtbTarget(float currentEtbTarget) {
+	auto& idleController = engine->module<IdleController>().unmock();
+
 	if (!engine->rpmCalculator.isRunning()) {
 		harleyRideModeState.engineBrakeEtbOffset = 0.0f;
+		harleyRideModeState.throttleReopenTaperActive = false;
+		harleyRideModeState.hasLastAdjustedEtbTarget = false;
+		harleyRideModeState.wasInIdleOrCoasting = false;
 		return currentEtbTarget;
 	}
 
+	percent_t adjustedEtbTarget = currentEtbTarget;
 	auto app = Sensor::get(SensorType::AcceleratorPedal);
-	if (!app || app.Value > 1.0f) {
+	bool isPedalClosed = app.Valid && app.Value <= 3.0f;
+	bool isCurrentlyCoasting = idleController.isIdleCoasting;
+
+	if (isPedalClosed && isCurrentlyCoasting) {
+		float rpm = Sensor::getOrZero(SensorType::Rpm);
+		float vss = Sensor::getOrZero(SensorType::VehicleSpeed);
+
+		float minRpmEngage = config->engineBrakingRpmEngage;
+		if (minRpmEngage < 0.0f) {
+			minRpmEngage = 0.0f;
+		}
+
+		float rpmFullEffect = config->engineBrakingRpmFull;
+		if (rpmFullEffect <= minRpmEngage) {
+			rpmFullEffect = minRpmEngage + 1.0f;
+		}
+
+		float minVss = config->engineBrakingMinVss;
+		if (minVss < 0.0f) {
+			minVss = 0.0f;
+		}
+
+		float maxBaseEtbTarget = config->engineBrakingMaxBaseEtbTarget;
+		if (maxBaseEtbTarget < 0.0f) {
+			maxBaseEtbTarget = 0.0f;
+		}
+
+		// Only influence closed-throttle decel, not idle or pedal-driven operation.
+		if (rpm >= minRpmEngage && vss >= minVss && currentEtbTarget <= maxBaseEtbTarget) {
+			float modeOffset = getDecelEtbOffsetByEngineBrakeMode(harleyRideModeState.engineBrake);
+			float rpmFactor = interpolateClamped(minRpmEngage, 0.0f, rpmFullEffect, 1.0f, rpm);
+			harleyRideModeState.engineBrakeEtbOffset = modeOffset * rpmFactor;
+			adjustedEtbTarget += harleyRideModeState.engineBrakeEtbOffset;
+		} else {
+			harleyRideModeState.engineBrakeEtbOffset = 0.0f;
+		}
+	} else {
 		harleyRideModeState.engineBrakeEtbOffset = 0.0f;
-		return currentEtbTarget;
 	}
 
-	float rpm = Sensor::getOrZero(SensorType::Rpm);
-	float vss = Sensor::getOrZero(SensorType::VehicleSpeed);
-
-	float minRpmEngage = config->engineBrakingRpmEngage;
-	if (minRpmEngage < 0.0f) {
-		minRpmEngage = 0.0f;
+	bool isInIdleOrCoasting = idleController.isIdling || idleController.isIdleCoasting;
+	float reopenTaperSec = config->engineBrakingThrottleReopenTaper;
+	if (reopenTaperSec < 0.0f) {
+		reopenTaperSec = 0.0f;
 	}
 
-	float rpmFullEffect = config->engineBrakingRpmFull;
-	if (rpmFullEffect <= minRpmEngage) {
-		rpmFullEffect = minRpmEngage + 1.0f;
+	if (!harleyRideModeState.hasLastAdjustedEtbTarget) {
+		harleyRideModeState.lastAdjustedEtbTarget = adjustedEtbTarget;
+		harleyRideModeState.hasLastAdjustedEtbTarget = true;
 	}
 
-	float minVss = config->engineBrakingMinVss;
-	if (minVss < 0.0f) {
-		minVss = 0.0f;
+	bool isLeavingIdleOrCoasting = harleyRideModeState.wasInIdleOrCoasting && !isInIdleOrCoasting;
+	if (isLeavingIdleOrCoasting
+		&& reopenTaperSec > 0.0f
+		&& adjustedEtbTarget > harleyRideModeState.lastAdjustedEtbTarget) {
+		harleyRideModeState.throttleReopenTaperActive = true;
+		harleyRideModeState.throttleReopenStartTarget = harleyRideModeState.lastAdjustedEtbTarget;
+		harleyRideModeState.throttleReopenStartTimeUs = getTimeNowUs();
 	}
 
-	float maxBaseEtbTarget = config->engineBrakingMaxBaseEtbTarget;
-	if (maxBaseEtbTarget < 0.0f) {
-		maxBaseEtbTarget = 0.0f;
+	if (harleyRideModeState.throttleReopenTaperActive) {
+		bool shouldCancelRamp = isInIdleOrCoasting || adjustedEtbTarget <= harleyRideModeState.lastAdjustedEtbTarget;
+		if (shouldCancelRamp) {
+			harleyRideModeState.throttleReopenTaperActive = false;
+		} else {
+			float elapsedSec = (getTimeNowUs() - harleyRideModeState.throttleReopenStartTimeUs) / US_PER_SECOND_F;
+			if (elapsedSec >= reopenTaperSec) {
+				harleyRideModeState.throttleReopenTaperActive = false;
+			} else {
+				adjustedEtbTarget = interpolateClamped(
+					0.0f, harleyRideModeState.throttleReopenStartTarget,
+					reopenTaperSec, adjustedEtbTarget,
+					elapsedSec
+				);
+			}
+		}
 	}
 
-	bool isCurrentlyCoasting = engine->module<IdleController>().unmock().isIdleCoasting;
-	// Only influence closed-throttle decel, not idle or pedal-driven operation.
-	if (rpm < minRpmEngage || vss < minVss || currentEtbTarget > maxBaseEtbTarget || !isCurrentlyCoasting) {
-		harleyRideModeState.engineBrakeEtbOffset = 0.0f;
-		return currentEtbTarget;
-	}
-
-	float modeOffset = getDecelEtbOffsetByEngineBrakeMode(harleyRideModeState.engineBrake);
-	float rpmFactor = interpolateClamped(minRpmEngage, 0.0f, rpmFullEffect, 1.0f, rpm);
-	harleyRideModeState.engineBrakeEtbOffset = modeOffset * rpmFactor;
-
-	return currentEtbTarget + harleyRideModeState.engineBrakeEtbOffset;
+	harleyRideModeState.wasInIdleOrCoasting = isInIdleOrCoasting;
+	harleyRideModeState.lastAdjustedEtbTarget = adjustedEtbTarget;
+	return adjustedEtbTarget;
 }

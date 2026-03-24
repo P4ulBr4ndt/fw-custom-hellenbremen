@@ -18,6 +18,7 @@ float engineBrakingRpmEngage;Engine braking minimum engage RPM;"rpm", 1, 0, 0, 1
 float engineBrakingRpmFull;Engine braking full-effect RPM;"rpm", 1, 0, 0, 10000, 0
 float engineBrakingMinVss;Engine braking minimum VSS;"kph", 1, 0, 0, 300, 1
 float engineBrakingMaxBaseEtbTarget;Engine braking max ETB target;"%", 1, 0, 0, 100, 1
+float engineBrakingThrottleReopenTaper;Throttle reopen taper after idle/coast;"s", 1, 0, 0, 2, 2
 float[INSTANT_ACCEL_SHOT_TPS_COUNT x INSTANT_ACCEL_SHOT_TPS_COUNT] instantAccelShotTpsTable;;"ms", 1, 0, 0, 50, 2
 float[INSTANT_ACCEL_SHOT_TPS_COUNT] instantAccelShotTpsFromBins;;"%", 1, 0, 0, 100, 1
 float[INSTANT_ACCEL_SHOT_TPS_COUNT] instantAccelShotTpsToBins;;"%", 1, 0, 0, 100, 1
