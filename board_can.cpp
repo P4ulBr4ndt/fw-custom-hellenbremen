@@ -43,10 +43,8 @@ static efitick_t cruiseDecPressStartNt = 0;
 static efitick_t cruiseIncPressStartNt = 0;
 static efitick_t cruiseDecLastRepeatNt = 0;
 static efitick_t cruiseIncLastRepeatNt = 0;
-static bool tripResetPressedPrev = false;
-static bool tripResetHoldHandled = false;
-static efitick_t tripResetPressStartNt = 0;
 static bool jssStopRequestActive = false;
+static uint32_t lastReceivedOdometer = 0;
 
 struct CruiseGearLimits {
 	bool allowCruise;
@@ -537,25 +535,12 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 		}
 	}
 
-	if (CAN_SID(frame) == 0x354) {
-		bool resetTripOdometer = (frame.data8[0] & 0x01) != 0;
-		const efitick_t tripResetHoldDelayNt = MS2NT(2000);
-
-		if (resetTripOdometer && !tripResetPressedPrev) {
-			tripResetPressStartNt = nowNt;
-			tripResetHoldHandled = false;
+	if (CAN_SID(frame) == 0x3C6) {
+		uint32_t newOdometer = frame.data32[0];
+		if (newOdometer != lastReceivedOdometer) {
+			// Speedometer has a new odometer for us, set this as base value and count from that upwards
+			lastReceivedOdometer = newOdometer;
+			engine->module<TripOdometer>()->setDistanceMeters(newOdometer);
 		}
-		if (!resetTripOdometer && tripResetPressedPrev) {
-			tripResetPressStartNt = 0;
-			tripResetHoldHandled = false;
-		}
-		if (resetTripOdometer && tripResetPressStartNt != 0 && !tripResetHoldHandled) {
-			if ((nowNt - tripResetPressStartNt) >= tripResetHoldDelayNt) {
-				engine->module<TripOdometer>()->reset();
-				tripResetHoldHandled = true;
-			}
-		}
-
-		tripResetPressedPrev = resetTripOdometer;
 	}
 }
