@@ -65,6 +65,20 @@ N: 0.872V => 17.44% => 0xA0
 */
 float harleyGearValues[] = { 17.44f, 9.86f, 25.24f, 41.96f, 57.48f, 72.96f, 88.78f };
 
+uint32_t getFourBytesMsb(const CANRxFrame& frame, size_t offset) {
+	return (static_cast<uint32_t>(frame.data8[offset]) << 24) |
+		(static_cast<uint32_t>(frame.data8[offset + 1]) << 16) |
+		(static_cast<uint32_t>(frame.data8[offset + 2]) << 8) |
+		static_cast<uint32_t>(frame.data8[offset + 3]);
+}
+
+void setFourBytesMsb(CanTxMessage& msg, uint32_t value, size_t offset) {
+	msg[offset] = (value >> 24) & 0xFF;
+	msg[offset + 1] = (value >> 16) & 0xFF;
+	msg[offset + 2] = (value >> 8) & 0xFF;
+	msg[offset + 3] = value & 0xFF;
+}
+
 uint8_t calculateHarleyGearIndex() {
 	float sensorValue = Sensor::getOrZero(SensorType::AuxLinear1);
 	float bestMatch = 0.0f;
@@ -329,10 +343,7 @@ void boardHandleCan(CanCycle cycle) {
 
 	if (cycle.isInterval(CI::_200ms)) {
 		CanTxMessage msg(CanCategory::NBC, 0x540);
-		msg[0] = (tripDistanceMeters >> 24) & 0xFF;
-		msg[1] = (tripDistanceMeters >> 16) & 0xFF;
-		msg[2] = (tripDistanceMeters >> 8) & 0xFF;
-		msg[3] = tripDistanceMeters & 0xFF;
+		setFourBytesMsb(msg, tripDistanceMeters, 0);
 		msg[4] = 0x00;
 		msg[5] = 0x00;
 		msg[6] = 0x00;
@@ -392,10 +403,7 @@ void boardHandleCan(CanCycle cycle) {
 
 		{
 			CanTxMessage msg(CanCategory::NBC, 0x346);
-			msg[0] = (tripDistanceMeters >> 24) & 0xFF;
-			msg[1] = (tripDistanceMeters >> 16) & 0xFF;
-			msg[2] = (tripDistanceMeters >> 8) & 0xFF;
-			msg[3] = tripDistanceMeters & 0xFF;
+			setFourBytesMsb(msg, tripDistanceMeters, 0);
 			msg[4] = 0x00;
 			msg[5] = Sensor::getOrZero(SensorType::AmbientTemperature) * 2 + 80;
 			msg[6] = 0x80;
@@ -536,7 +544,7 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 	}
 
 	if (CAN_SID(frame) == 0x3C6) {
-		uint32_t newOdometer = frame.data32[0];
+		uint32_t newOdometer = getFourBytesMsb(frame, 0);
 		if (newOdometer != lastReceivedOdometer) {
 			// Speedometer has a new odometer for us, set this as base value and count from that upwards
 			lastReceivedOdometer = newOdometer;
