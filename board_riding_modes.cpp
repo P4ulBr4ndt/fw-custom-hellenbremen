@@ -2,6 +2,8 @@
 
 #include "board_riding_modes.h"
 
+#include <algorithm>
+
 static constexpr uint8_t HD_MODE_ROAD = 0x1;
 static constexpr uint8_t HD_MODE_SPORT = 0x3;
 static constexpr uint8_t HD_MODE_TRACK = 0x4;
@@ -22,6 +24,15 @@ static constexpr float ENGINE_BRAKING_DEFAULT_RPM_ENGAGE = 1300.0f;
 static constexpr float ENGINE_BRAKING_DEFAULT_RPM_FULL = 4500.0f;
 static constexpr float ENGINE_BRAKING_DEFAULT_MIN_VSS = 3.0f;
 static constexpr float ENGINE_BRAKING_DEFAULT_MAX_BASE_ETB_TARGET = 10.0f;
+static constexpr float ETB_TARGET_SLEW_DEFAULT_MAX_DOWN_RATE = 600.0f;
+
+static constexpr float etbTargetSlewDefaultOpeningBins[ETB_TARGET_SLEW_BINS_COUNT] = {
+	0.0f, 5.0f, 10.0f, 15.0f, 20.0f, 25.0f, 30.0f, 40.0f, 50.0f, 60.0f, 80.0f, 100.0f
+};
+
+static constexpr float etbTargetSlewDefaultMaxUpRate[ETB_TARGET_SLEW_BINS_COUNT] = {
+	20.0f, 25.0f, 50.0f, 62.5f, 100.0f, 166.7f, 200.0f, 230.0f, 260.0f, 300.0f, 350.0f, 400.0f
+};
 
 struct HarleyRideModeState {
 	uint8_t activeMode = HD_MODE_SPORT;
@@ -33,6 +44,14 @@ struct HarleyRideModeState {
 };
 
 HarleyRideModeState harleyRideModeState;
+
+struct EtbTargetSlewState {
+	Timer timer;
+	float limitedTarget = 0.0f;
+	bool initialized = false;
+};
+
+EtbTargetSlewState etbTargetSlewState;
 
 uint8_t highNibble(uint8_t value) {
 	return (value >> 4) & 0x0F;
@@ -94,6 +113,107 @@ float getDecelEtbOffsetByEngineBrakeMode(uint8_t engineBrakeMode) {
 			return config->engineBrakingEtbOffsetMode5;
 	}
 }
+
+float applyEngineBrakingOffset(float currentEtbTarget) {
+	if (!engine->rpmCalculator.isRunning()) {
+		harleyRideModeState.engineBrakeEtbOffset = 0.0f;
+		return currentEtbTarget;
+	}
+
+	auto app = Sensor::get(SensorType::AcceleratorPedal);
+	if (!app || app.Value > 1.0f) {
+		harleyRideModeState.engineBrakeEtbOffset = 0.0f;
+		return currentEtbTarget;
+	}
+
+	float rpm = Sensor::getOrZero(SensorType::Rpm);
+	float vss = Sensor::getOrZero(SensorType::VehicleSpeed);
+
+	float minRpmEngage = config->engineBrakingRpmEngage;
+	if (minRpmEngage < 0.0f) {
+		minRpmEngage = 0.0f;
+	}
+
+	float rpmFullEffect = config->engineBrakingRpmFull;
+	if (rpmFullEffect <= minRpmEngage) {
+		rpmFullEffect = minRpmEngage + 1.0f;
+	}
+
+	float minVss = config->engineBrakingMinVss;
+	if (minVss < 0.0f) {
+		minVss = 0.0f;
+	}
+
+	float maxBaseEtbTarget = config->engineBrakingMaxBaseEtbTarget;
+	if (maxBaseEtbTarget < 0.0f) {
+		maxBaseEtbTarget = 0.0f;
+	}
+
+	bool isCurrentlyCoasting = engine->module<IdleController>().unmock().isIdleCoasting;
+	// Only influence closed-throttle decel, not idle or pedal-driven operation.
+	if (rpm < minRpmEngage || vss < minVss || currentEtbTarget > maxBaseEtbTarget || !isCurrentlyCoasting) {
+		harleyRideModeState.engineBrakeEtbOffset = 0.0f;
+		return currentEtbTarget;
+	}
+
+	float modeOffset = getDecelEtbOffsetByEngineBrakeMode(harleyRideModeState.engineBrake);
+	float rpmFactor = interpolateClamped(minRpmEngage, 0.0f, rpmFullEffect, 1.0f, rpm);
+	harleyRideModeState.engineBrakeEtbOffset = modeOffset * rpmFactor;
+
+	return currentEtbTarget + harleyRideModeState.engineBrakeEtbOffset;
+}
+
+float applyEtbTargetSlewLimit(float requestedEtbTarget) {
+	auto& state = etbTargetSlewState;
+
+	if (!engine->rpmCalculator.isRunning()) {
+		state.initialized = false;
+		return requestedEtbTarget;
+	}
+
+	// Invalid pedal should immediately pass through the safe (usually closed) command.
+	auto app = Sensor::get(SensorType::AcceleratorPedal);
+	if (!app) {
+		state.initialized = false;
+		return requestedEtbTarget;
+	}
+
+	efitick_t nowNt = getTimeNowNt();
+	if (!state.initialized) {
+		state.timer.reset(nowNt);
+		state.limitedTarget = requestedEtbTarget;
+		state.initialized = true;
+		return requestedEtbTarget;
+	}
+
+	float dt = state.timer.getElapsedSecondsAndReset(nowNt);
+	constexpr float ETB_TARGET_SLEW_MAX_DT = 0.25f;
+	if (dt <= 0.0f || dt > ETB_TARGET_SLEW_MAX_DT) {
+		// After long pauses, re-sync to avoid one giant stale-dt slew step.
+		state.limitedTarget = requestedEtbTarget;
+		return requestedEtbTarget;
+	}
+
+	float upRate = interpolate2d(state.limitedTarget, config->etbTargetSlewOpeningBins, config->etbTargetSlewMaxUpRate);
+	if (upRate < 0.0f) {
+		upRate = 0.0f;
+	}
+
+	float downRate = config->etbTargetSlewMaxDownRate;
+	if (downRate <= 0.0f) {
+		downRate = 10000.0f;
+	}
+
+	float limitedTarget = state.limitedTarget;
+	if (requestedEtbTarget > limitedTarget) {
+		limitedTarget += std::min((requestedEtbTarget - limitedTarget), upRate * dt);
+	} else if (requestedEtbTarget < limitedTarget) {
+		limitedTarget -= std::min((limitedTarget - requestedEtbTarget), downRate * dt);
+	}
+
+	state.limitedTarget = clampPercentValue(limitedTarget);
+	return state.limitedTarget;
+}
 } // namespace
 
 void boardRidingModesApplyDefaults() {
@@ -106,6 +226,10 @@ void boardRidingModesApplyDefaults() {
 	config->engineBrakingRpmFull = ENGINE_BRAKING_DEFAULT_RPM_FULL;
 	config->engineBrakingMinVss = ENGINE_BRAKING_DEFAULT_MIN_VSS;
 	config->engineBrakingMaxBaseEtbTarget = ENGINE_BRAKING_DEFAULT_MAX_BASE_ETB_TARGET;
+	config->etbTargetSlewMaxDownRate = ETB_TARGET_SLEW_DEFAULT_MAX_DOWN_RATE;
+
+	copyArray(config->etbTargetSlewOpeningBins, etbTargetSlewDefaultOpeningBins);
+	copyArray(config->etbTargetSlewMaxUpRate, etbTargetSlewDefaultMaxUpRate);
 }
 
 void boardRidingModesPublishLive() {
@@ -155,50 +279,6 @@ uint8_t boardGetHarleyEngineMap() {
 }
 
 float boardAdjustEtbTarget(float currentEtbTarget) {
-	if (!engine->rpmCalculator.isRunning()) {
-		harleyRideModeState.engineBrakeEtbOffset = 0.0f;
-		return currentEtbTarget;
-	}
-
-	auto app = Sensor::get(SensorType::AcceleratorPedal);
-	if (!app || app.Value > 1.0f) {
-		harleyRideModeState.engineBrakeEtbOffset = 0.0f;
-		return currentEtbTarget;
-	}
-
-	float rpm = Sensor::getOrZero(SensorType::Rpm);
-	float vss = Sensor::getOrZero(SensorType::VehicleSpeed);
-
-	float minRpmEngage = config->engineBrakingRpmEngage;
-	if (minRpmEngage < 0.0f) {
-		minRpmEngage = 0.0f;
-	}
-
-	float rpmFullEffect = config->engineBrakingRpmFull;
-	if (rpmFullEffect <= minRpmEngage) {
-		rpmFullEffect = minRpmEngage + 1.0f;
-	}
-
-	float minVss = config->engineBrakingMinVss;
-	if (minVss < 0.0f) {
-		minVss = 0.0f;
-	}
-
-	float maxBaseEtbTarget = config->engineBrakingMaxBaseEtbTarget;
-	if (maxBaseEtbTarget < 0.0f) {
-		maxBaseEtbTarget = 0.0f;
-	}
-
-	bool isCurrentlyCoasting = engine->module<IdleController>().unmock().isIdleCoasting;
-	// Only influence closed-throttle decel, not idle or pedal-driven operation.
-	if (rpm < minRpmEngage || vss < minVss || currentEtbTarget > maxBaseEtbTarget || !isCurrentlyCoasting) {
-		harleyRideModeState.engineBrakeEtbOffset = 0.0f;
-		return currentEtbTarget;
-	}
-
-	float modeOffset = getDecelEtbOffsetByEngineBrakeMode(harleyRideModeState.engineBrake);
-	float rpmFactor = interpolateClamped(minRpmEngage, 0.0f, rpmFullEffect, 1.0f, rpm);
-	harleyRideModeState.engineBrakeEtbOffset = modeOffset * rpmFactor;
-
-	return currentEtbTarget + harleyRideModeState.engineBrakeEtbOffset;
+	float targetWithEngineBraking = applyEngineBrakingOffset(currentEtbTarget);
+	return applyEtbTargetSlewLimit(targetWithEngineBraking);
 }
