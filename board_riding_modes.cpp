@@ -24,7 +24,6 @@ static constexpr float ENGINE_BRAKING_DEFAULT_RPM_ENGAGE = 1300.0f;
 static constexpr float ENGINE_BRAKING_DEFAULT_RPM_FULL = 4500.0f;
 static constexpr float ENGINE_BRAKING_DEFAULT_MIN_VSS = 3.0f;
 static constexpr float ENGINE_BRAKING_DEFAULT_MAX_BASE_ETB_TARGET = 10.0f;
-static constexpr float ETB_TARGET_SLEW_DEFAULT_MAX_DOWN_RATE = 600.0f;
 
 static constexpr float etbTargetSlewDefaultOpeningBins[ETB_TARGET_SLEW_BINS_COUNT] = {
 	0.0f, 5.0f, 10.0f, 15.0f, 20.0f, 25.0f, 30.0f, 40.0f, 50.0f, 60.0f, 80.0f, 100.0f
@@ -199,16 +198,12 @@ float applyEtbTargetSlewLimit(float requestedEtbTarget) {
 		upRate = 0.0f;
 	}
 
-	float downRate = config->etbTargetSlewMaxDownRate;
-	if (downRate <= 0.0f) {
-		downRate = 10000.0f;
-	}
-
 	float limitedTarget = state.limitedTarget;
 	if (requestedEtbTarget > limitedTarget) {
 		limitedTarget += std::min((requestedEtbTarget - limitedTarget), upRate * dt);
 	} else if (requestedEtbTarget < limitedTarget) {
-		limitedTarget -= std::min((limitedTarget - requestedEtbTarget), downRate * dt);
+		// Closing is intentionally not slewed.
+		limitedTarget = requestedEtbTarget;
 	}
 
 	state.limitedTarget = clampPercentValue(limitedTarget);
@@ -226,7 +221,6 @@ void boardRidingModesApplyDefaults() {
 	config->engineBrakingRpmFull = ENGINE_BRAKING_DEFAULT_RPM_FULL;
 	config->engineBrakingMinVss = ENGINE_BRAKING_DEFAULT_MIN_VSS;
 	config->engineBrakingMaxBaseEtbTarget = ENGINE_BRAKING_DEFAULT_MAX_BASE_ETB_TARGET;
-	config->etbTargetSlewMaxDownRate = ETB_TARGET_SLEW_DEFAULT_MAX_DOWN_RATE;
 
 	copyArray(config->etbTargetSlewOpeningBins, etbTargetSlewDefaultOpeningBins);
 	copyArray(config->etbTargetSlewMaxUpRate, etbTargetSlewDefaultMaxUpRate);
