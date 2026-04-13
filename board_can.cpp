@@ -10,22 +10,6 @@
 #include "cruise_control.h"
 #include "shutdown_controller.h"
 
-#define CAN_HD_VSS_ID 0x142
-#define CAN_HD_THROTTLE_ID 0x144
-
-#define CAN_HD_RPM_OFFSET 0x0
-#define CAN_HD_VSS_OFFSET 0x2
-#define CAN_HD_GEAR_OFFSET 0x4
-
-#define CAN_HD_BCM_PING_ID 0x503 // Here we receive a "Ping" kind of thing
-#define CAN_HD_ECM_PING_ID 0x502 // Here we send our own
-
-#define CAN_HD_VIN_ID_1 0x34D
-#define CAN_HD_VIN_ID_2 0x34E
-#define CAN_HD_VIN_ID_3 0x34F
-#define CAN_HD_RIDING_MODE_ID 0x134
-#define CAN_HD_RIDING_MODE_CONFIRM_ID 0x148
-
 static uint8_t frameCounter142 = 0x0;
 static uint8_t frameCounter144 = 0x0;
 static uint8_t frameCounter146_342 = 0x0;
@@ -245,17 +229,17 @@ void boardHandleCan(CanCycle cycle) {
 	uint32_t tripDistanceMeters = engine->module<TripOdometer>()->getDistanceMeters();
 
 	if (cycle.isInterval(CI::_10ms)) {
-		CanTxMessage msg(CanCategory::NBC, CAN_HD_VSS_ID);
-		msg.setShortValueMsb(Sensor::getOrZero(SensorType::Rpm), CAN_HD_RPM_OFFSET);
-		msg.setShortValueMsb(Sensor::getOrZero(SensorType::VehicleSpeed) * 10.f, CAN_HD_VSS_OFFSET);
-		msg[CAN_HD_GEAR_OFFSET] = calculateHarleyGearValue();
+		CanTxMessage msg(CanCategory::NBC, 0x142);
+		msg.setShortValueMsb(Sensor::getOrZero(SensorType::Rpm), 0x0);
+		msg.setShortValueMsb(Sensor::getOrZero(SensorType::VehicleSpeed) * 10.f, 0x2);
+		msg[0x4] = calculateHarleyGearValue();
 		msg[6] = frameCounter142;
 		msg[7] = crc8(msg.getFrame()->data8, 7);
 		frameCounter142 = (frameCounter142 + 1) % 64;
 	}
 
 	if (cycle.isInterval(CI::_20ms)) {
-		CanTxMessage msg(CanCategory::NBC, CAN_HD_THROTTLE_ID);
+		CanTxMessage msg(CanCategory::NBC, 0x144);
 		msg.setShortValueMsb(Sensor::getOrZero(SensorType::Tps1Primary), 0); // TARGET TPS?
 		msg.setShortValueMsb(Sensor::getOrZero(SensorType::Tps1Secondary), 2); // ACTUAL TPS?
 		msg[4] = Sensor::getOrZero(SensorType::AcceleratorPedal) / 0.4545; // As OEM does
@@ -352,7 +336,7 @@ void boardHandleCan(CanCycle cycle) {
 
 	if (cycle.isInterval(CI::_1000ms)) {
 		{
-			CanTxMessage msg(CanCategory::NBC, CAN_HD_VIN_ID_1);
+			CanTxMessage msg(CanCategory::NBC, 0x34D);
 			msg[0] = engineConfiguration->vinNumber[0];
 			msg[1] = engineConfiguration->vinNumber[1];
 			msg[2] = engineConfiguration->vinNumber[2];
@@ -362,7 +346,7 @@ void boardHandleCan(CanCycle cycle) {
 		}
 
 		{
-			CanTxMessage msg(CanCategory::NBC, CAN_HD_VIN_ID_2);
+			CanTxMessage msg(CanCategory::NBC, 0x34E);
 			msg[0] = engineConfiguration->vinNumber[6];
 			msg[1] = engineConfiguration->vinNumber[7];
 			msg[2] = engineConfiguration->vinNumber[8];
@@ -372,7 +356,7 @@ void boardHandleCan(CanCycle cycle) {
 		}
 
 		{
-			CanTxMessage msg(CanCategory::NBC, CAN_HD_VIN_ID_3);
+			CanTxMessage msg(CanCategory::NBC, 0x34F);
 			msg[0] = engineConfiguration->vinNumber[12];
 			msg[1] = engineConfiguration->vinNumber[13];
 			msg[2] = engineConfiguration->vinNumber[14];
@@ -386,7 +370,7 @@ void boardHandleCan(CanCycle cycle) {
 			uint8_t modeB1 = 0;
 			boardRidingModesComposeTx148(modeB0, modeB1);
 
-			CanTxMessage msg(CanCategory::NBC, CAN_HD_RIDING_MODE_CONFIRM_ID);
+			CanTxMessage msg(CanCategory::NBC, 0x148);
 			msg[0] = modeB0;
 			msg[1] = modeB1;
 			msg[2] = 0x00;
@@ -423,7 +407,7 @@ void boardHandleCan(CanCycle cycle) {
 		}
 
 		{
-			CanTxMessage msg(CanCategory::NBC, CAN_HD_ECM_PING_ID, 0x1/* DLC */);
+			CanTxMessage msg(CanCategory::NBC, 0x502, 0x1/* DLC */);
 			msg[0] = harleyKeepAlive;
 		}
 	}
@@ -432,7 +416,7 @@ void boardHandleCan(CanCycle cycle) {
 void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt) {
 	handleUdsCanRx(busIndex, frame, nowNt);
 
-	if (CAN_SID(frame) == CAN_HD_RIDING_MODE_ID) {
+	if (CAN_SID(frame) == 0x134) {
 		boardRidingModesProcessRx134(frame);
 		boardRidingModesPublishLive();
 	}
