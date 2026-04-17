@@ -8,6 +8,7 @@
 #include "board_riding_modes.h"
 #include "board_uds.h"
 #include "cruise_control.h"
+#include "electronic_throttle.h"
 #include "shutdown_controller.h"
 
 static uint8_t frameCounter142 = 0x0;
@@ -240,9 +241,13 @@ void boardHandleCan(CanCycle cycle) {
 
 	if (cycle.isInterval(CI::_20ms)) {
 		CanTxMessage msg(CanCategory::NBC, 0x144);
-		msg.setShortValueMsb(Sensor::getOrZero(SensorType::Tps1Primary), 0); // TARGET TPS?
-		msg.setShortValueMsb(Sensor::getOrZero(SensorType::Tps1Secondary), 2); // ACTUAL TPS?
-		msg[4] = Sensor::getOrZero(SensorType::AcceleratorPedal) / 0.4545; // As OEM does
+		float targetTps = 0.0f;
+		if (auto controller = engine->etbControllers[0]) {
+			targetTps = controller->getCurrentTarget();
+		}
+		msg.setShortValueMsb(static_cast<uint16_t>(clampF(0.0f, targetTps, 100.0f)), 0); // TARGET TPS
+		msg.setShortValueMsb(Sensor::getOrZero(SensorType::Tps1), 2); // ACTUAL TPS
+		msg[4] = Sensor::getOrZero(SensorType::AcceleratorPedal) / 0.5;
 		msg[5] = getHarleyTractionControlStatus();
 		msg[6] = frameCounter144;
 		msg[7] = crc8(msg.getFrame()->data8, 7);
