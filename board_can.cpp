@@ -254,20 +254,22 @@ void boardHandleCan(CanCycle cycle) {
 
 		constexpr float LHV_J_per_g = 43000.0f;
 		constexpr float eta_th      = 0.31f; // brake thermal efficiency — calibrate against dyno
+		constexpr float FOUR_PI     = 4.0f * 3.14159265f;
 		float displacement_m3  = engineConfiguration->displacement * 1e-3f;
 		float actualBMEP_Pa   = fuelMassCycle_g * LHV_J_per_g * eta_th / displacement_m3;
-		float actualTorque_Nm = actualBMEP_Pa * displacement_m3 / (4.0f * M_PI);
+		float actualTorque_Nm = actualBMEP_Pa * displacement_m3 / FOUR_PI;
 
 		// --- Desired BMEP & torque (targetTps -> desiredMAP -> desiredVE -> airmass) ---
+		// Table layout: [load/TPS rows][RPM cols] — load axis is first in interpolate3d
 		float desiredMap_kPa = interpolate3d(
 			config->mapEstimateTable,
-			config->mapEstimateRpmBins, rpm,
-			config->mapEstimateTpsBins, targetTps
+			config->mapEstimateTpsBins, targetTps,
+			config->mapEstimateRpmBins, rpm
 		);
 		float desiredVE = interpolate3d(
 			config->veTable,
-			config->veRpmBins,  rpm,
-			config->veLoadBins, desiredMap_kPa
+			config->veLoadBins, desiredMap_kPa,
+			config->veRpmBins,  rpm
 		) * PERCENT_DIV;
 		float tChargeK         = engine->engineState.sd.tChargeK;
 		if (tChargeK <= 0.0f) {
@@ -277,12 +279,15 @@ void boardHandleCan(CanCycle cycle) {
 		float desiredAirMassCyl_g  = desiredVE * V_cyl_L * desiredMap_kPa / (0.28705f * tChargeK);
 		float desiredFuelMass_g    = desiredAirMassCyl_g * engineConfiguration->cylindersCount / afr_actual;
 		float desiredBMEP_Pa       = desiredFuelMass_g * LHV_J_per_g * eta_th / displacement_m3;
-		float desiredTorque_Nm     = desiredBMEP_Pa * displacement_m3 / (4.0f * M_PI);
+		float desiredTorque_Nm     = desiredBMEP_Pa * displacement_m3 / FOUR_PI;
 
 		CanTxMessage msg(CanCategory::NBC, 0x144);
-		
-		msg.setShortValueMsb(static_cast<uint16_t>(clampF(0.0f, targetTps, 100.0f)), 0); // TARGET TPS
-		msg.setShortValueMsb(Sensor::getOrZero(SensorType::Tps1), 2); // ACTUAL TPS
+
+		short desiredTorque_short = (short) (((floor((float)(int)(desiredTorque_Nm + 0.1) * 5.0) + 5000)  * (uint)(-5001 < SUB42(buf,0)) & 0xfff);
+		short actualTorque_short  = (short) (((floor((float)(int)(actualTorque_Nm  + 0.1) * 5.0) + 5000)  * (uint)(-5001 < SUB42(buf,0)) & 0xfff);
+
+		msg.setShortValueMsb(desiredTorque_short, 0);
+		msg.setShortValueMsb(actualTorque_short,  2);
 		msg[4] = Sensor::getOrZero(SensorType::AcceleratorPedal) / 0.5;
 		msg[5] = getHarleyTractionControlStatus();
 		msg[6] = frameCounter144;
