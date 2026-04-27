@@ -240,11 +240,47 @@ void boardHandleCan(CanCycle cycle) {
 	}
 
 	if (cycle.isInterval(CI::_20ms)) {
-		CanTxMessage msg(CanCategory::NBC, 0x144);
+		float rpm = Sensor::getOrZero(SensorType::Rpm);
+
 		float targetTps = 0.0f;
 		if (auto controller = engine->etbControllers[0]) {
 			targetTps = controller->getCurrentTarget();
 		}
+
+		// --- Actual BMEP & torque (speed density) ---
+		float airMassCyl_g    = engine->fuelComputer.sdAirMassInOneCylinder;
+		float afr_actual      = engine->fuelComputer.targetAFR;
+		float fuelMassCycle_g = airMassCyl_g * engineConfiguration->cylindersCount / afr_actual;
+
+		constexpr float LHV_J_per_g = 43000.0f;
+		constexpr float eta_th      = 0.31f; // brake thermal efficiency — calibrate against dyno
+		float displacement_m3  = engineConfiguration->displacement * 1e-3f;
+		float actualBMEP_Pa   = fuelMassCycle_g * LHV_J_per_g * eta_th / displacement_m3;
+		float actualTorque_Nm = actualBMEP_Pa * displacement_m3 / (4.0f * M_PI);
+
+		// --- Desired BMEP & torque (targetTps -> desiredMAP -> desiredVE -> airmass) ---
+		float desiredMap_kPa = interpolate3d(
+			config->mapEstimateTable,
+			config->mapEstimateRpmBins, rpm,
+			config->mapEstimateTpsBins, targetTps
+		);
+		float desiredVE = interpolate3d(
+			config->veTable,
+			config->veRpmBins,  rpm,
+			config->veLoadBins, desiredMap_kPa
+		) * PERCENT_DIV;
+		float tChargeK         = engine->engineState.sd.tChargeK;
+		if (tChargeK <= 0.0f) {
+			tChargeK = convertCelsiusToKelvin(Sensor::getOrZero(SensorType::Iat));
+		}
+		float V_cyl_L              = engineConfiguration->displacement / engineConfiguration->cylindersCount;
+		float desiredAirMassCyl_g  = desiredVE * V_cyl_L * desiredMap_kPa / (0.28705f * tChargeK);
+		float desiredFuelMass_g    = desiredAirMassCyl_g * engineConfiguration->cylindersCount / afr_actual;
+		float desiredBMEP_Pa       = desiredFuelMass_g * LHV_J_per_g * eta_th / displacement_m3;
+		float desiredTorque_Nm     = desiredBMEP_Pa * displacement_m3 / (4.0f * M_PI);
+
+		CanTxMessage msg(CanCategory::NBC, 0x144);
+		
 		msg.setShortValueMsb(static_cast<uint16_t>(clampF(0.0f, targetTps, 100.0f)), 0); // TARGET TPS
 		msg.setShortValueMsb(Sensor::getOrZero(SensorType::Tps1), 2); // ACTUAL TPS
 		msg[4] = Sensor::getOrZero(SensorType::AcceleratorPedal) / 0.5;
