@@ -50,6 +50,29 @@ N: 0.872V => 17.44% => 0xA0
 */
 float harleyGearValues[] = { 17.44f, 9.86f, 25.24f, 41.96f, 57.48f, 72.96f, 88.78f };
 
+uint16_t encodeTorqueToCANValue(float torque_nm) {
+    // Skalierung mit Rundungsbias
+    float scaled_f = (torque_nm + 0.1f) * 5.0f;
+    
+    // Truncation toward zero (TriCore ftoiz)
+    int32_t buf = static_cast<int32_t>(scaled_f);
+    
+    // Schwellenprüfung auf den unteren 16 Bit, vorzeichenextendiert
+    int16_t buf_low = static_cast<int16_t>(buf & 0xFFFF);
+    bool in_range = (buf_low >= -5000);
+    
+    // Offset addieren
+    int32_t result = buf + 5000;
+    
+    // Bei Unterlauf: Null zurückgeben
+    if (!in_range) {
+        return 0;
+    }
+    
+    // Untere 16 Bit zurückgeben (zero-extended)
+    return static_cast<uint16_t>(result & 0xFFFF);
+}
+
 uint32_t getFourBytesMsb(const CANRxFrame& frame, size_t offset) {
 	return (static_cast<uint32_t>(frame.data8[offset]) << 24) |
 		(static_cast<uint32_t>(frame.data8[offset + 1]) << 16) |
@@ -283,8 +306,8 @@ void boardHandleCan(CanCycle cycle) {
 
 		CanTxMessage msg(CanCategory::NBC, 0x144);
 
-		short desiredTorque_short = (short) (((floor((float)(int)(desiredTorque_Nm + 0.1) * 5.0) + 5000)  * (uint)(-5001 < SUB42(buf,0)) & 0xfff);
-		short actualTorque_short  = (short) (((floor((float)(int)(actualTorque_Nm  + 0.1) * 5.0) + 5000)  * (uint)(-5001 < SUB42(buf,0)) & 0xfff);
+		short desiredTorque_short = encodeTorqueToCANValue(desiredTorque_Nm);
+		short actualTorque_short  = encodeTorqueToCANValue(actualTorque_Nm);
 
 		msg.setShortValueMsb(desiredTorque_short, 0);
 		msg.setShortValueMsb(actualTorque_short,  2);
