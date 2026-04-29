@@ -3,7 +3,7 @@ uint8_t[PEDAL_TO_TPS_SIZE x PEDAL_TO_TPS_RPM_SIZE] etbRoadTable;;"%", 1, 0, 0, 1
 uint8_t[PEDAL_TO_TPS_SIZE x PEDAL_TO_TPS_RPM_SIZE] etbRainTable;;"%", 1, 0, 0, 100, 0
 uint8_t[PEDAL_TO_TPS_SIZE x PEDAL_TO_TPS_RPM_SIZE] etbSportTable;;"%", 1, 0, 0, 100, 0
 uint8_t[PEDAL_TO_TPS_SIZE x PEDAL_TO_TPS_RPM_SIZE] etbTrackTable;;"%", 1, 0, 0, 100, 0
-int16_t[PEDAL_TO_TPS_SIZE x PEDAL_TO_TPS_RPM_SIZE] autoscale estimatedEngineTorqueTable;;"Nm", 0.1, 0, -4000, 4000, 1
+int16_t[PEDAL_TO_TPS_SIZE x PEDAL_TO_TPS_RPM_SIZE] autoscale estimatedEngineTorqueTable;;"Nm", 0.1, 0, -400, 400, 1
 uint16_t[PEDAL_TO_TPS_RPM_SIZE] estimatedEngineTorqueRpmBins;;"rpm", 1, 0, 0, 12000, 0
 uint8_t[PEDAL_TO_TPS_SIZE] estimatedEngineTorqueTpsBins;;"%", 1, 0, 0, 100, 0
 #define INSTANT_ACCEL_SHOT_TPS_COUNT 6
