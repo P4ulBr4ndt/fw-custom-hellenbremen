@@ -57,6 +57,10 @@ void boardDefaultConfiguration() {
 	boardEtbMapsApplyDefaults();
 	boardInstantAccelApplyDefaults();
 	boardRidingModesApplyDefaults();
+
+	setRpmTableBin(config->estimatedEngineTorqueRpmBins);
+	setLinearCurve(config->estimatedEngineTorqueTpsBins, 0.0f, 100.0f, 1.0f);
+	setTable(config->estimatedEngineTorqueTable, 0);
 }
 
 void boardConfigOverrides() {

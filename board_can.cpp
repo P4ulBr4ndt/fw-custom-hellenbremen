@@ -144,6 +144,22 @@ uint8_t getHarleyTractionControlStatus() {
 	return 0x00;
 }
 
+float getEstimatedTorqueFromTable(float rpm, float tps) {
+	const float estimatedTorque = interpolate3d(
+		config->estimatedEngineTorqueTable,
+		config->estimatedEngineTorqueTpsBins,
+		tps,
+		config->estimatedEngineTorqueRpmBins,
+		rpm
+	);
+
+	return clampF(-400.0f, estimatedTorque, 400.0f);
+}
+
+uint16_t scaleTorqueForCan(float torque) {
+	return static_cast<uint16_t>(((torque + 0.1f) * 5) + 5000);
+}
+
 bool isCurrentSpeedAllowedForCurrentGear() {
 	auto speed = Sensor::get(SensorType::VehicleSpeed);
 	if (!speed.Valid) {
@@ -241,12 +257,16 @@ void boardHandleCan(CanCycle cycle) {
 
 	if (cycle.isInterval(CI::_20ms)) {
 		CanTxMessage msg(CanCategory::NBC, 0x144);
-		float targetTps = 0.0f;
-		if (auto controller = engine->etbControllers[0]) {
-			targetTps = controller->getCurrentTarget();
-		}
-		msg.setShortValueMsb(static_cast<uint16_t>(clampF(0.0f, targetTps, 100.0f)), 0); // TARGET TPS
-		msg.setShortValueMsb(Sensor::getOrZero(SensorType::Tps1), 2); // ACTUAL TPS
+
+		const float rpm = Sensor::getOrZero(SensorType::Rpm);
+		const float currentTps = Sensor::getOrZero(SensorType::Tps1);
+		const float intendedTps = Sensor::getOrZero(SensorType::DriverThrottleIntent);
+
+		const float targetTorque = getEstimatedTorqueFromTable(rpm, intendedTps);
+		const float estimatedTorque = getEstimatedTorqueFromTable(rpm, currentTps);
+
+		msg.setShortValueMsb(scaleTorqueForCan(targetTorque), 0x0); // TARGET ESTIMATED TORQUE
+		msg.setShortValueMsb(scaleTorqueForCan(estimatedTorque), 0x2); // ACTUAL ESTIMATED TORQUE
 		msg[4] = Sensor::getOrZero(SensorType::AcceleratorPedal) / 0.5;
 		msg[5] = getHarleyTractionControlStatus();
 		msg[6] = frameCounter144;
