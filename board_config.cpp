@@ -5,6 +5,7 @@
 #include <cstring>
 
 #include "board_etb_maps.h"
+#include "board_torque_maps.h"
 #include "board_instant_accel_shot.h"
 #include "board_riding_modes.h"
 #include "defaults.h"
@@ -55,6 +56,7 @@ void boardDefaultConfiguration() {
 	engineConfiguration->throttlePedalSecondaryWOTVoltage = 4.48;
 
 	boardEtbMapsApplyDefaults();
+	boardTorqueMapsApplyDefaults();
 	boardInstantAccelApplyDefaults();
 	boardRidingModesApplyDefaults();
 }

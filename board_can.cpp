@@ -7,6 +7,7 @@
 
 #include "board_riding_modes.h"
 #include "board_uds.h"
+#include "board_torque_maps.h"
 #include "cruise_control.h"
 #include "electronic_throttle.h"
 #include "shutdown_controller.h"
@@ -49,6 +50,29 @@ N: 0.872V => 17.44% => 0xA0
 6: 4.439V => 88,78% => 0x60
 */
 float harleyGearValues[] = { 17.44f, 9.86f, 25.24f, 41.96f, 57.48f, 72.96f, 88.78f };
+
+uint16_t encodeTorqueToCANValue(int16_t torque_nm) {
+    // Skalierung mit Rundungsbias
+    float scaled_f = (torque_nm + 0.1f) * 5.0f;
+    
+    // Truncation toward zero (TriCore ftoiz)
+    int32_t buf = static_cast<int32_t>(scaled_f);
+    
+    // Schwellenprüfung auf den unteren 16 Bit, vorzeichenextendiert
+    int16_t buf_low = static_cast<int16_t>(buf & 0xFFFF);
+    bool in_range = (buf_low >= -5000);
+    
+    // Offset addieren
+    int32_t result = buf + 5000;
+    
+    // Bei Unterlauf: Null zurückgeben
+    if (!in_range) {
+        return 0;
+    }
+    
+    // Untere 16 Bit zurückgeben (zero-extended)
+    return static_cast<uint16_t>(result & 0xFFFF);
+}
 
 uint32_t getFourBytesMsb(const CANRxFrame& frame, size_t offset) {
 	return (static_cast<uint32_t>(frame.data8[offset]) << 24) |
@@ -245,8 +269,12 @@ void boardHandleCan(CanCycle cycle) {
 		if (auto controller = engine->etbControllers[0]) {
 			targetTps = controller->getCurrentTarget();
 		}
-		msg.setShortValueMsb(static_cast<uint16_t>(clampF(0.0f, targetTps, 100.0f)), 0); // TARGET TPS
-		msg.setShortValueMsb(Sensor::getOrZero(SensorType::Tps1), 2); // ACTUAL TPS
+
+		estimatedTargetTorque = ;
+		estimatedActualTorque = ;
+
+		msg.setShortValueMsb(encodeTorqueToCANValue(estimatedTargetTorque), 0); // TARGET TPS
+		msg.setShortValueMsb(encodeTorqueToCANValue(estimatedActualTorque), 2); // ACTUAL TPS
 		msg[4] = Sensor::getOrZero(SensorType::AcceleratorPedal) / 0.5;
 		msg[5] = getHarleyTractionControlStatus();
 		msg[6] = frameCounter144;
