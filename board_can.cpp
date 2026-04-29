@@ -270,8 +270,8 @@ void boardHandleCan(CanCycle cycle) {
 			targetTps = controller->getCurrentTarget();
 		}
 
-		estimatedTargetTorque = ;
-		estimatedActualTorque = ;
+		estimatedTargetTorque = targetTps;
+		estimatedActualTorque = SensorType::getOrZero(SensorType::Tps1);
 
 		msg.setShortValueMsb(encodeTorqueToCANValue(estimatedTargetTorque), 0); // TARGET TPS
 		msg.setShortValueMsb(encodeTorqueToCANValue(estimatedActualTorque), 2); // ACTUAL TPS

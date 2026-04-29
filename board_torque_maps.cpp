@@ -14,7 +14,9 @@ void ensureTorqueMapsInitialized() {
 		return;
 	}
 
-	torqueMap.initTable(config->torqueTable, config->pedalToTpsRpmBins, config->pedalToTpsPedalBins);
+	torqueMap.initTable(config->torqueTable, 
+						config->estimatedEngineTorqueRpmBins, 
+						config->estimatedEngineTorqueRpmBins);
 
 	torqueMapsInitialized = true;
 }
@@ -32,7 +34,7 @@ public:
 HarleyTorqueMapProvider harleyTorqueMapProvider;
 } // namespace
 
-ValueProvider3D* pedal2TpsProvider() {
+ValueProvider3D* torqueProvider() {
 	return &harleyTorqueMapProvider;
 }
 
