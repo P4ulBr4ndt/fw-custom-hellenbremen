@@ -260,9 +260,12 @@ void boardHandleCan(CanCycle cycle) {
 
 		const float rpm = Sensor::getOrZero(SensorType::Rpm);
 		const float currentTps = Sensor::getOrZero(SensorType::Tps1);
-		const float intendedTps = Sensor::getOrZero(SensorType::DriverThrottleIntent);
+		float targetTps = 0.0f;
+		if (auto controller = engine->etbControllers[0]) {
+			targetTps = controller->getCurrentTarget();
+		}
 
-		const float targetTorque = getEstimatedTorqueFromTable(rpm, intendedTps);
+		const float targetTorque = getEstimatedTorqueFromTable(rpm, targetTps);
 		const float estimatedTorque = getEstimatedTorqueFromTable(rpm, currentTps);
 
 		msg.setShortValueMsb(scaleTorqueForCan(targetTorque), 0x0); // TARGET ESTIMATED TORQUE
