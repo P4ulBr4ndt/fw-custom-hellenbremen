@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <msq xmlns="http://www.msefi.com/:msq">
     <page/>
-    <page number="0" size="25952">
+    <page number="0" size="26208">
         <constant name="accelEnrichmentMode">"MS Adder"</constant>
         <constant name="accelerometerCsPin">"NONE"</constant>
         <constant name="accelerometerCsPinMode">"default"</constant>
@@ -561,7 +561,7 @@
         <constant name="brakePedalPin">"NONE"</constant>
         <constant name="brakePedalPinMode">"PULLUP"</constant>
         <constant digits="0" name="byFirmwareVersion" units="index">20260303</constant>
-        <constant digits="0" name="calibrationBirthday" units="">20260428</constant>
+        <constant digits="0" name="calibrationBirthday" units="">20260429</constant>
         <constant digits="0" name="camDecoder2jzPosition" units="angle">95</constant>
         <constant digits="0" name="camDecoder2jzPrecision" units="">40</constant>
         <constant name="camInputs1">"NONE"</constant>
@@ -1025,6 +1025,48 @@
         <constant digits="0" name="engineSnifferRpmThreshold" units="RPM">2500</constant>
         <constant name="engineSyncCam">"Intake First Bank"</constant>
         <constant name="engineType">"MINIMAL_PINS"</constant>
+        <constant cols="1" digits="0" name="estimatedEngineTorqueRpmBins" rows="8" units="rpm">
+         0
+         0
+         0
+         0
+         0
+         0
+         0
+         0
+</constant>
+        <constant cols="8" digits="1" name="estimatedEngineTorqueTable" rows="14" units="Nm">
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+</constant>
+        <constant cols="1" digits="0" name="estimatedEngineTorqueTpsBins" rows="14" units="%">
+         0
+         0
+         0
+         0
+         0
+         0
+         0
+         0
+         0
+         0
+         0
+         0
+         0
+         0
+</constant>
         <constant digits="4" name="etb_dFactor" units="">0.05</constant>
         <constant digits="4" name="etb_iFactor" units="">10.0</constant>
         <constant digits="0" name="etb_iTermMax" units="">30</constant>
@@ -5199,7 +5241,7 @@ end</constant>
 </constant>
         <constant name="yesUnderstandLocking">"no"</constant>
     </page>
-    <versionInfo firmwareInfo="20260227" nPages="1" signature="rusEFI main.2026.04.28.hellen-bremen.4240361309" version="5.0"/>
+    <versionInfo firmwareInfo="20260227" nPages="1" signature="rusEFI main.2026.04.29.hellen-bremen.1781602520" version="5.0"/>
     <bibliography author="rusEFI 20260227" writeDate="date"/>
     <settings/>
     <userComments/>
