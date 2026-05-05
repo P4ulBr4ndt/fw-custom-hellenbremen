@@ -46,5 +46,17 @@ DDEFS += -DEFI_HD_DP=TRUE
 # Store LTFT in internal flash (not SD storage backend)
 DDEFS += -DEFI_STORAGE_SD=FALSE
 
+# USB product string shown by host OS
+DDEFS += -DUSB_DESCRIPTOR_STRING_CONTENT="'B', 0, 'r', 0, 'e', 0, 'm', 0, 'e', 0, 'r', 0, 'E', 0, 'C', 0, 'U', 0"
+
 # OpenBLT CAN IDs (standard 11-bit)
 DDEFS += -DBOOT_COM_CAN_RX_MSG_ID=0x7E0 -DBOOT_COM_CAN_TX_MSG_ID=0x7E8 -DBOOT_COM_CAN_EXT=0
+# OpenBLT CAN physical pins: match main firmware CAN1 (PD0/PD1)
+DDEFS += -DBOOT_COM_CAN_CHANNEL_INDEX=0
+DDEFS += -DOPENBLT_CAN_RX_PORT=GPIOD -DOPENBLT_CAN_RX_PIN=0
+DDEFS += -DOPENBLT_CAN_TX_PORT=GPIOD -DOPENBLT_CAN_TX_PIN=1
+
+# let's drop some fancy lua functions
+DDEFS += -DWITH_LUA_CONSUMPTION=FALSE
+DDEFS += -DWITH_LUA_PID=FALSE
+DDEFS += -DWITH_LUA_STOP_ENGINE=FALSE
