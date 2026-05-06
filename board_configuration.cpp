@@ -17,5 +17,5 @@ void setup_custom_board_overrides() {
 	custom_board_periodicFastCallback = boardInstantAccelFastCallback;
 
 	PRGSEL.initPin("PRGSEL", Gpio::D10);
-	PRGSEL.setValue(True);
+	PRGSEL.setValue(true);
 }
