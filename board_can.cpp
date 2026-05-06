@@ -7,6 +7,7 @@
 
 #include "board_riding_modes.h"
 #include "board_uds.h"
+#include "board_config.h"
 #include "cruise_control.h"
 #include "electronic_throttle.h"
 #include "shutdown_controller.h"
@@ -15,6 +16,8 @@ static uint8_t frameCounter142 = 0x0;
 static uint8_t frameCounter144 = 0x0;
 static uint8_t frameCounter146_342 = 0x0;
 static uint8_t frameCounter148 = 0x40;
+
+static uint8_t boardPeriodicSlowCounter = 0;
 
 static bool harleyKeepAlive = true;
 static bool harleyIgnitionOffRequested = false;
@@ -227,6 +230,8 @@ void decreaseDesiredCCSpeedForCurrentGear() {
 } // namespace
 
 void boardPeriodicSlow() {
+	boardPeriodicSlowCounter++;
+
 	bool jssDown = engine->engineState.jssState != 0;
 	uint8_t currentGear = calculateHarleyGearIndex();
 	bool isNeutral = currentGear == 0;
@@ -238,6 +243,8 @@ void boardPeriodicSlow() {
 	}
 
 	jssStopRequestActive = shouldRequestStop;
+
+	if(boardPeriodicSlowCounter % (1000 / 50) == 0) PRGSEL.toggle();
 }
 
 void boardHandleCan(CanCycle cycle) {
