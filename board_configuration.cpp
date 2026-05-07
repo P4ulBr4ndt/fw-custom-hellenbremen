@@ -9,7 +9,7 @@
 #include "pwm_generator_logic.h"
 
 static OutputPin prgselPin;
-static SimplePwm prgselPwm("PRGSEL");
+SimplePwm prgselPwm("PRGSEL");
 
 void setup_custom_board_overrides() {
 	custom_board_DefaultConfiguration = boardDefaultConfiguration;
