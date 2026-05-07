@@ -150,7 +150,7 @@ void boardConfigOverrides() {
 	engineConfiguration->minimumIgnitionTiming = -90;
 }
 
-void boardInitHardware() {
+void boardCustomInitHardware() {
 	// Purge Solenoid PWM init
 	startSimplePwmExt(&prgselPwm, 
 				   "PRGSEL", 
