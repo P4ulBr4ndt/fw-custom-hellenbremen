@@ -12,7 +12,7 @@
 
 #define HARLEY_V_TWIN 45.0
 
-static void onPrgselTimeout(scheduler_arg_t) {
+static void onPrgselTimeout() {
 	prgselWarmupTimeFinished = true;
 }
 
