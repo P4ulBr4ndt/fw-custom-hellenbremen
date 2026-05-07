@@ -12,6 +12,10 @@
 
 #define HARLEY_V_TWIN 45.0
 
+static void onPrgselTimeout(scheduler_arg_t) {
+	prgselWarmupTimeFinished = true;
+}
+
 void boardDefaultConfiguration() {
 	// Trigger
 	engineConfiguration->overrideTriggerGaps = true;
@@ -152,6 +156,12 @@ void boardConfigOverrides() {
 				   Gpio::D10, 
 				   &prgselPin, 
 				   NAN,              // Frequency
-				   0.3f                // Duty cycle
+				   0.3f              // Duty cycle
 	);
+
+	efitick_t prgselFireAt = getTimeNowNt() + MS2NT(5000);
+	engine->scheduler.schedule("prgsel", 
+		                       &prgselSchedule, 
+							   prgselFireAt, 
+							   action_s::make<onPrgselTimeout>());
 }

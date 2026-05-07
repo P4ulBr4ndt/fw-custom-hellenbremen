@@ -9,8 +9,10 @@
 #include "pwm_generator_logic.h"
 
 // Required by Purge Solenoid PWM 
-SimplePwm prgselPwm("PRGSEL");
-OutputPin prgselPin;
+SimplePwm    prgselPwm("PRGSEL");
+OutputPin    prgselPin;
+scheduling_s prgselSchedule;
+bool         prgselWarmupTimeFinished = false;
 
 void setup_custom_board_overrides() {
 	custom_board_DefaultConfiguration = boardDefaultConfiguration;
