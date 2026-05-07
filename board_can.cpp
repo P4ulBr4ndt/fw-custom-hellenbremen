@@ -240,15 +240,14 @@ void boardPeriodicSlow() {
 
 	jssStopRequestActive = shouldRequestStop;
 
-	/*if((Sensor::getOrZero(SensorType::Rpm) >= 2000) &&
+	if((Sensor::getOrZero(SensorType::Rpm) >= 2000.0f) &&
 	   (Sensor::getOrZero(SensorType::VehicleSpeed) >= 10.0f) &&
-	   (5.0f <= Sensor::getOrZero(SensorType::AcceleratorPedal) &&
-	    50.0f >= Sensor::getOrZero(SensorType::AcceleratorPedal)) &&
-	   (Sensor::getOrZero(SensorType::AuxTemp1) >= 90.0f)) {*/
-	if(50.0f <= Sensor::getOrZero(SensorType::AcceleratorPedal)) {
+	   (Sensor::getOrZero(SensorType::AcceleratorPedal) >= 5.0f) &&
+	   (Sensor::getOrZero(SensorType::AcceleratorPedal) <= 50.0f) &&
+	   (Sensor::getOrZero(SensorType::Clt) >= 90.0f)) {
 		prgselPwm.setFrequency(32.0f);
 	} else {
-		prgselPwm.setFrequency(NAN);
+		prgselPwm.setFrequency(NAN); // setFrequecy(NAN) deactivates the PWM schedule
 	}
 }
 
