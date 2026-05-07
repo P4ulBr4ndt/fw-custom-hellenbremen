@@ -148,7 +148,9 @@ void boardConfigOverrides() {
 	// work-around for https://github.com/rusefi/rusefi/issues/5894 todo: fix it!
 	engineConfiguration->maximumIgnitionTiming = 90;
 	engineConfiguration->minimumIgnitionTiming = -90;
+}
 
+void boardInitHardware() {
 	// Purge Solenoid PWM init
 	startSimplePwmExt(&prgselPwm, 
 				   "PRGSEL", 

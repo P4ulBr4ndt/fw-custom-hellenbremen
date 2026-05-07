@@ -21,4 +21,5 @@ void setup_custom_board_overrides() {
 	custom_board_update_dash = boardHandleCan;
 	custom_board_periodicSlowCallback = boardPeriodicSlow;
 	custom_board_periodicFastCallback = boardInstantAccelFastCallback;
+	custom_board_InitHardware = boardInitHardware;
 }
