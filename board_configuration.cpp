@@ -10,7 +10,7 @@
 
 // Required by Purge Solenoid PWM 
 SimplePwm prgselPwm("PRGSEL");
-static OutputPin prgselPin;
+OutputPin prgselPin;
 
 void setup_custom_board_overrides() {
 	custom_board_DefaultConfiguration = boardDefaultConfiguration;

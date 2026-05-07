@@ -246,9 +246,9 @@ void boardPeriodicSlow() {
 	    50.0f >= Sensor::getOrZero(SensorType::AcceleratorPedal)) &&
 	   (Sensor::getOrZero(SensorType::AuxTemp1) >= 90.0f)) {*/
 	if(50.0f <= Sensor::getOrZero(SensorType::AcceleratorPedal)) {
-		prgselPwm.setSimplePwmDutyCycle(0.3f);
+		prgselPwm.setFrequency(32.0f);
 	} else {
-		prgselPwm.setSimplePwmDutyCycle(0.0f);
+		prgselPwm.setFrequency(NAN);
 	}
 }
 

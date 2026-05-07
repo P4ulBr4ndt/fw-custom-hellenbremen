@@ -151,7 +151,7 @@ void boardConfigOverrides() {
 				   &engine->scheduler, 
 				   Gpio::D10, 
 				   &prgselPin, 
-				   32.0f,              // Frequency
-				   0.0f                // Duty cycle
+				   NAN,              // Frequency
+				   0.3f                // Duty cycle
 	);
 }
