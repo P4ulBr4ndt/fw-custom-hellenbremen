@@ -6,7 +6,10 @@
 #include "board_config.h"
 #include "board_instant_accel_shot.h"
 
-OutputPin PRGSEL;
+#include "pwm_generator_logic.h"
+
+static OutputPin prgselPin;
+static SimplePwm prgselPwm("PRGSEL");
 
 void setup_custom_board_overrides() {
 	custom_board_DefaultConfiguration = boardDefaultConfiguration;
@@ -16,6 +19,12 @@ void setup_custom_board_overrides() {
 	custom_board_periodicSlowCallback = boardPeriodicSlow;
 	custom_board_periodicFastCallback = boardInstantAccelFastCallback;
 
-	PRGSEL.initPin("PRGSEL", Gpio::D10);
-	PRGSEL.setValue(true);
+	startSimplePwmExt(&prgselPwm, 
+				   "PRGSEL", 
+				   &engine->scheduler, 
+				   Gpio::D10, 
+				   &prgselPin, 
+				   32.0f,              // Frequency
+				   0.0f                // Duty cycle
+	);
 }

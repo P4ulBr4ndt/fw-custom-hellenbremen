@@ -2,7 +2,7 @@
 
 #include "efi_output.h"
 
-extern OutputPin PRGSEL;
+extern SimplePwm prgselPwm;
 
 void boardDefaultConfiguration();
 void boardConfigOverrides();
