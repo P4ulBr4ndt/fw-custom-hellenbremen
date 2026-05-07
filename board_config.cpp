@@ -159,7 +159,7 @@ void boardConfigOverrides() {
 				   0.3f              // Duty cycle
 	);
 
-	efitick_t prgselFireAt = getTimeNowNt() + MS2NT(5000);
+	efitick_t prgselFireAt = getTimeNowNt() + MS2NT(30000);
 	engine->scheduler.schedule("prgsel", 
 		                       &prgselSchedule, 
 							   prgselFireAt, 

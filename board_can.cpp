@@ -240,11 +240,13 @@ void boardPeriodicSlow() {
 
 	jssStopRequestActive = shouldRequestStop;
 
-	if((Sensor::getOrZero(SensorType::Rpm) >= 2000.0f) &&
+	/*if((Sensor::getOrZero(SensorType::Rpm) >= 2000.0f) &&
 	   (Sensor::getOrZero(SensorType::VehicleSpeed) >= 10.0f) &&
 	   (Sensor::getOrZero(SensorType::AcceleratorPedal) >= 5.0f) &&
 	   (Sensor::getOrZero(SensorType::AcceleratorPedal) <= 50.0f) &&
 	   (Sensor::getOrZero(SensorType::Clt) >= 90.0f) && 
+	    prgselWarmupTimeFinished) {*/
+	if((Sensor::getOrZero(SensorType::AcceleratorPedal) >= 50.0f) &&
 	    prgselWarmupTimeFinished) {
 		prgselPwm.setFrequency(32.0f);
 	} else {
