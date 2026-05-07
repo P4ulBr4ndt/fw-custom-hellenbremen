@@ -9,3 +9,4 @@ extern bool         prgselWarmupTimeFinished;
 
 void boardDefaultConfiguration();
 void boardConfigOverrides();
+void boardInitHardware();
