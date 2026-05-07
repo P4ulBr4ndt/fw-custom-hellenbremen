@@ -8,8 +8,9 @@
 
 #include "pwm_generator_logic.h"
 
-static OutputPin prgselPin;
+// Required by Purge Solenoid PWM 
 SimplePwm prgselPwm("PRGSEL");
+static OutputPin prgselPin;
 
 void setup_custom_board_overrides() {
 	custom_board_DefaultConfiguration = boardDefaultConfiguration;
@@ -18,13 +19,4 @@ void setup_custom_board_overrides() {
 	custom_board_update_dash = boardHandleCan;
 	custom_board_periodicSlowCallback = boardPeriodicSlow;
 	custom_board_periodicFastCallback = boardInstantAccelFastCallback;
-
-	startSimplePwmExt(&prgselPwm, 
-				   "PRGSEL", 
-				   &engine->scheduler, 
-				   Gpio::D10, 
-				   &prgselPin, 
-				   32.0f,              // Frequency
-				   0.0f                // Duty cycle
-	);
 }
