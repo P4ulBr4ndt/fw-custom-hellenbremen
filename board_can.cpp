@@ -17,8 +17,6 @@ static uint8_t frameCounter144 = 0x0;
 static uint8_t frameCounter146_342 = 0x0;
 static uint8_t frameCounter148 = 0x40;
 
-static uint32_t boardPeriodicSlowEngineRuntimeCounter = 0;
-
 static bool harleyKeepAlive = true;
 static bool harleyIgnitionOffRequested = false;
 static bool harleyIgnitionOffRequestedPrev = false;
@@ -243,24 +241,18 @@ void boardPeriodicSlow() {
 	jssStopRequestActive = shouldRequestStop;
 
 	// Purge Valve Solenoid routines
-	// Only count up until 180 seconds, then activate PWM.
-	// Otherwise if not reached, reset counter
+	// Only count up until 180 seconds when engine running, activate PWM.
 	if(engine->rpmCalculator.isRunning() && !prgselWarmupTimeFinished) {
-		boardPeriodicSlowEngineRuntimeCounter++;
-
-		if(boardPeriodicSlowEngineRuntimeCounter >= (uint32_t)(180 / 0.05f)) {
+		if(engine->fuelComputer.running.timeSinceCrankingInSecs >= 180.0f) {
 			prgselWarmupTimeFinished = true;
 			efiPrintf("Purge Solenoid Warm Up time reached!");
 		}
-	} else {
-		boardPeriodicSlowEngineRuntimeCounter = 0;
-	}
-	
+	}	
 
 	if((Sensor::getOrZero(SensorType::Rpm) >= 2000.0f) &&
 	   (Sensor::getOrZero(SensorType::VehicleSpeed) >= 10.0f) &&
 	   (Sensor::getOrZero(SensorType::AcceleratorPedal) >= 5.0f) &&
-	   (Sensor::getOrZero(SensorType::AcceleratorPedal) <= 50.0f) &&
+	   (Sensor::getOrZero(SensorType::AcceleratorPedal) <= 75.0f) &&
 	   (Sensor::getOrZero(SensorType::Clt) >= 90.0f) && 
 	    prgselWarmupTimeFinished) {
 		prgselPwm.setFrequency(32.0f);
