@@ -12,9 +12,9 @@
 
 #define HARLEY_V_TWIN 45.0
 
-static void onPrgselTimeout() {
-	prgselWarmupTimeFinished = true;
-}
+// static void onPrgselTimeout() {
+// 	prgselWarmupTimeFinished = true;
+// }
 
 void boardDefaultConfiguration() {
 	// Trigger
