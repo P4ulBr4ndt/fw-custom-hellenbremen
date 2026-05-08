@@ -12,10 +12,6 @@
 
 #define HARLEY_V_TWIN 45.0
 
-// static void onPrgselTimeout() {
-// 	prgselWarmupTimeFinished = true;
-// }
-
 void boardDefaultConfiguration() {
 	// Trigger
 	engineConfiguration->overrideTriggerGaps = true;
@@ -151,7 +147,7 @@ void boardConfigOverrides() {
 }
 
 void boardCustomInitHardware() {
-	// // Purge Solenoid PWM init
+	// Purge Solenoid PWM init
 	startSimplePwmExt(&prgselPwm, 
 				   "PRGSEL", 
 				   &engine->scheduler, 
@@ -160,10 +156,4 @@ void boardCustomInitHardware() {
 				   NAN,              // Frequency
 				   0.3f              // Duty cycle
 	);
-
-	// efitick_t prgselFireAt = getTimeNowNt() + MS2NT(30000);
-	// engine->scheduler.schedule("prgsel", 
-	// 	                       &prgselSchedule, 
-	// 						   prgselFireAt, 
-	// 						   action_s::make<onPrgselTimeout>());
 }

@@ -4,7 +4,6 @@
 
 extern OutputPin    prgselPin;
 extern SimplePwm    prgselPwm;
-extern scheduling_s prgselSchedule;
 extern bool         prgselWarmupTimeFinished;
 
 void boardDefaultConfiguration();
