@@ -7,6 +7,7 @@
 
 #include "board_riding_modes.h"
 #include "board_uds.h"
+#include "board_config.h"
 #include "cruise_control.h"
 #include "electronic_throttle.h"
 #include "shutdown_controller.h"
@@ -238,6 +239,18 @@ void boardPeriodicSlow() {
 	}
 
 	jssStopRequestActive = shouldRequestStop;
+
+	// Purge Valve Solenoid routines
+	if((Sensor::getOrZero(SensorType::Rpm) >= 2000.0f) &&
+	   (Sensor::getOrZero(SensorType::VehicleSpeed) >= 10.0f) &&
+	   (Sensor::getOrZero(SensorType::AcceleratorPedal) >= 5.0f) &&
+	   (Sensor::getOrZero(SensorType::AcceleratorPedal) <= 75.0f) &&
+	   (Sensor::getOrZero(SensorType::Clt) >= 90.0f) && 
+		engine->fuelComputer.running.timeSinceCrankingInSecs >= 180.0f) {
+		prgselPwm.setFrequency(32.0f);
+	} else {
+		prgselPwm.setFrequency(NAN); // setFrequecy(NAN) deactivates the PWM schedule
+	}
 }
 
 void boardHandleCan(CanCycle cycle) {

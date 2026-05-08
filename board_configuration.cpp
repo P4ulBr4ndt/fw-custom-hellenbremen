@@ -6,6 +6,12 @@
 #include "board_config.h"
 #include "board_instant_accel_shot.h"
 
+#include "pwm_generator_logic.h"
+
+// Required by Purge Solenoid PWM 
+SimplePwm    prgselPwm("PRGSEL");
+OutputPin    prgselPin;
+
 void setup_custom_board_overrides() {
 	custom_board_DefaultConfiguration = boardDefaultConfiguration;
 	custom_board_ConfigOverrides = boardConfigOverrides;
@@ -13,4 +19,5 @@ void setup_custom_board_overrides() {
 	custom_board_update_dash = boardHandleCan;
 	custom_board_periodicSlowCallback = boardPeriodicSlow;
 	custom_board_periodicFastCallback = boardInstantAccelFastCallback;
+	custom_board_InitHardware = boardCustomInitHardware;
 }

@@ -145,3 +145,15 @@ void boardConfigOverrides() {
 	engineConfiguration->maximumIgnitionTiming = 90;
 	engineConfiguration->minimumIgnitionTiming = -90;
 }
+
+void boardCustomInitHardware() {
+	// Purge Solenoid PWM init
+	startSimplePwmExt(&prgselPwm, 
+				   "PRGSEL", 
+				   &engine->scheduler, 
+				   Gpio::D10, 
+				   &prgselPin, 
+				   NAN,              // Frequency
+				   0.3f              // Duty cycle
+	);
+}
