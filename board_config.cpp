@@ -151,19 +151,19 @@ void boardConfigOverrides() {
 }
 
 void boardCustomInitHardware() {
-	// Purge Solenoid PWM init
-	startSimplePwmExt(&prgselPwm, 
-				   "PRGSEL", 
-				   &engine->scheduler, 
-				   Gpio::D10, 
-				   &prgselPin, 
-				   NAN,              // Frequency
-				   0.3f              // Duty cycle
-	);
+	// // Purge Solenoid PWM init
+	// startSimplePwmExt(&prgselPwm, 
+	// 			   "PRGSEL", 
+	// 			   &engine->scheduler, 
+	// 			   Gpio::D10, 
+	// 			   &prgselPin, 
+	// 			   NAN,              // Frequency
+	// 			   0.3f              // Duty cycle
+	// );
 
-	efitick_t prgselFireAt = getTimeNowNt() + MS2NT(30000);
-	engine->scheduler.schedule("prgsel", 
-		                       &prgselSchedule, 
-							   prgselFireAt, 
-							   action_s::make<onPrgselTimeout>());
+	// efitick_t prgselFireAt = getTimeNowNt() + MS2NT(30000);
+	// engine->scheduler.schedule("prgsel", 
+	// 	                       &prgselSchedule, 
+	// 						   prgselFireAt, 
+	// 						   action_s::make<onPrgselTimeout>());
 }
