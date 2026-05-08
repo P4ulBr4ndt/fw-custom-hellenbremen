@@ -242,7 +242,8 @@ void boardPeriodicSlow() {
 
 	jssStopRequestActive = shouldRequestStop;
 
-	if(engine->rpmCalculator.isRunning() && !prgselWarmupTimeFinished) {
+	// if(engine->rpmCalculator.isRunning() && !prgselWarmupTimeFinished) {
+	if(!prgselWarmupTimeFinished) {
 		boardPeriodicSlowEngineRuntimeCounter++;
 
 		if(boardPeriodicSlowEngineRuntimeCounter >= (uint32_t)(30 / 0.02f))
@@ -250,7 +251,7 @@ void boardPeriodicSlow() {
 	} else {
 		boardPeriodicSlowEngineRuntimeCounter = 0;
 	}
-	
+
 	/*if((Sensor::getOrZero(SensorType::Rpm) >= 2000.0f) &&
 	   (Sensor::getOrZero(SensorType::VehicleSpeed) >= 10.0f) &&
 	   (Sensor::getOrZero(SensorType::AcceleratorPedal) >= 5.0f) &&
