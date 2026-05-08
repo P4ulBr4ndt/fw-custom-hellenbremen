@@ -250,7 +250,7 @@ void boardPeriodicSlow() {
 
 		if(boardPeriodicSlowEngineRuntimeCounter >= (uint32_t)(180 / 0.05f)) {
 			prgselWarmupTimeFinished = true;
-			efiprintf("Purge Solenoid Warm Up time reached!");
+			efiPrintf("Purge Solenoid Warm Up time reached!");
 		}
 	} else {
 		boardPeriodicSlowEngineRuntimeCounter = 0;
