@@ -11,7 +11,6 @@
 // Required by Purge Solenoid PWM 
 SimplePwm    prgselPwm("PRGSEL");
 OutputPin    prgselPin;
-bool         prgselWarmupTimeFinished = false;
 
 void setup_custom_board_overrides() {
 	custom_board_DefaultConfiguration = boardDefaultConfiguration;

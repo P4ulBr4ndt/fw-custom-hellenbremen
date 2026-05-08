@@ -241,20 +241,12 @@ void boardPeriodicSlow() {
 	jssStopRequestActive = shouldRequestStop;
 
 	// Purge Valve Solenoid routines
-	// Only count up until 180 seconds when engine running, activate PWM.
-	if(engine->rpmCalculator.isRunning() && !prgselWarmupTimeFinished) {
-		if(engine->fuelComputer.running.timeSinceCrankingInSecs >= 180.0f) {
-			prgselWarmupTimeFinished = true;
-			efiPrintf("Purge Solenoid Warm Up time reached!");
-		}
-	}	
-
 	if((Sensor::getOrZero(SensorType::Rpm) >= 2000.0f) &&
 	   (Sensor::getOrZero(SensorType::VehicleSpeed) >= 10.0f) &&
 	   (Sensor::getOrZero(SensorType::AcceleratorPedal) >= 5.0f) &&
 	   (Sensor::getOrZero(SensorType::AcceleratorPedal) <= 75.0f) &&
 	   (Sensor::getOrZero(SensorType::Clt) >= 90.0f) && 
-	    prgselWarmupTimeFinished) {
+		engine->fuelComputer.running.timeSinceCrankingInSecs >= 180.0f) {
 		prgselPwm.setFrequency(32.0f);
 	} else {
 		prgselPwm.setFrequency(NAN); // setFrequecy(NAN) deactivates the PWM schedule
