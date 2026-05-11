@@ -56,23 +56,23 @@ void boardDefaultConfiguration() {
 
 	// Fuel Level Calibration Road Glide 2025
 	// Values are rising in percentage per index
-	engineConfiguration->fuelLevelBins[0] = 0.335f; // fuelLevelBins in float of V
-	engineConfiguration->fuelLevelBins[1] = 0.446f;
-	engineConfiguration->fuelLevelBins[2] = 0.556f;
-	engineConfiguration->fuelLevelBins[3] = 0.667f;
-	engineConfiguration->fuelLevelBins[4] = 0.778f;
-	engineConfiguration->fuelLevelBins[5] = 0.889f;
-	engineConfiguration->fuelLevelBins[6] = 0.999f;
-	engineConfiguration->fuelLevelBins[7] = 1.110f;
+	config->fuelLevelBins[0] = 0.335f; // fuelLevelBins in float of V
+	config->fuelLevelBins[1] = 0.446f;
+	config->fuelLevelBins[2] = 0.556f;
+	config->fuelLevelBins[3] = 0.667f;
+	config->fuelLevelBins[4] = 0.778f;
+	config->fuelLevelBins[5] = 0.889f;
+	config->fuelLevelBins[6] = 0.999f;
+	config->fuelLevelBins[7] = 1.110f;
 
-	engineConfiguration->fuelLevelValues[0] = 0; // fuelLevelValues in int of %
-	engineConfiguration->fuelLevelValues[1] = 14;
-	engineConfiguration->fuelLevelValues[2] = 29;
-	engineConfiguration->fuelLevelValues[3] = 43;
-	engineConfiguration->fuelLevelValues[4] = 57;
-	engineConfiguration->fuelLevelValues[5] = 71;
-	engineConfiguration->fuelLevelValues[6] = 86;
-	engineConfiguration->fuelLevelValues[7] = 100;
+	config->fuelLevelValues[0] = 0; // fuelLevelValues in int of %
+	config->fuelLevelValues[1] = 14;
+	config->fuelLevelValues[2] = 29;
+	config->fuelLevelValues[3] = 43;
+	config->fuelLevelValues[4] = 57;
+	config->fuelLevelValues[5] = 71;
+	config->fuelLevelValues[6] = 86;
+	config->fuelLevelValues[7] = 100;
 
 	engineConfiguration->fuelLevelAveragingAlpha = 0.003f; //TODO Too responsive, decrease alpha for more smoothing
 	engineConfiguration->fuelLevelLowThresholdVoltage = 0.3f;
