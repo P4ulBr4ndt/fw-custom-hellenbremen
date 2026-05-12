@@ -65,15 +65,15 @@ void boardDefaultConfiguration() {
 	config->fuelLevelBins[6] = 0.999f;
 	config->fuelLevelBins[7] = 1.110f;
 
-	config->fuelLevelValues[0] = 0; // fuelLevelValues in int of %
-	config->fuelLevelValues[1] = 14;
-	config->fuelLevelValues[2] = 29;
-	config->fuelLevelValues[3] = 43;
-	config->fuelLevelValues[4] = 57;
-	config->fuelLevelValues[5] = 71;
-	config->fuelLevelValues[6] = 86;
-	config->fuelLevelValues[7] = 100;
-
+	config->fuelLevelValues[0] = 100; // fuelLevelValues in int of %
+	config->fuelLevelValues[1] = 86;
+	config->fuelLevelValues[2] = 71;
+	config->fuelLevelValues[3] = 57;
+	config->fuelLevelValues[4] = 43;
+	config->fuelLevelValues[5] = 29;
+	config->fuelLevelValues[6] = 14;
+	config->fuelLevelValues[7] = 0; 
+	
 	engineConfiguration->fuelLevelAveragingAlpha = 0.003f; //TODO Too responsive, decrease alpha for more smoothing
 	engineConfiguration->fuelLevelLowThresholdVoltage = 0.3f;
 	engineConfiguration->fuelLevelHighThresholdVoltage = 1.3f;
