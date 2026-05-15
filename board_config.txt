@@ -29,3 +29,8 @@ float[INSTANT_ACCEL_SHOT_TPS_COUNT] instantAccelShotTpsFromBins;;"%", 1, 0, 0, 1
 float[INSTANT_ACCEL_SHOT_TPS_COUNT] instantAccelShotTpsToBins;;"%", 1, 0, 0, 100, 1
 int16_t[INSTANT_ACCEL_SHOT_CLT_CORR_COUNT] instantAccelShotCltCorrBins;;"SPECIAL_CASE_TEMPERATURE", 1, 0, -40, 150, 0
 float[INSTANT_ACCEL_SHOT_CLT_CORR_COUNT] instantAccelShotCltCorrMult;;"multiplier", 1, 0, 0, 5, 2
+uint8_t cfcOnTemperature;On Temperature;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 0
+uint8_t cfcOffTemperature;Off Temperature;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 0
+bit cfcDisableWhenEngineStopped,"Yes","No";Disable when engine stopped
+uint8_t cfcDisableAboveSpeed;Disable above vehicle speed;"SPECIAL_CASE_SPEED", 1, 0, 0, 255, 0
+uint8_t cfcIdleAdder;Idle Adder;"%", 1, 0, 0, 100, 0

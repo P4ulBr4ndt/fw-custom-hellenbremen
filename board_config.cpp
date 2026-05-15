@@ -31,9 +31,9 @@ void boardDefaultConfiguration() {
 	engineConfiguration->fanPin = Gpio::C7;
 	engineConfiguration->fanOnTemperature = 0.f;
 	engineConfiguration->fanOffTemperature = 0.f;
-	engineConfiguration->fan2Pin = Gpio::C8;
-	engineConfiguration->fan2OnTemperature = 80.f;
-	engineConfiguration->fan2OffTemperature = 70.f;
+	engineConfiguration->fan2Pin = Gpio::Unassigned;
+	engineConfiguration->fan2OnTemperature = 0.f;
+	engineConfiguration->fan2OffTemperature = 0.f;
 	engineConfiguration->mainRelayPin = Gpio::Unassigned;
 
 	// AFR TODO
@@ -180,4 +180,7 @@ void boardCustomInitHardware() {
 				   NAN,              // Frequency
 				   0.3f              // Duty cycle
 	);
+
+	// Cooling Fan Control Pin init
+	cfcPin.initPin("CFC", Gpio::C8);
 }

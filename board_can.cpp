@@ -251,6 +251,13 @@ void boardPeriodicSlow() {
 	} else {
 		prgselPwm.setFrequency(NAN); // setFrequecy(NAN) deactivates the PWM schedule
 	}
+
+	// Cooling Fan Controller
+	if ((Sensor::getOrZero(SensorType::AuxTemp2) > config->cfcOnTemperature) && (cfcPin.getLogicValue() == false)) {
+		cfcPin.setValue(true);
+	} else if ((Sensor::getOrZero(SensorType::AuxTemp2) < config->cfcOffTemperature) && (cfcPin.getLogicValue() == true)) {
+		cfcPin.setValue(false);
+	}
 }
 
 void boardHandleCan(CanCycle cycle) {
