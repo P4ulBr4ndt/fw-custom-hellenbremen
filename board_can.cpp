@@ -251,6 +251,18 @@ void boardPeriodicSlow() {
 	} else {
 		prgselPwm.setFrequency(NAN); // setFrequecy(NAN) deactivates the PWM schedule
 	}
+
+	// Cooling Fan Controller
+	//TODO Idle Adder is not implemented yet
+	bool  cfcRunning          = cfcPin.getLogicValue();
+	float cfcCurrentTemp      = Sensor::getOrZero(SensorType::AuxTemp2);
+	bool  cfcDisableSpeedCond = (config->cfcDisableAboveSpeed <= Sensor::getOrZero(SensorType::VehicleSpeed)) &&
+								(config->cfcDisableAboveSpeed > 0);
+	bool  cfcDisableEngCond   = (!config->cfcDisableWhenEngineStopped || isEngineActive);
+	if ((cfcCurrentTemp > config->cfcOnTemperature) && !cfcRunning && cfcDisableEngCond && !cfcDisableSpeedCond)
+		cfcPin.setValue(true);
+	else if ((cfcCurrentTemp < config->cfcOffTemperature || cfcDisableSpeedCond) && cfcRunning) 
+		cfcPin.setValue(false);
 }
 
 void boardHandleCan(CanCycle cycle) {
