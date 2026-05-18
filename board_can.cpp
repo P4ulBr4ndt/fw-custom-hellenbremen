@@ -227,44 +227,6 @@ void decreaseDesiredCCSpeedForCurrentGear() {
 }
 } // namespace
 
-void boardPeriodicSlow() {
-	bool jssDown = engine->engineState.jssState != 0;
-	uint8_t currentGear = calculateHarleyGearIndex();
-	bool isNeutral = currentGear == 0;
-	bool isEngineActive = engine->rpmCalculator.isRunning() || engine->rpmCalculator.isCranking();
-
-	bool shouldRequestStop = jssDown && !isNeutral && isEngineActive;
-	if (shouldRequestStop && !jssStopRequestActive) {
-		doScheduleStopEngine(StopRequestedReason::Board1);
-	}
-
-	jssStopRequestActive = shouldRequestStop;
-
-	// Purge Valve Solenoid routines
-	if((Sensor::getOrZero(SensorType::Rpm) >= 2000.0f) &&
-	   (Sensor::getOrZero(SensorType::VehicleSpeed) >= 10.0f) &&
-	   (Sensor::getOrZero(SensorType::AcceleratorPedal) >= 5.0f) &&
-	   (Sensor::getOrZero(SensorType::AcceleratorPedal) <= 75.0f) &&
-	   (Sensor::getOrZero(SensorType::Clt) >= 90.0f) && 
-		engine->fuelComputer.running.timeSinceCrankingInSecs >= 180.0f) {
-		prgselPwm.setFrequency(32.0f);
-	} else {
-		prgselPwm.setFrequency(NAN); // setFrequecy(NAN) deactivates the PWM schedule
-	}
-
-	// Cooling Fan Controller
-	//TODO Idle Adder is not implemented yet
-	bool  cfcRunning          = cfcPin.getLogicValue();
-	float cfcCurrentTemp      = Sensor::getOrZero(SensorType::AuxTemp2);
-	bool  cfcDisableSpeedCond = (config->cfcDisableAboveSpeed <= Sensor::getOrZero(SensorType::VehicleSpeed)) &&
-								(config->cfcDisableAboveSpeed > 0);
-	bool  cfcDisableEngCond   = (!config->cfcDisableWhenEngineStopped || isEngineActive);
-	if ((cfcCurrentTemp > config->cfcOnTemperature) && !cfcRunning && cfcDisableEngCond && !cfcDisableSpeedCond)
-		cfcPin.setValue(true);
-	else if ((cfcCurrentTemp < config->cfcOffTemperature || cfcDisableSpeedCond) && cfcRunning) 
-		cfcPin.setValue(false);
-}
-
 void boardHandleCan(CanCycle cycle) {
 	boardRidingModesPublishLive();
 
