@@ -259,9 +259,9 @@ void boardPeriodicSlow() {
 	bool  cfcDisableSpeedCond = (config->cfcDisableAboveSpeed <= Sensor::getOrZero(SensorType::VehicleSpeed)) &&
 								(config->cfcDisableAboveSpeed > 0);
 	bool  cfcDisableEngCond   = (!config->cfcDisableWhenEngineStopped || isEngineActive);
-	if ((cfcCurrentTemp > config->cfcOnTemperature) && !cfcRunning && cfcDisableEngCond && !cfcDisableSpeedCond)
+	if (((cfcCurrentTemp > config->cfcOnTemperature) && !cfcRunning && cfcDisableEngCond && !cfcDisableSpeedCond) || config->cfcForceState)
 		cfcPin.setValue(true);
-	else if ((cfcCurrentTemp < config->cfcOffTemperature || cfcDisableSpeedCond) && cfcRunning) 
+	else if (((cfcCurrentTemp < config->cfcOffTemperature || cfcDisableSpeedCond) && cfcRunning) && !config->cfcForceState) 
 		cfcPin.setValue(false);
 }
 
