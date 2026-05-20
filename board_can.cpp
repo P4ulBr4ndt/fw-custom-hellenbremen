@@ -475,7 +475,9 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 	}
 
 	if (CAN_SID(frame) == 0x500) {
-		harleyKeepAlive = frame.data8[0];
+			bool cfcRunning = cfcPin.getLogicValue();
+			if(!cfcRunning || config->cfcDisableWhenEngineStopped)
+				harleyKeepAlive = frame.data8[0];
 	}
 
 	if (CAN_SID(frame) == 0x15A) {
