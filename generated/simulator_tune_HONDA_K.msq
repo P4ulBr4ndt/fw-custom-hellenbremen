@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <msq xmlns="http://www.msefi.com/:msq">
     <page/>
-    <page number="0" size="26220">
+    <page number="0" size="26236">
         <constant name="accelEnrichmentMode">"MS Adder"</constant>
         <constant name="accelerometerCsPin">"NONE"</constant>
         <constant name="accelerometerCsPinMode">"default"</constant>
@@ -3326,6 +3326,15 @@ end</constant>
          1.0
          1.0
 </constant>
+        <constant digits="0" name="prgselActAfterTime" units="s">0</constant>
+        <constant name="prgselActive">"No"</constant>
+        <constant digits="0" name="prgselCLTTemp" units="C">0</constant>
+        <constant digits="0" name="prgselLowerTGS" units="%">0</constant>
+        <constant digits="0" name="prgselPWMDuty" units="%">0</constant>
+        <constant digits="0" name="prgselPWMFreq" units="Hz">0</constant>
+        <constant digits="0" name="prgselRPM" units="rpm">0</constant>
+        <constant digits="0" name="prgselUpperTGS" units="%">0</constant>
+        <constant digits="0" name="prgselVelocity" units="kmh">0</constant>
         <constant cols="1" digits="0" name="primeBins" rows="8" units="{bitStringValue(unitsLabels, useMetricOnInterface)}">
          -40
          -20
@@ -5248,7 +5257,7 @@ end</constant>
 </constant>
         <constant name="yesUnderstandLocking">"no"</constant>
     </page>
-    <versionInfo firmwareInfo="20260227" nPages="1" signature="rusEFI main.2026.05.21.hellen-bremen.1823622948" version="5.0"/>
+    <versionInfo firmwareInfo="20260227" nPages="1" signature="rusEFI main.2026.05.21.hellen-bremen.366900970" version="5.0"/>
     <bibliography author="rusEFI 20260227" writeDate="date"/>
     <settings/>
     <userComments/>
