@@ -203,7 +203,7 @@ void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {
 	}
 }
 
-void boardOnConfigurationChange(engine_configuration_s* previousConfiguration) {
+void boardCustomOnConfigurationChange(engine_configuration_s* previousConfiguration) {
 	prgselPwm.setFrequency(config->prgselPWMFreq);
 	prgselPwm.setSimplePwmDutyCycle(config->prgselPWMDuty / 100.0f);
 
