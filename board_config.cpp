@@ -1,5 +1,6 @@
 #include "pch.h"
 
+#include "board_can.h"
 #include "board_config.h"
 
 #include <cstring>
@@ -132,11 +133,11 @@ void boardConfigOverrides() {
 
 	// Temp Sensor Pullups
 	// As CLT we use ETS because thats the important figure for us
-	engineConfiguration->clt.config.bias_resistor = 820; // ETS
-	engineConfiguration->auxTempSensor1.config.bias_resistor = 820; // ETS
-	engineConfiguration->auxTempSensor2.config.bias_resistor = 4700; // CLT
-	engineConfiguration->ambientTempSensor.config.bias_resistor = 4700; // AAT
-	engineConfiguration->iat.config.bias_resistor = 4700; // IAT
+	engineConfiguration->clt.config.bias_resistor = 1000; // ETS
+	engineConfiguration->auxTempSensor1.config.bias_resistor = 1000; // ETS
+	engineConfiguration->auxTempSensor2.config.bias_resistor = 1000; // CLT
+	engineConfiguration->ambientTempSensor.config.bias_resistor = 10000; // AAT
+	engineConfiguration->iat.config.bias_resistor = 1000; // IAT
 
 	// Temp Sensors
 	engineConfiguration->clt.adcChannel = EFI_ADC_17; // ETS PA1 MUX = 1
@@ -183,4 +184,15 @@ void boardCustomInitHardware() {
 
 	// Cooling Fan Control Pin init
 	cfcPin.initPin("CFC", Gpio::C8);
+}
+
+void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {
+	switch(index) {
+		case 0:
+			setCfcForceState(false);
+			break;
+		case 1:
+			setCfcForceState(true);
+			break;
+	}
 }

@@ -31,6 +31,11 @@ static efitick_t cruiseDecLastRepeatNt = 0;
 static efitick_t cruiseIncLastRepeatNt = 0;
 static bool jssStopRequestActive = false;
 static uint32_t lastReceivedOdometer = 0;
+static bool cfcForceState = false;
+
+void setCfcForceState(bool state) {
+	cfcForceState = state;
+}
 
 struct CruiseGearLimits {
 	bool allowCruise;
@@ -259,9 +264,9 @@ void boardPeriodicSlow() {
 	bool  cfcDisableSpeedCond = (config->cfcDisableAboveSpeed <= Sensor::getOrZero(SensorType::VehicleSpeed)) &&
 								(config->cfcDisableAboveSpeed > 0);
 	bool  cfcDisableEngCond   = (!config->cfcDisableWhenEngineStopped || isEngineActive);
-	if (((cfcCurrentTemp > config->cfcOnTemperature) && !cfcRunning && cfcDisableEngCond && !cfcDisableSpeedCond) || config->cfcForceState)
+	if (((cfcCurrentTemp > config->cfcOnTemperature) && !cfcRunning && cfcDisableEngCond && !cfcDisableSpeedCond) || cfcForceState)
 		cfcPin.setValue(true);
-	else if (((cfcCurrentTemp < config->cfcOffTemperature || cfcDisableSpeedCond) && cfcRunning) && !config->cfcForceState) 
+	else if (((cfcCurrentTemp < config->cfcOffTemperature || cfcDisableSpeedCond) && cfcRunning) && !cfcForceState) 
 		cfcPin.setValue(false);
 }
 

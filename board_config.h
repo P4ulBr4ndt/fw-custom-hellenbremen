@@ -12,3 +12,4 @@ extern OutputPin    cfcPin;
 void boardDefaultConfiguration();
 void boardConfigOverrides();
 void boardCustomInitHardware();
+void boardHandleTsCommand(uint16_t subsystem, uint16_t index);
