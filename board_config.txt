@@ -43,4 +43,4 @@ uint8_t  prgselUpperTGS;;"%", 1, 0, 0, 100, 0
 uint8_t  prgselCLTTemp;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 120, 0
 uint8_t  prgselPWMFreq;;"Hz", 1, 0, 1, 255, 0
 uint8_t  prgselPWMDuty;;"%", 1, 0, 1, 100, 0
-uint16_t prgselActAfterTime;;"s", 1, 0, 0, 65536, 0
+uint16_t prgselActAfterTime;;"s", 1, 0, 0, 65535, 0
