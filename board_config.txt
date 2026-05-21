@@ -34,3 +34,4 @@ uint8_t cfcOffTemperature;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 0
 bit cfcDisableWhenEngineStopped,"Yes","No";
 uint8_t cfcDisableAboveSpeed;;"SPECIAL_CASE_SPEED", 1, 0, 0, 255, 0
 uint8_t cfcIdleAdder;Additional idle % when fan is active;"%", 1, 0, 0, 100, 0
+output_pin_e cfcOutputPin;Cooling fan control pin;
