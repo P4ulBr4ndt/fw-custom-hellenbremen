@@ -183,7 +183,7 @@ void boardCustomInitHardware() {
 	);
 
 	// Cooling Fan Control Pin init
-	cfcPin.initPin("CFC", config->cfcOutputPin);
+	cfcPin.initPin("CFC", Gpio::C8);
 }
 
 void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {
