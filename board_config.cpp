@@ -178,8 +178,8 @@ void boardCustomInitHardware() {
 				   &engine->scheduler, 
 				   Gpio::D10, 
 				   &prgselPin, 
-				   NAN,              // Frequency
-				   0.3f              // Duty cycle
+				   NAN, // Frequency
+				   config->prgselPWMDuty / 100.0f
 	);
 
 	// Cooling Fan Control Pin init
@@ -194,5 +194,19 @@ void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {
 		case 1:
 			setCfcForceState(true);
 			break;
+		case 2:
+			setPrgselForceState(false);
+			break;
+		case 3:
+			setPrgselForceState(true);
+			break;
 	}
+}
+
+void boardOnConfigurationChange(engine_configuration_s* previousConfiguration) {
+	prgselPwm.setFrequency(config->prgselPWMFreq);
+	prgselPwm.setSimplePwmDutyCycle(config->prgselPWMDuty / 100.0f);
+
+	if(!config->prgselActive)
+		prgselPwm.setFrequency(NAN);
 }

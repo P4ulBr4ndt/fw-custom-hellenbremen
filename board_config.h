@@ -13,3 +13,4 @@ void boardDefaultConfiguration();
 void boardConfigOverrides();
 void boardCustomInitHardware();
 void boardHandleTsCommand(uint16_t subsystem, uint16_t index);
+void boardOnConfigurationChange(engine_configuration_s* previousConfiguration);

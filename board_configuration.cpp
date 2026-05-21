@@ -23,4 +23,5 @@ void setup_custom_board_overrides() {
 	custom_board_periodicFastCallback = boardInstantAccelFastCallback;
 	custom_board_InitHardware = boardCustomInitHardware;
 	custom_board_ts_command = boardHandleTsCommand;
+	custom_board_OnConfigurationChange = boardOnConfigurationChange;
 }

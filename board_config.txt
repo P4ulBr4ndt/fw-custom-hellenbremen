@@ -1,3 +1,4 @@
+! type name;description;"unit", scale, offset, min, max, digits
 uint16_t[VE_LOAD_COUNT x VE_RPM_COUNT] autoscale veFrontTable;;"%", 0.1, 0, 0, 999, 1
 uint8_t[PEDAL_TO_TPS_SIZE x PEDAL_TO_TPS_RPM_SIZE] etbRoadTable;;"%", 1, 0, 0, 100, 0
 uint8_t[PEDAL_TO_TPS_SIZE x PEDAL_TO_TPS_RPM_SIZE] etbRainTable;;"%", 1, 0, 0, 100, 0
@@ -34,3 +35,12 @@ uint8_t cfcOffTemperature;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 0
 bit cfcDisableWhenEngineStopped,"Yes","No";
 uint8_t cfcDisableAboveSpeed;;"SPECIAL_CASE_SPEED", 1, 0, 0, 255, 0
 uint8_t cfcIdleAdder;Additional idle % when fan is active;"%", 1, 0, 0, 100, 0
+bit prgselActive,"Yes","No";
+uint16_t prgselRPM;;"rpm", 1, 0, 0, 10000, 0
+uint8_t  prgselVelocity;;"SPECIAL_CASE_SPEED", 1, 0, 0, 255, 0
+uint8_t  prgselLowerTGS;;"%", 1, 0, 0, 100, 0
+uint8_t  prgselUpperTGS;;"%", 1, 0, 0, 100, 0
+uint8_t  prgselCLTTemp;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 120, 0
+uint8_t  prgselPWMFreq;;"Hz", 1, 0, 1, 255, 0
+uint8_t  prgselPWMDuty;;"%", 1, 0, 1, 100, 0
+uint16_t prgselActAfterTime;;"s", 1, 0, 0, 65536, 0

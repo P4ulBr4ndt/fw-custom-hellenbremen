@@ -32,9 +32,19 @@ static efitick_t cruiseIncLastRepeatNt = 0;
 static bool jssStopRequestActive = false;
 static uint32_t lastReceivedOdometer = 0;
 static bool cfcForceState = false;
+static bool prgselForceState = false;
 
 void setCfcForceState(bool state) {
 	cfcForceState = state;
+}
+
+void setPrgselForceState(bool state) {
+	if(state && !config->prgselActive)
+		prgselPwm.setFrequency(config->prgselPWMFreq);
+	else if(!state && !config->prgselActive)
+		prgselPwm.setFrequency(NAN);
+
+	prgselForceState = state;
 }
 
 struct CruiseGearLimits {
@@ -246,13 +256,13 @@ void boardPeriodicSlow() {
 	jssStopRequestActive = shouldRequestStop;
 
 	// Purge Valve Solenoid routines
-	if((Sensor::getOrZero(SensorType::Rpm) >= 2000.0f) &&
-	   (Sensor::getOrZero(SensorType::VehicleSpeed) >= 10.0f) &&
-	   (Sensor::getOrZero(SensorType::AcceleratorPedal) >= 5.0f) &&
-	   (Sensor::getOrZero(SensorType::AcceleratorPedal) <= 75.0f) &&
-	   (Sensor::getOrZero(SensorType::Clt) >= 90.0f) && 
-		engine->fuelComputer.running.timeSinceCrankingInSecs >= 180.0f) {
-		prgselPwm.setFrequency(32.0f);
+	if(config->prgselActive && (((Sensor::getOrZero(SensorType::Rpm) >= config->prgselRPM) &&
+	   (Sensor::getOrZero(SensorType::VehicleSpeed) >= config->prgselVelocity) &&
+	   (Sensor::getOrZero(SensorType::AcceleratorPedal) >= config->prgselLowerTGS) &&
+	   (Sensor::getOrZero(SensorType::AcceleratorPedal) <= config->prgselUpperTGS) &&
+	   (Sensor::getOrZero(SensorType::Clt) >= config->prgselCLTTemp) && 
+		engine->fuelComputer.running.timeSinceCrankingInSecs >= config->prgselActAfterTime) || prgselForceState))  {
+		prgselPwm.setFrequency(config->prgselPWMFreq);
 	} else {
 		prgselPwm.setFrequency(NAN); // setFrequecy(NAN) deactivates the PWM schedule
 	}
