@@ -109,7 +109,7 @@ void boardConfigOverrides() {
 
 	// Knock
 	// engineConfiguration->enableSoftwareKnock = true;
-	// engineConfiguration->knockFrequency = 0.0f; // TODO
+	// engineConfiguration->knockFrequency = 0.0f; 
 
 	// Sensors
 	engineConfiguration->map.sensor.hwChannel = EFI_ADC_13; // PC3
