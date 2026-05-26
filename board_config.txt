@@ -52,12 +52,10 @@ uint8_t  prgselPWMFreq;;"Hz", 1, 0, 1, 255, 0
 uint8_t  prgselPWMDuty;;"%", 1, 0, 1, 100, 0
 uint16_t prgselActAfterTime;;"s", 1, 0, 0, 65535, 0
 
-custom ccfcModes_e 1 bits, U08, @OFFSET@, [0:1], "On", "Auto", "Off"
-ccfcModes_e ccfcMode;;
 uint8_t ccfcDisableAboveSpeed;;"SPECIAL_CASE_SPEED", 1, 0, 0, 255, 0
 uint8_t ccfcEnableBelowSpeed;;"SPECIAL_CASE_SPEED", 1, 0, 0, 255, 0
-uint8_t ccfcDisableBelowEngTemp;;"SPECIAL_CASE_SPEED", 1, 0, 0, 255, 0
-uint8_t ccfcEnableAboveEngTemp;;"SPECIAL_CASE_SPEED", 1, 0, 0, 255, 0
-uint8_t ccfcDisableBelowAmbTemp;;"SPECIAL_CASE_SPEED", 1, 0, 0, 255, 0
-uint8_t ccfcEnableAboveAmbTemp;;"SPECIAL_CASE_SPEED", 1, 0, 0, 255, 0
+uint8_t ccfcDisableBelowEngTemp;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 255, 0
+uint8_t ccfcEnableAboveEngTemp;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 255, 0
+uint8_t ccfcDisableBelowAmbTemp;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 255, 0
+uint8_t ccfcEnableAboveAmbTemp;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 255, 0
 ! uint8_t ccfcIdleAdder;Additional idle RPM in % when fan is active;"%", 1, 0, 0, 100, 0

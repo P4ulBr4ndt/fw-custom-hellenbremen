@@ -31,9 +31,12 @@ static efitick_t cruiseDecLastRepeatNt = 0;
 static efitick_t cruiseIncLastRepeatNt = 0;
 static bool jssStopRequestActive = false;
 static uint32_t lastReceivedOdometer = 0;
+
 static bool cfcForceState    = false;
 static bool ccfcForceState   = false;
 static bool prgselForceState = false;
+
+static ccfcModes_e ccfcMode; // Is set by CAN Bus frame 0x3C4
 
 void setCfcForceState(bool state) {
 	cfcForceState = state;
@@ -290,12 +293,14 @@ void boardPeriodicSlow() {
 	// Chassis Cooling Fan Controller
 	//TODO Idle Adder is not implemented yet
 	bool ccfcRunning = ccfcPin.getLogicValue();
-	if(config->ccfcMode == ccfcModes_e::On) {
+	engine->outputChannels.luaGauges[6] = ccfcRunning ? 1.0f : 0.0f;
+	engine->outputChannels.luaGauges[7] = static_cast<float>(static_cast<uint8_t>(ccfcMode));
+	if(ccfcMode == ccfcModes_e::On) {
 		if(((currVelocity <= config->ccfcEnableBelowSpeed) && !ccfcRunning) || ccfcForceState)
 			ccfcPin.setValue(true);
 		else if((currVelocity >= config->ccfcDisableAboveSpeed) && ccfcRunning)
 			ccfcPin.setValue(false);
-	} else if(config->ccfcMode == ccfcModes_e::Auto) {
+	} else if(ccfcMode == ccfcModes_e::Auto) {
 		if(((currVelocity <= config->ccfcEnableBelowSpeed && 
 		     currEngTemp >= config->ccfcEnableAboveEngTemp &&
 		     currAmbTemp >= config->ccfcEnableAboveAmbTemp) && !ccfcRunning) || ccfcForceState)
@@ -304,7 +309,7 @@ void boardPeriodicSlow() {
 		         currEngTemp <= config->ccfcDisableBelowEngTemp &&
 		         currAmbTemp <= config->ccfcDisableBelowAmbTemp) && ccfcRunning)
 			ccfcPin.setValue(false);
-	} else if(config->ccfcMode == ccfcModes_e::Off) {
+	} else if(ccfcMode == ccfcModes_e::Off) {
 		if(ccfcForceState)
 			ccfcPin.setValue(true);	
 		else
@@ -627,6 +632,16 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 		if (getCCStatus() == CruiseControlStatus::Enabled && footBrakeEngaged) {
 			setCCStatus(CruiseControlStatus::Standby);
 		}
+	}
+
+	if(CAN_SID(frame) == 0x3C4) {
+		uint8_t ifcuCcfcMode = frame.data8[4];
+		if(ifcuCcfcMode == 0x40)
+			ccfcMode = ccfcModes_e::Off;
+		if(ifcuCcfcMode == 0xC0)
+			ccfcMode = ccfcModes_e::Auto;
+		if(ifcuCcfcMode == 0x80)
+			ccfcMode = ccfcModes_e::On;
 	}
 
 	if (CAN_SID(frame) == 0x3C6) {
