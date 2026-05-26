@@ -38,6 +38,8 @@ static bool prgselForceState = false;
 
 static ccfcModes_e ccfcMode; // Is set by CAN Bus frame 0x3C4
 
+extern StoredValueSensor luaGauges[LUA_GAUGE_COUNT];
+
 void setCfcForceState(bool state) {
 	cfcForceState = state;
 }
@@ -293,8 +295,10 @@ void boardPeriodicSlow() {
 	// Chassis Cooling Fan Controller
 	//TODO Idle Adder is not implemented yet
 	bool ccfcRunning = ccfcPin.getLogicValue();
-	engine->outputChannels.luaGauges[6] = ccfcRunning ? 1.0f : 0.0f;
-	engine->outputChannels.luaGauges[7] = static_cast<float>(static_cast<uint8_t>(ccfcMode));
+
+	luaGauges[6].setValidValue(ccfcRunning ? 1.0f : 0.0f, getTimeNowNt());
+	luaGauges[7].setValidValue(static_cast<float>(static_cast<uint8_t>(ccfcMode)), getTimeNowNt());
+	
 	if(ccfcMode == ccfcModes_e::On) {
 		if(((currVelocity <= config->ccfcEnableBelowSpeed) && !ccfcRunning) || ccfcForceState)
 			ccfcPin.setValue(true);
