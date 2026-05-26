@@ -9,6 +9,15 @@ extern SimplePwm    prgselPwm;
 // Cooling Fan Control
 extern OutputPin    cfcPin;
 
+// Chassis Cooling Fan Control
+extern OutputPin	ccfcPin;
+
+enum class ccfcModes_e : uint8_t {
+    On   = 0,
+    Auto = 1,
+    Off  = 2,
+};
+
 void boardDefaultConfiguration();
 void boardConfigOverrides();
 void boardCustomInitHardware();

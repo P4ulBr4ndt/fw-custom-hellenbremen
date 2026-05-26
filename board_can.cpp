@@ -31,11 +31,16 @@ static efitick_t cruiseDecLastRepeatNt = 0;
 static efitick_t cruiseIncLastRepeatNt = 0;
 static bool jssStopRequestActive = false;
 static uint32_t lastReceivedOdometer = 0;
-static bool cfcForceState = false;
+static bool cfcForceState    = false;
+static bool ccfcForceState   = false;
 static bool prgselForceState = false;
 
 void setCfcForceState(bool state) {
 	cfcForceState = state;
+}
+
+void setCcfcForceState(bool state) {
+	ccfcForceState = state;
 }
 
 void setPrgselForceState(bool state) {
@@ -247,6 +252,9 @@ void boardPeriodicSlow() {
 	uint8_t currentGear = calculateHarleyGearIndex();
 	bool isNeutral = currentGear == 0;
 	bool isEngineActive = engine->rpmCalculator.isRunning() || engine->rpmCalculator.isCranking();
+	float currVelocity = Sensor::getOrZero(SensorType::VehicleSpeed);
+	float currEngTemp  = Sensor::getOrZero(SensorType::AuxTemp1);
+	float currAmbTemp  = Sensor::getOrZero(SensorType::AmbientTemperature);
 
 	bool shouldRequestStop = jssDown && !isNeutral && isEngineActive;
 	if (shouldRequestStop && !jssStopRequestActive) {
@@ -278,6 +286,30 @@ void boardPeriodicSlow() {
 		cfcPin.setValue(true);
 	else if (((cfcCurrentTemp < config->cfcOffTemperature || cfcDisableSpeedCond) && cfcRunning) && !cfcForceState) 
 		cfcPin.setValue(false);
+
+	// Chassis Cooling Fan Controller
+	//TODO Idle Adder is not implemented yet
+	bool ccfcRunning = ccfcPin.getLogicValue();
+	if(config->ccfcMode == ccfcModes_e::On) {
+		if(((currVelocity <= config->ccfcEnableBelowSpeed) && !ccfcRunning) || ccfcForceState)
+			ccfcPin.setValue(true);
+		else if((currVelocity >= config->ccfcDisableAboveSpeed) && ccfcRunning)
+			ccfcPin.setValue(false);
+	} else if(config->ccfcMode == ccfcModes_e::Auto) {
+		if(((currVelocity <= config->ccfcEnableBelowSpeed && 
+		     currEngTemp >= config->ccfcEnableAboveEngTemp &&
+		     currAmbTemp >= config->ccfcEnableAboveAmbTemp) && !ccfcRunning) || ccfcForceState)
+			ccfcPin.setValue(true);
+		else if((currVelocity >= config->ccfcDisableAboveSpeed &&
+		         currEngTemp <= config->ccfcDisableBelowEngTemp &&
+		         currAmbTemp <= config->ccfcDisableBelowAmbTemp) && ccfcRunning)
+			ccfcPin.setValue(false);
+	} else if(config->ccfcMode == ccfcModes_e::Off) {
+		if(ccfcForceState)
+			ccfcPin.setValue(true);	
+		else
+			ccfcPin.setValue(false);	
+	}
 }
 
 void boardHandleCan(CanCycle cycle) {
