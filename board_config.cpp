@@ -213,9 +213,10 @@ void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {
 }
 
 void boardCustomOnConfigurationChange(engine_configuration_s* previousConfiguration) {
-	prgselPwm.setFrequency(config->prgselPWMFreq);
-	prgselPwm.setSimplePwmDutyCycle(config->prgselPWMDuty / 100.0f);
-
-	if(!config->prgselActive)
+	if(!config->prgselActive) {
 		prgselPwm.setFrequency(NAN);
+	} else {
+		prgselPwm.setFrequency(config->prgselPWMFreq);
+		prgselPwm.setSimplePwmDutyCycle(config->prgselPWMDuty / 100.0f);
+	}
 }

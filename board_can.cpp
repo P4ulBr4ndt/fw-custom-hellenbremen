@@ -1,3 +1,4 @@
+#include "board_types.h"
 #include "pch.h"
 
 #include "board_can.h"
@@ -36,7 +37,9 @@ static bool cfcForceState    = false;
 static bool ccfcForceState   = false;
 static bool prgselForceState = false;
 
-static ccfcModes_e ccfcMode; // Is set by CAN Bus frame 0x3C4
+// Are set by CAN Bus frame 0x3C4
+static ccfcModes_e ccfcMode; 
+static bool        ccfcActivated;
 
 extern StoredValueSensor luaGauges[LUA_GAUGE_COUNT];
 
@@ -253,13 +256,15 @@ void decreaseDesiredCCSpeedForCurrentGear() {
 } // namespace
 
 void boardPeriodicSlow() {
-	bool jssDown = engine->engineState.jssState != 0;
+	bool jssDown        = engine->engineState.jssState != 0;
 	uint8_t currentGear = calculateHarleyGearIndex();
-	bool isNeutral = currentGear == 0;
+	bool isNeutral      = currentGear == 0;
 	bool isEngineActive = engine->rpmCalculator.isRunning() || engine->rpmCalculator.isCranking();
-	float currVelocity = Sensor::getOrZero(SensorType::VehicleSpeed);
-	float currEngTemp  = Sensor::getOrZero(SensorType::AuxTemp1);
-	float currAmbTemp  = Sensor::getOrZero(SensorType::AmbientTemperature);
+	
+	float currVelocity    = Sensor::getOrZero(SensorType::VehicleSpeed);
+	float currEngTemp     = Sensor::getOrZero(SensorType::AuxTemp1);
+	float currAmbTemp     = Sensor::getOrZero(SensorType::AmbientTemperature);
+	float currCoolantTemp = Sensor::getOrZero(SensorType::AuxTemp2);
 
 	bool shouldRequestStop = jssDown && !isNeutral && isEngineActive;
 	if (shouldRequestStop && !jssStopRequestActive) {
@@ -269,36 +274,35 @@ void boardPeriodicSlow() {
 	jssStopRequestActive = shouldRequestStop;
 
 	// Purge Valve Solenoid routines
-	if(config->prgselActive && (((Sensor::getOrZero(SensorType::Rpm) >= config->prgselRPM) &&
-	   (Sensor::getOrZero(SensorType::VehicleSpeed) >= config->prgselVelocity) &&
-	   (Sensor::getOrZero(SensorType::AcceleratorPedal) >= config->prgselLowerTGS) &&
-	   (Sensor::getOrZero(SensorType::AcceleratorPedal) <= config->prgselUpperTGS) &&
-	   (Sensor::getOrZero(SensorType::Clt) >= config->prgselCLTTemp) && 
-		engine->fuelComputer.running.timeSinceCrankingInSecs >= config->prgselActAfterTime) || prgselForceState))  {
+	bool prgselRunning = config->prgselActive && (
+		((Sensor::getOrZero(SensorType::Rpm) >= config->prgselRPM) &&
+		 (Sensor::getOrZero(SensorType::VehicleSpeed) >= config->prgselVelocity) &&
+		 (Sensor::getOrZero(SensorType::AcceleratorPedal) >= config->prgselLowerTGS) &&
+		 (Sensor::getOrZero(SensorType::AcceleratorPedal) <= config->prgselUpperTGS) &&
+		 (Sensor::getOrZero(SensorType::Clt) >= config->prgselCLTTemp) &&
+		 engine->fuelComputer.running.timeSinceCrankingInSecs >= config->prgselActAfterTime) ||
+		prgselForceState);
+	if (prgselRunning) {
 		prgselPwm.setFrequency(config->prgselPWMFreq);
 	} else {
-		prgselPwm.setFrequency(NAN); // setFrequecy(NAN) deactivates the PWM schedule
+		prgselPwm.setFrequency(NAN); // setFrequency(NAN) deactivates the PWM schedule
 	}
 
 	// Cooling Fan Controller
 	//TODO Idle Adder is not implemented yet
 	bool  cfcRunning          = cfcPin.getLogicValue();
-	float cfcCurrentTemp      = Sensor::getOrZero(SensorType::AuxTemp2);
 	bool  cfcDisableSpeedCond = (config->cfcDisableAboveSpeed <= Sensor::getOrZero(SensorType::VehicleSpeed)) &&
 								(config->cfcDisableAboveSpeed > 0);
 	bool  cfcDisableEngCond   = (!config->cfcDisableWhenEngineStopped || isEngineActive);
-	if (((cfcCurrentTemp > config->cfcOnTemperature) && !cfcRunning && cfcDisableEngCond && !cfcDisableSpeedCond) || cfcForceState)
+	if (((currCoolantTemp > config->cfcOnTemperature) && !cfcRunning && cfcDisableEngCond && !cfcDisableSpeedCond) || cfcForceState)
 		cfcPin.setValue(true);
-	else if (((cfcCurrentTemp < config->cfcOffTemperature || cfcDisableSpeedCond) && cfcRunning) && !cfcForceState) 
+	else if (((currCoolantTemp < config->cfcOffTemperature || cfcDisableSpeedCond) && cfcRunning) && !cfcForceState) 
 		cfcPin.setValue(false);
 
 	// Chassis Cooling Fan Controller
 	//TODO Idle Adder is not implemented yet
 	bool ccfcRunning = ccfcPin.getLogicValue();
 
-	luaGauges[6].setValidValue(ccfcRunning ? 1.0f : 0.0f, getTimeNowNt());
-	luaGauges[7].setValidValue(static_cast<float>(ccfcMode), getTimeNowNt());
-	
 	if(ccfcMode == ccfcModes_e::On) {
 		if(((currVelocity <= config->ccfcEnableBelowSpeed) && !ccfcRunning) || ccfcForceState)
 			ccfcPin.setValue(true);
@@ -314,11 +318,18 @@ void boardPeriodicSlow() {
 		         currAmbTemp <= config->ccfcDisableBelowAmbTemp) && ccfcRunning)
 			ccfcPin.setValue(false);
 	} else if(ccfcMode == ccfcModes_e::Off) {
-		if(ccfcForceState)
+		if(ccfcForceState && ccfcActivated) 
 			ccfcPin.setValue(true);	
 		else
 			ccfcPin.setValue(false);	
 	}
+
+	// luaGauges[6]: CCFC state    — 0=Disabled, 1=Off, 2=Auto, 3=On
+	// luaGauges[7]: running flags — ccfcRunning*4 + cfcRunning*2 + prgselRunning  (0-7)
+	luaGauges[6].setValidValue(ccfcActivated ? (3.0f - static_cast<float>(ccfcMode)) : 0.0f, getTimeNowNt());
+	luaGauges[7].setValidValue((ccfcPin.getLogicValue() ? 4.0f : 0.0f) 
+	                           + (cfcPin.getLogicValue() ? 2.0f : 0.0f) 
+							   + (prgselRunning ? 1.0f : 0.0f), getTimeNowNt());
 }
 
 void boardHandleCan(CanCycle cycle) {
@@ -640,12 +651,18 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 
 	if(CAN_SID(frame) == 0x3C4) {
 		uint8_t ifcuCcfcMode = frame.data8[4];
-		if(ifcuCcfcMode == 0x40 || ifcuCcfcMode == 0x00)
-			ccfcMode = ccfcModes_e::Off;
-		if(ifcuCcfcMode == 0xC0)
-			ccfcMode = ccfcModes_e::Auto;
-		if(ifcuCcfcMode == 0x80)
-			ccfcMode = ccfcModes_e::On;
+		if(ifcuCcfcMode == 0x00) {  
+			ccfcActivated = false;
+			ccfcMode      = ccfcModes_e::Off;
+		} else {
+			ccfcActivated = true;
+			if(ifcuCcfcMode == 0x40) 
+				ccfcMode = ccfcModes_e::Off;
+			else if(ifcuCcfcMode == 0xC0)  	                     
+				ccfcMode = ccfcModes_e::Auto;
+			else if(ifcuCcfcMode == 0x80)                         
+				ccfcMode = ccfcModes_e::On;
+		}
 	}
 
 	if (CAN_SID(frame) == 0x3C6) {
