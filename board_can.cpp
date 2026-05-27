@@ -297,7 +297,7 @@ void boardPeriodicSlow() {
 	bool ccfcRunning = ccfcPin.getLogicValue();
 
 	luaGauges[6].setValidValue(ccfcRunning ? 1.0f : 0.0f, getTimeNowNt());
-	luaGauges[7].setValidValue(static_cast<float>(static_cast<uint8_t>(ccfcMode)), getTimeNowNt());
+	luaGauges[7].setValidValue(static_cast<float>(ccfcMode), getTimeNowNt());
 	
 	if(ccfcMode == ccfcModes_e::On) {
 		if(((currVelocity <= config->ccfcEnableBelowSpeed) && !ccfcRunning) || ccfcForceState)
@@ -640,7 +640,7 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 
 	if(CAN_SID(frame) == 0x3C4) {
 		uint8_t ifcuCcfcMode = frame.data8[4];
-		if(ifcuCcfcMode == 0x40)
+		if(ifcuCcfcMode == 0x40 || ifcuCcfcMode == 0x00)
 			ccfcMode = ccfcModes_e::Off;
 		if(ifcuCcfcMode == 0xC0)
 			ccfcMode = ccfcModes_e::Auto;
