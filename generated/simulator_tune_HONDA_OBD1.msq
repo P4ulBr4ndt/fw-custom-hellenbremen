@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <msq xmlns="http://www.msefi.com/:msq">
     <page/>
-    <page number="0" size="26240">
+    <page number="0" size="26248">
         <constant name="accelEnrichmentMode">"MS Adder"</constant>
         <constant name="accelerometerCsPin">"NONE"</constant>
         <constant name="accelerometerCsPinMode">"default"</constant>
@@ -615,11 +615,15 @@
         <constant digits="2" name="cel_map_min_v" units="V">0.0</constant>
         <constant digits="2" name="cel_tps_max_v" units="V">0.0</constant>
         <constant digits="2" name="cel_tps_min_v" units="V">0.0</constant>
-        <constant digits="0" name="cfcDisableAboveSpeed" units="kmh">0</constant>
         <constant name="cfcDisableWhenEngineStopped">"No"</constant>
+        <constant digits="0" name="cfcEngShutdownOffTemp" units="C">0</constant>
+        <constant digits="0" name="cfcHigherSpeedOffTemperature" units="C">0</constant>
+        <constant digits="0" name="cfcHigherSpeedOnTemperature" units="C">0</constant>
         <constant digits="0" name="cfcIdleAdder" units="%">0</constant>
-        <constant digits="0" name="cfcOffTemperature" units="C">0</constant>
-        <constant digits="0" name="cfcOnTemperature" units="C">0</constant>
+        <constant digits="0" name="cfcLowerSpeedOffTemperature" units="C">0</constant>
+        <constant digits="0" name="cfcLowerSpeedOnTemperature" units="C">0</constant>
+        <constant digits="0" name="cfcMaxRuntimeAfterEngShutdown" units="s">0</constant>
+        <constant digits="0" name="cfcSpeedModeDivider" units="kmh">0</constant>
         <constant name="clt_adcChannel">"Disabled"</constant>
         <constant digits="1" name="clt_bias_resistor" units="Ohm">1500.0</constant>
         <constant digits="1" name="clt_resistance_1" units="Ohm">9500.0</constant>
@@ -5262,7 +5266,7 @@ end</constant>
 </constant>
         <constant name="yesUnderstandLocking">"no"</constant>
     </page>
-    <versionInfo firmwareInfo="20260227" nPages="1" signature="rusEFI main.2026.05.29.hellen-bremen.3996226613" version="5.0"/>
+    <versionInfo firmwareInfo="20260227" nPages="1" signature="rusEFI main.2026.05.29.hellen-bremen.4165451743" version="5.0"/>
     <bibliography author="rusEFI 20260227" writeDate="date"/>
     <settings/>
     <userComments/>
