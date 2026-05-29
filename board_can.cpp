@@ -342,10 +342,10 @@ void boardPeriodicSlow() {
 
 	bool ccfcOnSpeedCond  = (currSpeed <= config->ccfcEnableBelowSpeed) && !ccfcRunning;
 	bool ccfcOffSpeedCond = (currSpeed >= config->ccfcDisableAboveSpeed) && ccfcRunning;
-	bool ccfcOnTempCond   = ((currCltTemp >  config->ccfcLowAmbEnableAboveEngTemp   && !ccfcHighAmbMode) ||
-	     				     (currCltTemp >  config->ccfcHighAmbEnableAboveEngTemp  && ccfcHighAmbMode)) && !ccfcRunning;
-	bool ccfcOffTempCond  = ((currCltTemp <= config->ccfcLowAmbDisableBelowEngTemp  && !ccfcHighAmbMode) || 
-						     (currCltTemp <= config->ccfcHighAmbDisableBelowEngTemp && ccfcHighAmbMode)) && ccfcRunning;
+	bool ccfcOnTempCond   = ((currEngTemp >  config->ccfcLowAmbEnableAboveEngTemp   && !ccfcHighAmbMode) ||
+	     				     (currEngTemp >  config->ccfcHighAmbEnableAboveEngTemp  && ccfcHighAmbMode)) && !ccfcRunning;
+	bool ccfcOffTempCond  = ((currEngTemp <= config->ccfcLowAmbDisableBelowEngTemp  && !ccfcHighAmbMode) || 
+						     (currEngTemp <= config->ccfcHighAmbDisableBelowEngTemp && ccfcHighAmbMode)) && ccfcRunning;
 
 	if(ccfcMode == ccfcModes_e::Off) {						
 		if(ccfcForce && ccfcActivated) 
