@@ -302,7 +302,7 @@ void boardPeriodicSlow() {
 	bool  cfcRunning        = cfcPin.getLogicValue();
 
 	bool cfcIsShutdownRunning  = cfcRunning && !isEngineActive && (engNotRunningTimer.getElapsedSeconds() <= config->cfcMaxRuntimeAfterEngShutdown);
-	bool cfcIsShutdownComplete = (engNotRunningTimer.getElapsedSeconds() > config->cfcMaxRuntimeAfterEngShutdown || currCoolantTemp <= config->cfcEngShutdownTemp) && cfcRunning;
+	bool cfcIsShutdownComplete = (engNotRunningTimer.getElapsedSeconds() > config->cfcMaxRuntimeAfterEngShutdown || currCoolantTemp <= config->cfcEngShutdownOffTemp) && cfcRunning;
 	bool cfcDisabledEngCond    = (!config->cfcDisableWhenEngineStopped || isEngineActive || cfcIsShutdownRunning);
 	bool cfcOnTempCond         = ((currCoolantTemp >  config->cfcLowerSpeedOnTemperature   && currVelocity <  config->cfcSpeedModeDivider) ||
 	     				          (currCoolantTemp >  config->cfcHigherSpeedOnTemperature  && currVelocity >= config->cfcSpeedModeDivider)) && !cfcRunning;
