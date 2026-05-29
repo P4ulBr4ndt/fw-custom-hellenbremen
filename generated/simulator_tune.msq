@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <msq xmlns="http://www.msefi.com/:msq">
     <page/>
-    <page number="0" size="26236">
+    <page number="0" size="26240">
         <constant name="accelEnrichmentMode">"MS Adder"</constant>
         <constant name="accelerometerCsPin">"NONE"</constant>
         <constant name="accelerometerCsPinMode">"default"</constant>
@@ -561,7 +561,7 @@
         <constant name="brakePedalPin">"NONE"</constant>
         <constant name="brakePedalPinMode">"PULLUP"</constant>
         <constant digits="0" name="byFirmwareVersion" units="index">20260303</constant>
-        <constant digits="0" name="calibrationBirthday" units="">20260528</constant>
+        <constant digits="0" name="calibrationBirthday" units="">20260529</constant>
         <constant digits="0" name="camDecoder2jzPosition" units="angle">95</constant>
         <constant digits="0" name="camDecoder2jzPrecision" units="">40</constant>
         <constant name="camInputs1">"NONE"</constant>
@@ -600,6 +600,12 @@
         <constant name="canWbo2_reId">"ID2 0x192/193"</constant>
         <constant name="canWbo2_type">"RusEFI"</constant>
         <constant name="canWriteEnabled">"enable"</constant>
+        <constant digits="0" name="ccfcDisableAboveSpeed" units="kmh">0</constant>
+        <constant digits="0" name="ccfcDisableBelowAmbTemp" units="C">0</constant>
+        <constant digits="0" name="ccfcDisableBelowEngTemp" units="C">0</constant>
+        <constant digits="0" name="ccfcEnableAboveAmbTemp" units="C">0</constant>
+        <constant digits="0" name="ccfcEnableAboveEngTemp" units="C">0</constant>
+        <constant digits="0" name="ccfcEnableBelowSpeed" units="kmh">0</constant>
         <constant name="cdmInputPin">"NONE"</constant>
         <constant digits="1" name="cel_battery_max_v" units="#">0.0</constant>
         <constant digits="1" name="cel_battery_min_v" units="#">0.0</constant>
@@ -5255,7 +5261,7 @@ end</constant>
 </constant>
         <constant name="yesUnderstandLocking">"no"</constant>
     </page>
-    <versionInfo firmwareInfo="20260227" nPages="1" signature="rusEFI main.2026.05.28.hellen-bremen.2187546571" version="5.0"/>
+    <versionInfo firmwareInfo="20260227" nPages="1" signature="rusEFI main.2026.05.29.hellen-bremen.3996226613" version="5.0"/>
     <bibliography author="rusEFI 20260227" writeDate="date"/>
     <settings/>
     <userComments/>
