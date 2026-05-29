@@ -192,22 +192,22 @@ void boardCustomInitHardware() {
 void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {
 	switch(index) {
 		case 0:
-			setCfcForceState(false);
+			setCfcForce(false);
 			break;
 		case 1:
-			setCfcForceState(true);
+			setCfcForce(true);
 			break;
 		case 2:
-			setPrgselForceState(false);
+			setPrgselForce(false);
 			break;
 		case 3:
-			setPrgselForceState(true);
+			setPrgselForce(true);
 			break;
 		case 4:
-			setCcfcForceState(false);
+			setCcfcForce(false);
 			break;
 		case 5:
-			setCcfcForceState(true);
+			setCcfcForce(true);
 			break;
 	}
 }
