@@ -33,14 +33,21 @@ static efitick_t cruiseIncLastRepeatNt = 0;
 static bool jssStopRequestActive = false;
 static uint32_t lastReceivedOdometer = 0;
 
-static bool cfcForceState    = false;
-static bool ccfcForceState   = false;
-static bool prgselForceState = false;
+// CFC
+static bool  cfcForceState = false;
+static Timer engNotRunningTimer;
+
+// CCFC
+static bool ccfcForceState = false;
 
 // Are set by CAN Bus frame 0x3C4
-static ccfcModes_e ccfcMode; 
-static bool        ccfcActivated;
+static ccfcModes_e ccfcMode      = ccfcModes_e::Off; 
+static bool        ccfcActivated = false;
 
+// Purge Valve Solenoid
+static bool prgselForceState = false;
+
+// Required for indicators
 extern StoredValueSensor luaGauges[LUA_GAUGE_COUNT];
 
 void setCfcForceState(bool state) {
@@ -271,6 +278,8 @@ void boardPeriodicSlow() {
 		doScheduleStopEngine(StopRequestedReason::Board1);
 	}
 
+	if(isEngineActive) engNotRunningTimer.reset();
+
 	jssStopRequestActive = shouldRequestStop;
 
 	// Purge Valve Solenoid routines
@@ -290,13 +299,19 @@ void boardPeriodicSlow() {
 
 	// Cooling Fan Controller
 	//TODO Idle Adder is not implemented yet
-	bool  cfcRunning          = cfcPin.getLogicValue();
-	bool  cfcDisableSpeedCond = (config->cfcDisableAboveSpeed <= Sensor::getOrZero(SensorType::VehicleSpeed)) &&
-								(config->cfcDisableAboveSpeed > 0);
-	bool  cfcDisableEngCond   = (!config->cfcDisableWhenEngineStopped || isEngineActive);
-	if (((currCoolantTemp > config->cfcOnTemperature) && !cfcRunning && cfcDisableEngCond && !cfcDisableSpeedCond) || cfcForceState)
+	bool  cfcRunning        = cfcPin.getLogicValue();
+
+	bool cfcIsShutdownRunning  = cfcRunning && !isEngineActive && (engNotRunningTimer.getElapsedSeconds() <= config->cfcMaxRuntimeAfterEngShutdown);
+	bool cfcIsShutdownComplete = (engNotRunningTimer.getElapsedSeconds() > config->cfcMaxRuntimeAfterEngShutdown || currCoolantTemp <= config->cfcEngShutdownTemp) && cfcRunning;
+	bool cfcDisabledEngCond    = (!config->cfcDisableWhenEngineStopped || isEngineActive || cfcIsShutdownRunning);
+	bool cfcOnTempCond         = ((currCoolantTemp >  config->cfcLowerSpeedOnTemperature   && currVelocity <  config->cfcSpeedModeDivider) ||
+	     				          (currCoolantTemp >  config->cfcHigherSpeedOnTemperature  && currVelocity >= config->cfcSpeedModeDivider)) && !cfcRunning;
+	bool cfcOffTempCond        = ((currCoolantTemp <= config->cfcLowerSpeedOffTemperature  && currVelocity <  config->cfcSpeedModeDivider) || 
+						          (currCoolantTemp <= config->cfcHigherSpeedOffTemperature && currVelocity >= config->cfcSpeedModeDivider)) && cfcRunning;
+
+	if ((cfcOnTempCond && cfcDisabledEngCond) || cfcForceState)
 		cfcPin.setValue(true);
-	else if (((currCoolantTemp < config->cfcOffTemperature || cfcDisableSpeedCond) && cfcRunning) && !cfcForceState) 
+	else if ((cfcOffTempCond || cfcIsShutdownOffComplete) && !cfcForceState) 
 		cfcPin.setValue(false);
 
 	// Chassis Cooling Fan Controller
