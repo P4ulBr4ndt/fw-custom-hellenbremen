@@ -36,11 +36,12 @@ float[INSTANT_ACCEL_SHOT_TPS_COUNT] instantAccelShotTpsToBins;;"%", 1, 0, 0, 100
 int16_t[INSTANT_ACCEL_SHOT_CLT_CORR_COUNT] instantAccelShotCltCorrBins;;"SPECIAL_CASE_TEMPERATURE", 1, 0, -40, 150, 0
 float[INSTANT_ACCEL_SHOT_CLT_CORR_COUNT] instantAccelShotCltCorrMult;;"multiplier", 1, 0, 0, 5, 2
 
-uint8_t cfcSpeedModeDivider;Velocity which divides between Lower and Higher speed temperatures;"SPECIAL_CASE_SPEED", 1, 0, 0, 255, 0
-uint8_t cfcLowerSpeedOnTemperature;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 0
-uint8_t cfcLowerSpeedOffTemperature;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 0
-uint8_t cfcHigherSpeedOnTemperature;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 0
-uint8_t cfcHigherSpeedOffTemperature;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 0
+uint8_t cfcHighSpeedThreshold;Upper Speed Threshold when to swtich to High Speed On/Off temperatures;"SPECIAL_CASE_SPEED", 1, 0, 0, 255, 0
+uint8_t cfcLowSpeedThreshold;Lower Speed Threshold when to swtich to Low Speed On/Off temperatures;"SPECIAL_CASE_SPEED", 1, 0, 0, 255, 0
+uint8_t cfcLowSpeedOnTemp;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 0
+uint8_t cfcLowSpeedOffTemp;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 0
+uint8_t cfcHighSpeedOnTemp;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 0
+uint8_t cfcHighSpeedOffTemp;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 0
 bit cfcDisableWhenEngineStopped,"Yes","No";
 uint8_t cfcIdleAdder;Additional idle % when fan is active;"%", 1, 0, 0, 100, 0
 uint16_t cfcMaxRuntimeAfterEngShutdown;;"s", 1, 0, 0, 65535, 0
@@ -48,18 +49,20 @@ uint8_t cfcEngShutdownOffTemp;Coolant temperature to cool down to after engine s
 
 bit prgselActive,"Yes","No";
 uint16_t prgselRPM;;"rpm", 1, 0, 0, 10000, 0
-uint8_t  prgselVelocity;;"SPECIAL_CASE_SPEED", 1, 0, 0, 255, 0
+uint8_t  prgselSpeed;;"SPECIAL_CASE_SPEED", 1, 0, 0, 255, 0
 uint8_t  prgselLowerTGS;;"%", 1, 0, 0, 100, 0
 uint8_t  prgselUpperTGS;;"%", 1, 0, 0, 100, 0
-uint8_t  prgselCLTTemp;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 120, 0
+uint8_t  prgselCltTemp;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 120, 0
 uint8_t  prgselPWMFreq;;"Hz", 1, 0, 1, 255, 0
 uint8_t  prgselPWMDuty;;"%", 1, 0, 1, 100, 0
 uint16_t prgselActAfterTime;;"s", 1, 0, 0, 65535, 0
 
 uint8_t ccfcDisableAboveSpeed;;"SPECIAL_CASE_SPEED", 1, 0, 0, 255, 0
 uint8_t ccfcEnableBelowSpeed;;"SPECIAL_CASE_SPEED", 1, 0, 0, 255, 0
-uint8_t ccfcDisableBelowEngTemp;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 255, 0
-uint8_t ccfcEnableAboveEngTemp;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 255, 0
-uint8_t ccfcDisableBelowAmbTemp;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 255, 0
-uint8_t ccfcEnableAboveAmbTemp;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 255, 0
-! uint8_t ccfcIdleAdder;Additional idle RPM in % when fan is active;"%", 1, 0, 0, 100, 0
+uint8_t ccfcHighAmbTempThreshold;Upper ambient temperature threshold when to swtich to high coolant temperature On/Off temperatures;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 255, 0
+uint8_t ccfcLowAmbTempThreshold;Lower ambient temperature threshold when to swtich to lower coolant temperature On/Off temperatures;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 255, 0
+uint8_t ccfcLowAmbDisableBelowEngTemp;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 255, 0
+uint8_t ccfcLowAmbEnableAboveEngTemp;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 255, 0
+uint8_t ccfcHighAmbDisableBelowEngTemp;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 255, 0
+uint8_t ccfcHighAmbEnableAboveEngTemp;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 255, 0
+uint8_t ccfcIdleAdder;Additional idle RPM in % when fan is active;"%", 1, 0, 0, 100, 0

@@ -34,37 +34,39 @@ static bool jssStopRequestActive = false;
 static uint32_t lastReceivedOdometer = 0;
 
 // CFC
-static bool  cfcForceState = false;
+static bool  cfcForce         = false;
+static bool  cfcHighSpeedMode = false;
 static Timer engNotRunningTimer;
 
 // CCFC
-static bool ccfcForceState = false;
+static bool ccfcForce       = false;
+static bool ccfcHighAmbMode = false;
 
 // Are set by CAN Bus frame 0x3C4
 static ccfcModes_e ccfcMode      = ccfcModes_e::Off; 
 static bool        ccfcActivated = false;
 
 // Purge Valve Solenoid
-static bool prgselForceState = false;
+static bool prgselForce = false;
 
 // Required for indicators
 extern StoredValueSensor luaGauges[LUA_GAUGE_COUNT];
 
-void setCfcForceState(bool state) {
-	cfcForceState = state;
+void setCfcForce(bool state) {
+	cfcForce = state;
 }
 
-void setCcfcForceState(bool state) {
-	ccfcForceState = state;
+void setCcfcForce(bool state) {
+	ccfcForce = state;
 }
 
-void setPrgselForceState(bool state) {
+void setPrgselForce(bool state) {
 	if(state && !config->prgselActive)
 		prgselPwm.setFrequency(config->prgselPWMFreq);
 	else if(!state && !config->prgselActive)
 		prgselPwm.setFrequency(NAN);
 
-	prgselForceState = state;
+	prgselForce = state;
 }
 
 struct CruiseGearLimits {
@@ -268,76 +270,101 @@ void boardPeriodicSlow() {
 	bool isNeutral      = currentGear == 0;
 	bool isEngineActive = engine->rpmCalculator.isRunning() || engine->rpmCalculator.isCranking();
 	
-	float currVelocity    = Sensor::getOrZero(SensorType::VehicleSpeed);
-	float currEngTemp     = Sensor::getOrZero(SensorType::AuxTemp1);
-	float currAmbTemp     = Sensor::getOrZero(SensorType::AmbientTemperature);
-	float currCoolantTemp = Sensor::getOrZero(SensorType::AuxTemp2);
+	float currRPM     = Sensor::getOrZero(SensorType::Rpm);
+	float currSpeed   = Sensor::getOrZero(SensorType::VehicleSpeed);
+	float currEngTemp = Sensor::getOrZero(SensorType::AuxTemp1);
+	float currAmbTemp = Sensor::getOrZero(SensorType::AmbientTemperature);
+	float currCltTemp = Sensor::getOrZero(SensorType::AuxTemp2);
+	float currTGS     = Sensor::getOrZero(SensorType::AcceleratorPedal);
+	float currCltTmp2 = Sensor::getOrZero(SensorType::Clt);
+	float currRuntime = engine->fuelComputer.running.timeSinceCrankingInSecs;
 
 	bool shouldRequestStop = jssDown && !isNeutral && isEngineActive;
 	if (shouldRequestStop && !jssStopRequestActive) {
 		doScheduleStopEngine(StopRequestedReason::Board1);
 	}
 
-	if(isEngineActive) engNotRunningTimer.reset();
+	// Similar to engine->fuelComputer.running.timeSinceCrankingInSecs
+	// but for engine not running time. See, engine2.cpp:170
+	if(isEngineActive)
+		engNotRunningTimer.reset();
 
 	jssStopRequestActive = shouldRequestStop;
 
 	// Purge Valve Solenoid routines
-	bool prgselRunning = config->prgselActive && (
-		((Sensor::getOrZero(SensorType::Rpm) >= config->prgselRPM) &&
-		 (Sensor::getOrZero(SensorType::VehicleSpeed) >= config->prgselVelocity) &&
-		 (Sensor::getOrZero(SensorType::AcceleratorPedal) >= config->prgselLowerTGS) &&
-		 (Sensor::getOrZero(SensorType::AcceleratorPedal) <= config->prgselUpperTGS) &&
-		 (Sensor::getOrZero(SensorType::Clt) >= config->prgselCLTTemp) &&
-		 engine->fuelComputer.running.timeSinceCrankingInSecs >= config->prgselActAfterTime) ||
-		prgselForceState);
-	if (prgselRunning) {
+	bool prgselRunning = config->prgselActive && 
+						 (prgselForce || ((currRPM     >= config->prgselRPM) &&
+		 				                  (currSpeed   >= config->prgselSpeed) &&
+		 				                  (currTGS     >= config->prgselLowerTGS) &&
+		 				                  (currTGS     <= config->prgselUpperTGS) &&
+		 				                  (currCltTmp2 >= config->prgselCltTemp) &&
+		 				                  (currRuntime >= config->prgselActAfterTime)));
+	if (prgselRunning) 
 		prgselPwm.setFrequency(config->prgselPWMFreq);
-	} else {
+	else 
 		prgselPwm.setFrequency(NAN); // setFrequency(NAN) deactivates the PWM schedule
-	}
-
+	
 	// Cooling Fan Controller
 	//TODO Idle Adder is not implemented yet
-	bool  cfcRunning        = cfcPin.getLogicValue();
+	bool cfcRunning = cfcPin.getLogicValue();
+
+	// Speed hysteresis cases
+	if(currSpeed >= config->cfcHighSpeedThreshold)
+		cfcHighSpeedMode = true;
+	else if(currSpeed < config->cfcLowSpeedThreshold)
+		cfcHighSpeedMode = false;
 
 	bool cfcIsShutdownRunning  = cfcRunning && !isEngineActive && (engNotRunningTimer.getElapsedSeconds() <= config->cfcMaxRuntimeAfterEngShutdown);
-	bool cfcIsShutdownComplete = (engNotRunningTimer.getElapsedSeconds() > config->cfcMaxRuntimeAfterEngShutdown || currCoolantTemp <= config->cfcEngShutdownOffTemp) && cfcRunning;
+	bool cfcIsShutdownComplete = (engNotRunningTimer.getElapsedSeconds() > config->cfcMaxRuntimeAfterEngShutdown || currCltTemp <= config->cfcEngShutdownOffTemp) && cfcRunning;
 	bool cfcDisabledEngCond    = (!config->cfcDisableWhenEngineStopped || isEngineActive || cfcIsShutdownRunning);
-	bool cfcOnTempCond         = ((currCoolantTemp >  config->cfcLowerSpeedOnTemperature   && currVelocity <  config->cfcSpeedModeDivider) ||
-	     				          (currCoolantTemp >  config->cfcHigherSpeedOnTemperature  && currVelocity >= config->cfcSpeedModeDivider)) && !cfcRunning;
-	bool cfcOffTempCond        = ((currCoolantTemp <= config->cfcLowerSpeedOffTemperature  && currVelocity <  config->cfcSpeedModeDivider) || 
-						          (currCoolantTemp <= config->cfcHigherSpeedOffTemperature && currVelocity >= config->cfcSpeedModeDivider)) && cfcRunning;
+	bool cfcOnTempCond         = ((currCltTemp >  config->cfcLowSpeedOnTemp   && !cfcHighSpeedMode) ||
+	     				          (currCltTemp >  config->cfcHighSpeedOnTemp  && cfcHighSpeedMode)) && !cfcRunning;
+	bool cfcOffTempCond        = ((currCltTemp <= config->cfcLowSpeedOffTemp  && !cfcHighSpeedMode) || 
+						          (currCltTemp <= config->cfcHighSpeedOffTemp && cfcHighSpeedMode)) && cfcRunning;
 
-	if ((cfcOnTempCond && cfcDisabledEngCond) || cfcForceState)
+	if ((cfcOnTempCond && cfcDisabledEngCond) || cfcForce)
 		cfcPin.setValue(true);
-	else if ((cfcOffTempCond || cfcIsShutdownComplete) && !cfcForceState) 
+	else if ((cfcOffTempCond || cfcIsShutdownComplete) && !cfcForce) 
 		cfcPin.setValue(false);
 
 	// Chassis Cooling Fan Controller
 	//TODO Idle Adder is not implemented yet
+	// Bikes without Amb. Temp. run... (!)
+	//		i) for currSpeed <= 64 km/h && currCltTemp >= 95° C
+	//      ii) not for currSpeed > 72 km/h || currCltTemp < 82°C
 	bool ccfcRunning = ccfcPin.getLogicValue();
 
-	if(ccfcMode == ccfcModes_e::On) {
-		if(((currVelocity <= config->ccfcEnableBelowSpeed) && !ccfcRunning) || ccfcForceState)
-			ccfcPin.setValue(true);
-		else if((currVelocity >= config->ccfcDisableAboveSpeed) && ccfcRunning)
-			ccfcPin.setValue(false);
-	} else if(ccfcMode == ccfcModes_e::Auto) {
-		if(((currVelocity <= config->ccfcEnableBelowSpeed && 
-		     currEngTemp >= config->ccfcEnableAboveEngTemp &&
-		     currAmbTemp >= config->ccfcEnableAboveAmbTemp) && !ccfcRunning) || ccfcForceState)
-			ccfcPin.setValue(true);
-		else if((currVelocity >= config->ccfcDisableAboveSpeed &&
-		         currEngTemp <= config->ccfcDisableBelowEngTemp &&
-		         currAmbTemp <= config->ccfcDisableBelowAmbTemp) && ccfcRunning)
-			ccfcPin.setValue(false);
-	} else if(ccfcMode == ccfcModes_e::Off) {
-		if(ccfcForceState && ccfcActivated) 
+	// Ambient temparature hysteresis cases
+	if(currAmbTemp >= config->ccfcHighAmbTempThreshold)
+		ccfcHighAmbMode = true;
+	else if(currAmbTemp <  config->ccfcLowAmbTempThreshold)
+		ccfcHighAmbMode = false;
+
+	bool ccfcOnSpeedCond  = (currSpeed <= config->ccfcEnableBelowSpeed) && !ccfcRunning;
+	bool ccfcOffSpeedCond = (currSpeed >= config->ccfcDisableAboveSpeed) && ccfcRunning;
+	bool ccfcOnTempCond   = ((currCltTemp >  config->ccfcLowAmbEnableAboveEngTemp   && !ccfcHighAmbMode) ||
+	     				     (currCltTemp >  config->ccfcHighAmbEnableAboveEngTemp  && ccfcHighAmbMode)) && !ccfcRunning;
+	bool ccfcOffTempCond  = ((currCltTemp <= config->ccfcLowAmbDisableBelowEngTemp  && !ccfcHighAmbMode) || 
+						     (currCltTemp <= config->ccfcHighAmbDisableBelowEngTemp && ccfcHighAmbMode)) && ccfcRunning;
+
+	if(ccfcMode == ccfcModes_e::Off) {						
+		if(ccfcForce && ccfcActivated) 
 			ccfcPin.setValue(true);	
 		else
-			ccfcPin.setValue(false);	
-	}
+			ccfcPin.setValue(false);
+	} else {
+		if(ccfcMode == ccfcModes_e::On) {
+			if(ccfcOnSpeedCond || ccfcForce)
+				ccfcPin.setValue(true);
+			else if(ccfcOffSpeedCond && !ccfcForce)
+				ccfcPin.setValue(false);
+		} else if(ccfcMode == ccfcModes_e::Auto) {
+			if((ccfcOnSpeedCond && ccfcOnTempCond) || ccfcForce)
+				ccfcPin.setValue(true);
+			else if((ccfcOffSpeedCond && ccfcOffTempCond) && !ccfcForce)
+				ccfcPin.setValue(false);
+		}
+	}	
 
 	// luaGauges[6]: CCFC state    — 0=Disabled, 1=Off, 2=Auto, 3=On
 	// luaGauges[7]: running flags — ccfcRunning*4 + cfcRunning*2 + prgselRunning  (0-7)
