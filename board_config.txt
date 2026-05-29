@@ -1,4 +1,5 @@
 ! type name;description;"unit", scale, offset, min, max, digits
+
 uint16_t[VE_LOAD_COUNT x VE_RPM_COUNT] autoscale veFrontTable;;"%", 0.1, 0, 0, 999, 1
 uint8_t[PEDAL_TO_TPS_SIZE x PEDAL_TO_TPS_RPM_SIZE] etbRoadTable;;"%", 1, 0, 0, 100, 0
 uint8_t[PEDAL_TO_TPS_SIZE x PEDAL_TO_TPS_RPM_SIZE] etbRainTable;;"%", 1, 0, 0, 100, 0
@@ -7,13 +8,16 @@ uint8_t[PEDAL_TO_TPS_SIZE x PEDAL_TO_TPS_RPM_SIZE] etbTrackTable;;"%", 1, 0, 0, 
 int16_t[PEDAL_TO_TPS_SIZE x PEDAL_TO_TPS_RPM_SIZE] autoscale estimatedEngineTorqueTable;;"Nm", 0.1, 0, -400, 400, 1
 uint16_t[PEDAL_TO_TPS_RPM_SIZE] estimatedEngineTorqueRpmBins;;"rpm", 1, 0, 0, 12000, 0
 uint8_t[PEDAL_TO_TPS_SIZE] estimatedEngineTorqueTpsBins;;"%", 1, 0, 0, 100, 0
+
 #define INSTANT_ACCEL_SHOT_TPS_COUNT 6
 #define INSTANT_ACCEL_SHOT_CLT_CORR_COUNT 10
 #define ETB_TARGET_SLEW_BINS_COUNT 12
+
 float instantAccelShotWindowMs;Instant accel window length;"ms", 1, 0, 0, 500, 0
 float instantAccelShotTopupMinSpacingMs;Instant accel top-up min spacing;"ms", 1, 0, 0, 100, 2
 float instantAccelShotTopupMinIncrementMs;Instant accel top-up min increment;"ms", 1, 0, 0, 20, 2
 float instantAccelShotMinDeltaTps;Instant accel min delta TPS;"%", 1, 0, 0, 100, 2
+
 float engineBrakingEtbOffsetMode1;Engine braking ETB offset for mode 1;"%", 1, 0, -5, 5, 2
 float engineBrakingEtbOffsetMode2;Engine braking ETB offset for mode 2;"%", 1, 0, -5, 5, 2
 float engineBrakingEtbOffsetMode3;Engine braking ETB offset for mode 3;"%", 1, 0, -5, 5, 2
@@ -25,16 +29,19 @@ float engineBrakingMinVss;Engine braking minimum VSS;"kph", 1, 0, 0, 300, 1
 float engineBrakingMaxBaseEtbTarget;Engine braking max ETB target;"%", 1, 0, 0, 100, 1
 float[ETB_TARGET_SLEW_BINS_COUNT] etbTargetSlewOpeningBins;;"%", 1, 0, 0, 100, 1
 float[ETB_TARGET_SLEW_BINS_COUNT] etbTargetSlewMaxUpRate;;"%/s", 1, 0, 0, 1200, 1
+
 float[INSTANT_ACCEL_SHOT_TPS_COUNT x INSTANT_ACCEL_SHOT_TPS_COUNT] instantAccelShotTpsTable;;"ms", 1, 0, 0, 50, 2
 float[INSTANT_ACCEL_SHOT_TPS_COUNT] instantAccelShotTpsFromBins;;"%", 1, 0, 0, 100, 1
 float[INSTANT_ACCEL_SHOT_TPS_COUNT] instantAccelShotTpsToBins;;"%", 1, 0, 0, 100, 1
 int16_t[INSTANT_ACCEL_SHOT_CLT_CORR_COUNT] instantAccelShotCltCorrBins;;"SPECIAL_CASE_TEMPERATURE", 1, 0, -40, 150, 0
 float[INSTANT_ACCEL_SHOT_CLT_CORR_COUNT] instantAccelShotCltCorrMult;;"multiplier", 1, 0, 0, 5, 2
+
 uint8_t cfcOnTemperature;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 0
 uint8_t cfcOffTemperature;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 0
 bit cfcDisableWhenEngineStopped,"Yes","No";
 uint8_t cfcDisableAboveSpeed;;"SPECIAL_CASE_SPEED", 1, 0, 0, 255, 0
 uint8_t cfcIdleAdder;Additional idle % when fan is active;"%", 1, 0, 0, 100, 0
+
 bit prgselActive,"Yes","No";
 uint16_t prgselRPM;;"rpm", 1, 0, 0, 10000, 0
 uint8_t  prgselVelocity;;"SPECIAL_CASE_SPEED", 1, 0, 0, 255, 0
@@ -44,3 +51,11 @@ uint8_t  prgselCLTTemp;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 120, 0
 uint8_t  prgselPWMFreq;;"Hz", 1, 0, 1, 255, 0
 uint8_t  prgselPWMDuty;;"%", 1, 0, 1, 100, 0
 uint16_t prgselActAfterTime;;"s", 1, 0, 0, 65535, 0
+
+uint8_t ccfcDisableAboveSpeed;;"SPECIAL_CASE_SPEED", 1, 0, 0, 255, 0
+uint8_t ccfcEnableBelowSpeed;;"SPECIAL_CASE_SPEED", 1, 0, 0, 255, 0
+uint8_t ccfcDisableBelowEngTemp;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 255, 0
+uint8_t ccfcEnableAboveEngTemp;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 255, 0
+uint8_t ccfcDisableBelowAmbTemp;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 255, 0
+uint8_t ccfcEnableAboveAmbTemp;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 255, 0
+! uint8_t ccfcIdleAdder;Additional idle RPM in % when fan is active;"%", 1, 0, 0, 100, 0

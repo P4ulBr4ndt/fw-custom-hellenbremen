@@ -109,7 +109,7 @@ void boardConfigOverrides() {
 
 	// Knock
 	// engineConfiguration->enableSoftwareKnock = true;
-	// engineConfiguration->knockFrequency = 0.0f; // TODO
+	// engineConfiguration->knockFrequency = 0.0f; 
 
 	// Sensors
 	engineConfiguration->map.sensor.hwChannel = EFI_ADC_13; // PC3
@@ -184,6 +184,9 @@ void boardCustomInitHardware() {
 
 	// Cooling Fan Control Pin init
 	cfcPin.initPin("CFC", Gpio::C8);
+
+	// Chassis Cooling Fan Control Pin init
+	ccfcPin.initPin("CCFC", Gpio::C9);
 }
 
 void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {
@@ -200,13 +203,20 @@ void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {
 		case 3:
 			setPrgselForceState(true);
 			break;
+		case 4:
+			setCcfcForceState(false);
+			break;
+		case 5:
+			setCcfcForceState(true);
+			break;
 	}
 }
 
 void boardCustomOnConfigurationChange(engine_configuration_s* previousConfiguration) {
-	prgselPwm.setFrequency(config->prgselPWMFreq);
-	prgselPwm.setSimplePwmDutyCycle(config->prgselPWMDuty / 100.0f);
-
-	if(!config->prgselActive)
+	if(!config->prgselActive) {
 		prgselPwm.setFrequency(NAN);
+	} else {
+		prgselPwm.setFrequency(config->prgselPWMFreq);
+		prgselPwm.setSimplePwmDutyCycle(config->prgselPWMDuty / 100.0f);
+	}
 }
