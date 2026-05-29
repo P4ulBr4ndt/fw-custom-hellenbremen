@@ -44,7 +44,7 @@ uint8_t cfcHigherSpeedOffTemperature;;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 
 bit cfcDisableWhenEngineStopped,"Yes","No";
 uint8_t cfcIdleAdder;Additional idle % when fan is active;"%", 1, 0, 0, 100, 0
 uint16_t cfcMaxRuntimeAfterEngShutdown;;"s", 1, 0, 0, 65535, 0
-uint8_t cfcEngShowtdownOffTemp;Coolant temperature to cool down to after engine shutdown;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 0
+uint8_t cfcEngShutdownOffTemp;Coolant temperature to cool down to after engine shutdown;"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 0
 
 bit prgselActive,"Yes","No";
 uint16_t prgselRPM;;"rpm", 1, 0, 0, 10000, 0

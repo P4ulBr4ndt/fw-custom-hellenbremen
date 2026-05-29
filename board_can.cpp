@@ -311,7 +311,7 @@ void boardPeriodicSlow() {
 
 	if ((cfcOnTempCond && cfcDisabledEngCond) || cfcForceState)
 		cfcPin.setValue(true);
-	else if ((cfcOffTempCond || cfcIsShutdownOffComplete) && !cfcForceState) 
+	else if ((cfcOffTempCond || cfcIsShutdownComplete) && !cfcForceState) 
 		cfcPin.setValue(false);
 
 	// Chassis Cooling Fan Controller
