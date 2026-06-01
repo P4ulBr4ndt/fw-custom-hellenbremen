@@ -280,7 +280,7 @@ void boardPeriodicSlow() {
 	float currRuntime = engine->fuelComputer.running.timeSinceCrankingInSecs;
 
 	// Similar to engine->fuelComputer.running.timeSinceCrankingInSecs
-	// but for engine not running time. See, engine2.cpp:170
+	// but for engine not running time. See engine2.cpp:170
 	if(isEngineActive)
 		engNotRunningTimer.reset();
 
@@ -438,8 +438,12 @@ void boardHandleCan(CanCycle cycle) {
 
 		{
 			CanTxMessage msg(CanCategory::NBC, 0x342);
-			uint16_t remainingRangeKM = static_cast<uint16_t>(minF(22.7f * (Sensor::getOrZero(SensorType::FuelLevel) / 100) * (100.0f / 5.5f), 65535.0f));
-			msg[0] = 0x54;
+
+			// Remaining Range in Km = Tank volume [L] * (FuelLevel [0% - 100%] / 100) / Consumption [km / L]
+			//                       = Tank volume [L] * (FuelLevel [0% - 100%] / 100) * (100 / Consumption [L / (100 km)])
+			//                       = Tank volume [L] * (FuelLevel [0% - 100%]) / Consumption [L / (100 km)]
+			uint16_t remainingRangeKM = static_cast<uint16_t>(minF(22.7f * (Sensor::getOrZero(SensorType::FuelLevel) / 5.5f), 65535.0f));
+
 			switch (getCCStatus()) {
 				case CruiseControlStatus::Enabled:
 					msg[0] = 0xA4;
@@ -453,6 +457,12 @@ void boardHandleCan(CanCycle cycle) {
 					break;
 			}
 
+			// msg[1]:  bit 7  6  5  4  3  2  1  0
+			//                    │     │  │  │  └── range < 30 km
+			//                    │     │  │  └───── range < 60 km
+			//                    │     │  └──────── running  (from 0x24)
+			//                    │     └─────────── opsSwitchedState
+			//                    └───────────────── running  (from 0x24)
 			msg[1] = running ? 0x24 : 0x00;
 			if (engine->opsSwitchedState) {
 				msg[1] |= 0x8;
@@ -463,10 +473,15 @@ void boardHandleCan(CanCycle cycle) {
 			if (remainingRangeKM < 30.f) {
 				msg[1] |= 0x3;
 			}
-			msg[2] = 0x54;
+			
+			msg[2] = 0x54; // ?
+
+			// msg[3]: Upper byte, lower nibble of 16-bit uint, capped lower 4-bit
+			// msg[4]: Lower byte of 16-bit uint
 			msg[3] = 0x10;
 			msg[3] |= ((remainingRangeKM >> 8) & 0x0F);
 			msg[4] = remainingRangeKM & 0xFF;
+
 			msg[5] = Sensor::getOrZero(SensorType::FuelLevel);
 			msg[6] = frameCounter146_342;
 			msg[7] = crc8(msg.getFrame()->data8, 7);
@@ -692,17 +707,21 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 	}
 
 	if(CAN_SID(frame) == 0x3C4) {
-		uint8_t ifcuCcfcMode = frame.data8[4];
-		if(ifcuCcfcMode == 0x00) {  
+		// frame.data8[4]:  bit 7  6  5  4  3  2  1  0
+		//                      │  │     │           └── Unknown sub-state
+		//                      │  │     └────────────── Front fog lights
+		//                      └──┴──────────────────── mode: 0b00=inactive, 0b01=Off, 0b10=On, 0b11=Auto
+		uint8_t ifcuVehicleFunctionSetup = frame.data8[4];
+		if((ifcuVehicleFunctionSetup & 0xC0) == 0x00) {  
 			ccfcActivated = false;
 			ccfcMode      = ccfcModes_e::Off;
 		} else {
 			ccfcActivated = true;
-			if(ifcuCcfcMode == 0x40) 
+			if((ifcuVehicleFunctionSetup & 0xC0) == 0x40) 
 				ccfcMode = ccfcModes_e::Off;
-			else if(ifcuCcfcMode == 0xC0)  	                     
+			else if((ifcuVehicleFunctionSetup & 0xC0) == 0xC0)  	                     
 				ccfcMode = ccfcModes_e::Auto;
-			else if(ifcuCcfcMode == 0x80)                         
+			else if((ifcuVehicleFunctionSetup & 0xC0) == 0x80)                         
 				ccfcMode = ccfcModes_e::On;
 		}
 	}
