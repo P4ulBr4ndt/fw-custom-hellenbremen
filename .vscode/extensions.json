@@ -3,6 +3,7 @@
         "marus25.cortex-debug",
         "Gruntfuggly.todo-tree",
 		"ms-vscode.cpptools",
-		"vadimcn.vscode-lldb"
+		"vadimcn.vscode-lldb",
+		"llvm-vs-code-extensions.vscode-clangd"
     ]
 }

@@ -279,15 +279,15 @@ void boardPeriodicSlow() {
 	float currCltTmp2 = Sensor::getOrZero(SensorType::Clt);
 	float currRuntime = engine->fuelComputer.running.timeSinceCrankingInSecs;
 
-	bool shouldRequestStop = jssDown && !isNeutral && isEngineActive;
-	if (shouldRequestStop && !jssStopRequestActive) {
-		doScheduleStopEngine(StopRequestedReason::Board1);
-	}
-
 	// Similar to engine->fuelComputer.running.timeSinceCrankingInSecs
 	// but for engine not running time. See, engine2.cpp:170
 	if(isEngineActive)
 		engNotRunningTimer.reset();
+
+	bool shouldRequestStop = jssDown && !isNeutral && isEngineActive;
+	if (shouldRequestStop && !jssStopRequestActive) {
+		doScheduleStopEngine(StopRequestedReason::Board1);
+	}
 
 	jssStopRequestActive = shouldRequestStop;
 
