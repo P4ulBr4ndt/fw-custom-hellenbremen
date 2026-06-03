@@ -117,6 +117,27 @@ static void writeU16be(uint8_t* dest, uint16_t value) {
 	dest[1] = static_cast<uint8_t>(value & 0xFF);
 }
 
+static uint32_t decodeIsoTpSeparationTimeUs(uint8_t stMin) {
+	if (stMin <= 0x7F) {
+		return static_cast<uint32_t>(stMin) * 1000;
+	}
+
+	if (stMin >= 0xF1 && stMin <= 0xF9) {
+		return static_cast<uint32_t>(stMin - 0xF0) * 100;
+	}
+
+	return 0;
+}
+
+static void sleepIsoTpSeparationTime(uint8_t stMin) {
+	uint32_t separationTimeUs = decodeIsoTpSeparationTimeUs(stMin);
+	if (separationTimeUs == 0) {
+		return;
+	}
+
+	chThdSleepMicroseconds(separationTimeUs);
+}
+
 static bool validateVin(const uint8_t* vin, size_t len, std::array<uint8_t, kVinLength>& normalized) {
 	if (len != kVinLength) {
 		return false;
@@ -288,6 +309,10 @@ static void sendIsoTpConsecutiveFrames(size_t busIndex) {
 			isoTpTx.nextSeq = 1;
 		}
 		blocksLeft--;
+
+		if (isoTpTx.sentLen < isoTpTx.totalLen && blocksLeft > 0) {
+			sleepIsoTpSeparationTime(isoTpTx.stMin);
+		}
 	}
 
 	if (isoTpTx.sentLen >= isoTpTx.totalLen) {
