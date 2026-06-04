@@ -385,12 +385,12 @@ void boardPeriodicSlow() {
 
 	// Coolant Pump Control
 	bool cpcRunning         = cpcPin.getLogicValue();
-	bool cpcOnTempCond      = (currCltTemp >  config->cpcOnTemp)  && !cpcRunning;
-	bool cpcOffTempCond     = (currCltTemp <= config->cpcOffTemp) &&  cpcRunning;
-	bool cpcDisabledEngCond = !config->cpcDisableWhenEngineStopped || isEngineActive;
+	bool cpcOnTempCond      = (currCltTemp >  config->cpcOnTemp)  && isEngineActive && !cpcRunning;
+	bool cpcOffTempCond     = (currCltTemp <= config->cpcOffTemp) && isEngineActive && cpcRunning;
+	bool cpcDisabledEngCond = isEngineActive || !config->cpcDisableWhenEngineStopped;
 	bool cpcCurrentCfc      = cfcPin.getLogicValue();
 
-	if (((cpcCurrentCfc || cpcOnTempCond) && cpcDisabledEngCond) || cpcForce) {
+	if (((cpcCurrentCfc || cpcOnTempCond) && cpcDisabledEngCond) || cpcForce) {	
 		cpcPin.setValue(true);
 	} else if ((!cpcCurrentCfc || cpcOffTempCond) && !cpcForce) {
 		cpcPin.setValue(false);
