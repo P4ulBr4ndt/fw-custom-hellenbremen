@@ -1,4 +1,6 @@
 #include "pch.h"
+
+#include "engine_state.h"
 #include "board_types.h"
 
 #include "board_can.h"
@@ -288,8 +290,9 @@ void boardPeriodicSlow() {
 
 	// Similar to engine->fuelComputer.running.timeSinceCrankingInSecs
 	// but for engine not running time. See engine2.cpp:170
-	if(isEngineActive)
+	if(isEngineActive) {
 		engNotRunningTimer.reset();
+	}
 
 	bool shouldRequestStop = jssDown && !isNeutral && isEngineActive;
 	if (shouldRequestStop && !jssStopRequestActive) {
@@ -306,20 +309,22 @@ void boardPeriodicSlow() {
 		 				                  (currTGS     <= config->prgselUpperTGS) &&
 		 				                  (currCltTmp2 >= config->prgselCltTemp) &&
 		 				                  (currRuntime >= config->prgselActAfterTime)));
-	if (prgselRunning) 
+	if (prgselRunning) {
 		prgselPwm.setFrequency(config->prgselPWMFreq);
-	else 
+	} else {
 		prgselPwm.setFrequency(NAN); // setFrequency(NAN) deactivates the PWM schedule
+	}
 	
 	// Cooling Fan Controller
 	//TODO Idle Adder is not implemented yet
 	bool cfcRunning = cfcPin.getLogicValue();
 
 	// Speed hysteresis cases
-	if(currSpeed >= config->cfcHighSpeedThreshold)
+	if(currSpeed >= config->cfcHighSpeedThreshold) {
 		cfcHighSpeedMode = true;
-	else if(currSpeed < config->cfcLowSpeedThreshold)
+	} else if(currSpeed < config->cfcLowSpeedThreshold) {
 		cfcHighSpeedMode = false;
+	}
 
 	bool cfcIsShutdownRunning  = cfcRunning && !isEngineActive && (engNotRunningTimer.getElapsedSeconds() <= config->cfcMaxRuntimeAfterEngShutdown);
 	bool cfcIsShutdownComplete = (engNotRunningTimer.getElapsedSeconds() > config->cfcMaxRuntimeAfterEngShutdown || currCltTemp <= config->cfcEngShutdownOffTemp) && cfcRunning;
@@ -329,10 +334,11 @@ void boardPeriodicSlow() {
 	bool cfcOffTempCond        = ((currCltTemp <= config->cfcLowSpeedOffTemp  && !cfcHighSpeedMode) || 
 						          (currCltTemp <= config->cfcHighSpeedOffTemp && cfcHighSpeedMode)) && cfcRunning;
 
-	if ((cfcOnTempCond && cfcDisabledEngCond) || cfcForce)
+	if ((cfcOnTempCond && cfcDisabledEngCond) || cfcForce) {
 		cfcPin.setValue(true);
-	else if ((cfcOffTempCond || cfcIsShutdownComplete) && !cfcForce) 
+	} else if ((cfcOffTempCond || cfcIsShutdownComplete) && !cfcForce) {
 		cfcPin.setValue(false);
+	}
 
 	// Chassis Cooling Fan Controller
 	//TODO Idle Adder is not implemented yet
@@ -342,10 +348,11 @@ void boardPeriodicSlow() {
 	bool ccfcRunning = ccfcPin.getLogicValue();
 
 	// Ambient temparature hysteresis cases
-	if(currAmbTemp >= config->ccfcHighAmbTempThreshold)
+	if(currAmbTemp >= config->ccfcHighAmbTempThreshold) {
 		ccfcHighAmbMode = true;
-	else if(currAmbTemp <  config->ccfcLowAmbTempThreshold)
+	} else if(currAmbTemp <  config->ccfcLowAmbTempThreshold) {
 		ccfcHighAmbMode = false;
+	}
 
 	bool ccfcOnSpeedCond  = (currSpeed <= config->ccfcEnableBelowSpeed) && !ccfcRunning;
 	bool ccfcOffSpeedCond = (currSpeed >= config->ccfcDisableAboveSpeed) && ccfcRunning;
@@ -355,21 +362,24 @@ void boardPeriodicSlow() {
 						     (currEngTemp <= config->ccfcHighAmbDisableBelowEngTemp && ccfcHighAmbMode)) && ccfcRunning;
 
 	if(ccfcMode == ccfcModes_e::Off) {						
-		if(ccfcForce && ccfcActivated) 
+		if(ccfcForce && ccfcActivated) {
 			ccfcPin.setValue(true);	
-		else
+		} else {
 			ccfcPin.setValue(false);
+		}
 	} else {
 		if(ccfcMode == ccfcModes_e::On) {
-			if(ccfcOnSpeedCond || (ccfcForce || isEngineActive))
+			if(ccfcOnSpeedCond || (ccfcForce || isEngineActive)) {
 				ccfcPin.setValue(true);
-			else if(ccfcOffSpeedCond && !ccfcForce)
+			} else if(ccfcOffSpeedCond && !ccfcForce) {
 				ccfcPin.setValue(false);
+			}
 		} else if(ccfcMode == ccfcModes_e::Auto) {
-			if((ccfcOnSpeedCond && ccfcOnTempCond) || (ccfcForce || isEngineActive))
+			if((ccfcOnSpeedCond && ccfcOnTempCond) || (ccfcForce || isEngineActive)) {
 				ccfcPin.setValue(true);
-			else if((ccfcOffSpeedCond && ccfcOffTempCond) && !ccfcForce)
+			} else if((ccfcOffSpeedCond && ccfcOffTempCond) && !ccfcForce) {
 				ccfcPin.setValue(false);
+			}
 		}
 	}	
 
@@ -380,10 +390,11 @@ void boardPeriodicSlow() {
 	bool cpcDisabledEngCond = !config->cpcDisableWhenEngineStopped || isEngineActive;
 	bool cpcCurrentCfc      = cfcPin.getLogicValue();
 
-	if (((cpcCurrentCfc || cpcOnTempCond) && cpcDisabledEngCond) || cpcForce)
+	if (((cpcCurrentCfc || cpcOnTempCond) && cpcDisabledEngCond) || cpcForce) {
 		cpcPin.setValue(true);
-	else if ((!cpcCurrentCfc || cpcOffTempCond) && !cpcForce)
+	} else if ((!cpcCurrentCfc || cpcOffTempCond) && !cpcForce) {
 		cpcPin.setValue(false);
+	}
 
 	// luaGauges[6]: CCFC state    — 0=Disabled, 1=Off, 2=Auto, 3=On
 	// luaGauges[7]: running flags — cpcRunning*8 + ccfcRunning*4 + cfcRunning*2 + prgselRunning  (0-15)
@@ -473,38 +484,37 @@ void boardHandleCan(CanCycle cycle) {
 					break;
 				case CruiseControlStatus::Disabled:
 				default:
-					msg[0] = 0x54; //0x56? 0b0101 0100 vs. 0b0101 0110
+					msg[0] = 0x54; //0x56? 0b0101 0100 vs. 0b0101 0110 (0x54)
 					break;
 			}
-
-			// 0x04, 0b0000 0100 - Boot up
-			// 0x08, 0b0000 1000 - Zündung an aus kaltem Zustand
-			// 0x28, 0b0010 1000 - Motor anlassen
-			// 0x24, 0b0010 0100 - Motor läuft (bei uns 0x2C)
-			// 0x34, 0b0011 0100 - Motor geht aus
-			// 0x14, 0b0001 0100 - Motor ist aus
-			// 0x18, 0b0001 1000 - Motorrad fährt runter
-
-			// 0x10 wenn Schalter auf aus in Verbindung mit klickendem Geräusch
 
 			// msg[1]:  bit 7  6  5  4  3  2  1  0
 			//                    │  |  │  │  │  └── range <= 16  km
 			//                    │  |  │  │  └───── range <= 130 km (?)
-			//                    │  |  │  └──────── running  (from 0x24)
+			//                    │  |  │  └──────── !opsSwitchedState
 			// 				      |  |  └─────────── opsSwitchedState
-			//                    |  └────────────── Ignition Switch on 
-			//                    └───────────────── running  (from 0x24)
-			msg[1] = running ? 0x24 : 0x00;
-			if (engine->opsSwitchedState) {
+			//                    |  └────────────── Ignition Switch off
+			//                    └───────────────── running (successfull start and running )
+			if (running) {
+				msg[1] |= 0x20;
+			}
+
+			if(harleyIgnitionOffRequested && !harleyIgnitionOnRequested) {
+				msg[1] |= 0x10;
+			}
+
+			if (getOPSState()) {
 				msg[1] |= 0x8;
+			} else {
+				msg[1] |= 0x4;
 			}
-			if (remainingRangeKM < 60.f) {
-				msg[1] |= 0x2;
-			}
+
 			if (remainingRangeKM < 30.f) {
 				msg[1] |= 0x3;
+			} else if (remainingRangeKM < 60.f) {
+				msg[1] |= 0x2;
 			}
-			
+
 			msg[2] = 0x54; // ?
 
 			// msg[3]: Upper byte, lower nibble of 16-bit uint, capped lower 4-bit
