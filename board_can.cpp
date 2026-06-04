@@ -49,6 +49,9 @@ static bool        ccfcActivated = false;
 // Purge Valve Solenoid
 static bool prgselForce = false;
 
+// CPC
+static bool cpcForce = false;
+
 // Required for indicators
 extern StoredValueSensor luaGauges[LUA_GAUGE_COUNT];
 
@@ -67,6 +70,10 @@ void setPrgselForce(bool state) {
 		prgselPwm.setFrequency(NAN);
 
 	prgselForce = state;
+}
+
+void setCpcForce(bool state) {
+	cpcForce = state;
 }
 
 struct CruiseGearLimits {
@@ -366,12 +373,25 @@ void boardPeriodicSlow() {
 		}
 	}	
 
+	// Coolant Pump Control
+	bool cpcRunning         = cpcPin.getLogicValue();
+	bool cpcOnTempCond      = (currCltTemp >  config->cpcOnTemp)  && !cpcRunning;
+	bool cpcOffTempCond     = (currCltTemp <= config->cpcOffTemp) &&  cpcRunning;
+	bool cpcDisabledEngCond = !config->cpcDisableWhenEngineStopped || isEngineActive;
+	bool cpcCurrentCfc      = cfcPin.getLogicValue();
+
+	if (((cpcCurrentCfc || cpcOnTempCond) && cpcDisabledEngCond) || cpcForce)
+		cpcPin.setValue(true);
+	else if ((!cpcCurrentCfc || cpcOffTempCond) && !cpcForce)
+		cpcPin.setValue(false);
+
 	// luaGauges[6]: CCFC state    — 0=Disabled, 1=Off, 2=Auto, 3=On
-	// luaGauges[7]: running flags — ccfcRunning*4 + cfcRunning*2 + prgselRunning  (0-7)
+	// luaGauges[7]: running flags — cpcRunning*8 + ccfcRunning*4 + cfcRunning*2 + prgselRunning  (0-15)
 	luaGauges[6].setValidValue(ccfcActivated ? (3.0f - static_cast<float>(ccfcMode)) : 0.0f, getTimeNowNt());
-	luaGauges[7].setValidValue((ccfcPin.getLogicValue() ? 4.0f : 0.0f) 
-	                           + (cfcPin.getLogicValue() ? 2.0f : 0.0f) 
-							   + (prgselRunning ? 1.0f : 0.0f), getTimeNowNt());
+	luaGauges[7].setValidValue((cpcPin.getLogicValue()    ? 8.0f : 0.0f)
+	                           + (ccfcPin.getLogicValue() ? 4.0f : 0.0f)
+	                           + (cfcPin.getLogicValue()  ? 2.0f : 0.0f)
+							   + (prgselRunning           ? 1.0f : 0.0f), getTimeNowNt());
 }
 
 void boardHandleCan(CanCycle cycle) {
@@ -453,15 +473,26 @@ void boardHandleCan(CanCycle cycle) {
 					break;
 				case CruiseControlStatus::Disabled:
 				default:
-					msg[0] = 0x54;
+					msg[0] = 0x54; //0x56? 0b0101 0100 vs. 0b0101 0110
 					break;
 			}
 
+			// 0x04, 0b0000 0100 - Boot up
+			// 0x08, 0b0000 1000 - Zündung an aus kaltem Zustand
+			// 0x28, 0b0010 1000 - Motor anlassen
+			// 0x24, 0b0010 0100 - Motor läuft (bei uns 0x2C)
+			// 0x34, 0b0011 0100 - Motor geht aus
+			// 0x14, 0b0001 0100 - Motor ist aus
+			// 0x18, 0b0001 1000 - Motorrad fährt runter
+
+			// 0x10 wenn Schalter auf aus in Verbindung mit klickendem Geräusch
+
 			// msg[1]:  bit 7  6  5  4  3  2  1  0
-			//                    │     │  │  │  └── range < 30 km
-			//                    │     │  │  └───── range < 60 km
-			//                    │     │  └──────── running  (from 0x24)
-			//                    │     └─────────── opsSwitchedState
+			//                    │  |  │  │  │  └── range <= 16  km
+			//                    │  |  │  │  └───── range <= 130 km (?)
+			//                    │  |  │  └──────── running  (from 0x24)
+			// 				      |  |  └─────────── opsSwitchedState
+			//                    |  └────────────── Ignition Switch on 
 			//                    └───────────────── running  (from 0x24)
 			msg[1] = running ? 0x24 : 0x00;
 			if (engine->opsSwitchedState) {
