@@ -191,6 +191,9 @@ void boardCustomInitHardware() {
 
 	// Chassis Cooling Fan Control Pin init
 	ccfcPin.initPin("CCFC", Gpio::C9);
+
+	// Coolant Pump Control Pin init
+	cpcPin.initPin("CPC", Gpio::C7);
 }
 
 void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {
@@ -212,6 +215,12 @@ void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {
 			break;
 		case 5:
 			setCcfcForce(true);
+			break;
+		case 6:
+			setCpcForce(false);
+			break;
+		case 7:
+			setCpcForce(true);
 			break;
 	}
 }

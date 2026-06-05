@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <msq xmlns="http://www.msefi.com/:msq">
     <page/>
-    <page number="0" size="26252">
+    <page number="0" size="26264">
         <constant name="accelEnrichmentMode">"MS Adder"</constant>
         <constant name="accelerometerCsPin">"NONE"</constant>
         <constant name="accelerometerCsPinMode">"default"</constant>
@@ -561,7 +561,7 @@
         <constant name="brakePedalPin">"NONE"</constant>
         <constant name="brakePedalPinMode">"PULLUP"</constant>
         <constant digits="0" name="byFirmwareVersion" units="index">0</constant>
-        <constant digits="0" name="calibrationBirthday" units="">20260603</constant>
+        <constant digits="0" name="calibrationBirthday" units="">20260604</constant>
         <constant digits="0" name="camDecoder2jzPosition" units="angle">95</constant>
         <constant digits="0" name="camDecoder2jzPrecision" units="">40</constant>
         <constant name="camInputs1">"NONE"</constant>
@@ -808,6 +808,10 @@
         <constant digits="1" name="compressorDischargeTemperature_tempC_3" units="*C">0.0</constant>
         <constant name="consoleUartDevice">"Off"</constant>
         <constant name="consumeObdSensors">"no"</constant>
+        <constant name="cpcDisableWhenEngineStopped">"No"</constant>
+        <constant digits="0" name="cpcIdleAdder" units="%">0</constant>
+        <constant digits="0" name="cpcOffTemp" units="C">0</constant>
+        <constant digits="0" name="cpcOnTemp" units="C">0</constant>
         <constant digits="0" name="cranking_rpm" units="RPM">550</constant>
         <constant cols="1" digits="2" name="crankingAdvance" rows="4" units="deg">
          0.0
@@ -5270,7 +5274,7 @@ end</constant>
 </constant>
         <constant name="yesUnderstandLocking">"no"</constant>
     </page>
-    <versionInfo firmwareInfo="20260227" nPages="1" signature="rusEFI main.2026.06.03.hellen-bremen.850800841" version="5.0"/>
+    <versionInfo firmwareInfo="20260227" nPages="1" signature="rusEFI main.2026.06.04.hellen-bremen.3538396066" version="5.0"/>
     <bibliography author="rusEFI 20260227" writeDate="date"/>
     <settings/>
     <userComments/>
