@@ -24,8 +24,9 @@ void boardDefaultConfiguration() {
 	engineConfiguration->triggerGapOverrideFrom[2] = 1.850; // this one is custom
 	engineConfiguration->triggerGapOverrideTo[2] = 6;
 
-	// Cam
+	// Cam // VVT is controlled at 100hz
 	engineConfiguration->vvtMode[0] = VVT_MAP_V_TWIN;
+	engineConfiguration->vvtOutputFrequency = 100;
 	engineConfiguration->mapCamDetectionAnglePosition = 50;
 
 	// Aux Outputs
@@ -169,6 +170,9 @@ void boardConfigOverrides() {
 	// work-around for https://github.com/rusefi/rusefi/issues/5894 todo: fix it!
 	engineConfiguration->maximumIgnitionTiming = 90;
 	engineConfiguration->minimumIgnitionTiming = -90;
+
+	// VVT is controlled at 100hz
+	engineConfiguration->vvtOutputFrequency = 100;
 }
 
 void boardCustomInitHardware() {
