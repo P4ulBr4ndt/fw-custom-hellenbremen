@@ -24,9 +24,9 @@ void boardDefaultConfiguration() {
 	engineConfiguration->triggerGapOverrideFrom[2] = 1.850; // this one is custom
 	engineConfiguration->triggerGapOverrideTo[2] = 6;
 
-	// Cam // VVT is controlled at 100hz
+	// Cam // VVT is controlled at 110hz
 	engineConfiguration->vvtMode[0] = VVT_MAP_V_TWIN;
-	engineConfiguration->vvtOutputFrequency = 100;
+	engineConfiguration->vvtOutputFrequency = 110;
 	engineConfiguration->mapCamDetectionAnglePosition = 50;
 
 	// Aux Outputs
