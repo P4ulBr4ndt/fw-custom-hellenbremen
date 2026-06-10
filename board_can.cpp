@@ -494,12 +494,12 @@ void boardHandleCan(CanCycle cycle) {
 			}
 
 			// msg[1]:  bit 7  6  5  4  3  2  1  0
-			//                    │  |  │  │  │  └── range <= 16  km
-			//                    │  |  │  │  └───── range <= 130 km (?)
+			//                    │  |  │  │  │  └── FuelLevel <= 1%
+			//                    │  |  │  │  └───── FuelLevel <= 10%
 			//                    │  |  │  └──────── !opsSwitchedState
-			// 				      |  |  └─────────── opsSwitchedState
+			// 				      |  |  └─────────── opsSwitchedState (0b11 and 0b00 not observed, 0b10 causes OP warn lamp)
 			//                    |  └────────────── Ignition Switch off
-			//                    └───────────────── running (successfull start and running )
+			//                    └───────────────── running (successful start and running)
 			if (running) {
 				msg[1] |= 0x20;
 			}
@@ -514,9 +514,9 @@ void boardHandleCan(CanCycle cycle) {
 				msg[1] |= 0x4;
 			}
 
-			if (remainingRangeKM < 30.f) {
+			if (Sensor::getOrZero(SensorType::FuelLevel) <= 1.0f) {
 				msg[1] |= 0x3;
-			} else if (remainingRangeKM < 60.f) {
+			} else if (Sensor::getOrZero(SensorType::FuelLevel) <= 10.0f) {
 				msg[1] |= 0x2;
 			}
 
@@ -758,17 +758,20 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 		//                      │  │     └────────────── Front fog lights
 		//                      └──┴──────────────────── mode: 0b00=inactive, 0b01=Off, 0b10=On, 0b11=Auto
 		uint8_t ifcuVehicleFunctionSetup = frame.data8[4];
-		if((ifcuVehicleFunctionSetup & 0xC0) == 0x00) {  
+		uint8_t ifcuCcfcState            = ifcuVehicleFunctionSetup & 0xC0;
+
+		if(ifcuCcfcState == 0x00) {  
 			ccfcActivated = false;
 			ccfcMode      = ccfcModes_e::Off;
 		} else {
 			ccfcActivated = true;
-			if((ifcuVehicleFunctionSetup & 0xC0) == 0x40) 
+			if(ifcuCcfcState == 0x40) {
 				ccfcMode = ccfcModes_e::Off;
-			else if((ifcuVehicleFunctionSetup & 0xC0) == 0xC0)  	                     
+			} else if(ifcuCcfcState == 0xC0) {
 				ccfcMode = ccfcModes_e::Auto;
-			else if((ifcuVehicleFunctionSetup & 0xC0) == 0x80)                         
+			} else if(ifcuCcfcState == 0x80) {
 				ccfcMode = ccfcModes_e::On;
+			}
 		}
 	}
 

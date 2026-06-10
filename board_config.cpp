@@ -13,6 +13,7 @@
 
 #define HARLEY_V_TWIN 45.0
 
+// Executed after flash when empty or when factory resetted
 void boardDefaultConfiguration() {
 	// Trigger
 	engineConfiguration->overrideTriggerGaps = true;
@@ -55,26 +56,6 @@ void boardDefaultConfiguration() {
 	engineConfiguration->throttlePedalWOTVoltage = 4.46;
 	engineConfiguration->throttlePedalSecondaryUpVoltage = 1.37;
 	engineConfiguration->throttlePedalSecondaryWOTVoltage = 4.48;
-
-	// Fuel Level Calibration Road Glide 2025
-	// Values are rising in percentage per index
-	config->fuelLevelBins[0] = 0.335f; // fuelLevelBins in float of V
-	config->fuelLevelBins[1] = 0.446f;
-	config->fuelLevelBins[2] = 0.556f;
-	config->fuelLevelBins[3] = 0.667f;
-	config->fuelLevelBins[4] = 0.778f;
-	config->fuelLevelBins[5] = 0.889f;
-	config->fuelLevelBins[6] = 0.999f;
-	config->fuelLevelBins[7] = 1.110f;
-
-	config->fuelLevelValues[0] = 100; // fuelLevelValues in int of %
-	config->fuelLevelValues[1] = 86;
-	config->fuelLevelValues[2] = 71;
-	config->fuelLevelValues[3] = 57;
-	config->fuelLevelValues[4] = 43;
-	config->fuelLevelValues[5] = 29;
-	config->fuelLevelValues[6] = 14;
-	config->fuelLevelValues[7] = 0; 
 	
 	engineConfiguration->fuelLevelAveragingAlpha = 0.003f; //TODO Too responsive, decrease alpha for more smoothing
 	engineConfiguration->fuelLevelLowThresholdVoltage = 0.3f;
@@ -89,6 +70,7 @@ void boardDefaultConfiguration() {
 	setTable(config->estimatedEngineTorqueTable, 0);
 }
 
+// Set when booted and after burn
 void boardConfigOverrides() {
 	setHellenAnalogDividers();
 	setHellenCan();
@@ -172,7 +154,7 @@ void boardConfigOverrides() {
 	engineConfiguration->minimumIgnitionTiming = -90;
 
 	// VVT is controlled at 100hz
-	engineConfiguration->vvtOutputFrequency = 100;
+	engineConfiguration->vvtOutputFrequency = 110;
 }
 
 void boardCustomInitHardware() {
