@@ -43,4 +43,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: rusefi_hellen-bremen-ini
-          path: ext/rusefi/firmware/generated/tunerstudio/generated/rusefi_hellen-bremen.ini
+          path: '**/rusefi_hellen-bremen.ini'
