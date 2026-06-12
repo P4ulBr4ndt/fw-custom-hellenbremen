@@ -382,7 +382,7 @@ void boardPeriodicSlow() {
 		} else if(ccfcMode == ccfcModes_e::Auto) {
 			if((ccfcOnSpeedCond && ccfcOnTempCond) || ccfcForce) {
 				ccfcPin.setValue(true);
-			} else if(((ccfcOffSpeedCond && ccfcOffTempCond) || (!isEngineActive && ccfcRunning)) && !ccfcForce) {
+			} else if(((ccfcOffSpeedCond || ccfcOffTempCond) || (!isEngineActive && ccfcRunning)) && !ccfcForce) {
 				ccfcPin.setValue(false);
 			}
 		}
