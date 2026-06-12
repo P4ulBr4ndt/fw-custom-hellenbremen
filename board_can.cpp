@@ -408,6 +408,13 @@ void boardPeriodicSlow() {
 	                           + (ccfcPin.getLogicValue() ? 4.0f : 0.0f)
 	                           + (cfcPin.getLogicValue()  ? 2.0f : 0.0f)
 							   + (prgselRunning           ? 1.0f : 0.0f), getTimeNowNt());
+
+	if(harleyIgnitionOffRequested && !harleyIgnitionOnRequested) {
+		cfcForce    = false;
+		ccfcForce   = false;
+		prgselForce = false;
+		cpcForce    = false;
+	}
 }
 
 void boardHandleCan(CanCycle cycle) {
