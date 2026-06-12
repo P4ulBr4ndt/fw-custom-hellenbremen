@@ -374,13 +374,13 @@ void boardPeriodicSlow() {
 		}
 	} else {
 		if(ccfcMode == ccfcModes_e::On) {
-			if(ccfcOnSpeedCond || (ccfcForce || isEngineActive)) {
+			if((ccfcOnSpeedCond && isEngineActive) || ccfcForce) {
 				ccfcPin.setValue(true);
 			} else if((ccfcOffSpeedCond || (!isEngineActive && ccfcRunning)) && !ccfcForce) {
 				ccfcPin.setValue(false);
 			}
 		} else if(ccfcMode == ccfcModes_e::Auto) {
-			if((ccfcOnSpeedCond && ccfcOnTempCond) || (ccfcForce || isEngineActive)) {
+			if((ccfcOnSpeedCond && ccfcOnTempCond) || ccfcForce) {
 				ccfcPin.setValue(true);
 			} else if(((ccfcOffSpeedCond && ccfcOffTempCond) || (!isEngineActive && ccfcRunning)) && !ccfcForce) {
 				ccfcPin.setValue(false);
