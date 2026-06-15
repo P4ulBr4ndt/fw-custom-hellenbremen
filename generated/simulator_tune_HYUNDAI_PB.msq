@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <msq xmlns="http://www.msefi.com/:msq">
     <page/>
-    <page number="0" size="26264">
+    <page number="0" size="26268">
         <constant name="accelEnrichmentMode">"MS Adder"</constant>
         <constant name="accelerometerCsPin">"NONE"</constant>
         <constant name="accelerometerCsPinMode">"default"</constant>
@@ -561,7 +561,7 @@
         <constant name="brakePedalPin">"NONE"</constant>
         <constant name="brakePedalPinMode">"PULLUP"</constant>
         <constant digits="0" name="byFirmwareVersion" units="index">0</constant>
-        <constant digits="0" name="calibrationBirthday" units="">20260614</constant>
+        <constant digits="0" name="calibrationBirthday" units="">20260615</constant>
         <constant digits="0" name="camDecoder2jzPosition" units="angle">95</constant>
         <constant digits="0" name="camDecoder2jzPrecision" units="">40</constant>
         <constant name="camInputs1">"NONE"</constant>
@@ -1941,6 +1941,7 @@
         <constant digits="0" name="idlePidRpmDeadZone" units="RPM">50</constant>
         <constant digits="0" name="idlePidRpmUpperLimit" units="RPM">300</constant>
         <constant name="idlePositionChannel">"Disabled"</constant>
+        <constant digits="1" name="idlePositionLowerLimit" units="%">0.0</constant>
         <constant digits="0" name="idlePositionMax" units="mv">5000</constant>
         <constant digits="0" name="idlePositionMin" units="mv">0</constant>
         <constant name="idleReturnTargetRamp">"no"</constant>
@@ -5365,7 +5366,7 @@ end</constant>
 </constant>
         <constant name="yesUnderstandLocking">"no"</constant>
     </page>
-    <versionInfo firmwareInfo="20260227" nPages="1" signature="rusEFI main.2026.06.14.hellen-bremen.665249130" version="5.0"/>
+    <versionInfo firmwareInfo="20260227" nPages="1" signature="rusEFI main.2026.06.15.hellen-bremen.3565589184" version="5.0"/>
     <bibliography author="rusEFI 20260227" writeDate="date"/>
     <settings/>
     <userComments/>
