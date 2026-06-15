@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <msq xmlns="http://www.msefi.com/:msq">
     <page/>
-    <page number="0" size="26268">
+    <page number="0" size="26276">
         <constant name="accelEnrichmentMode">"MS Adder"</constant>
         <constant name="accelerometerCsPin">"NONE"</constant>
         <constant name="accelerometerCsPinMode">"default"</constant>
@@ -1268,6 +1268,7 @@
         <constant name="FuelHighPressureSentInput">"None"</constant>
         <constant name="FuelHighPressureSentType">"None"</constant>
         <constant digits="4" name="fuelLevelAveragingAlpha" units="">0.001</constant>
+        <constant digits="1" name="fuelLevelAvgConsumption" units="L / 100 km">0.0</constant>
         <constant cols="1" digits="3" name="fuelLevelBins" rows="8" units="volt">
          0.0
          0.71
@@ -1281,6 +1282,7 @@
         <constant digits="2" name="fuelLevelHighThresholdVoltage" units="v">4.5</constant>
         <constant digits="2" name="fuelLevelLowThresholdVoltage" units="v">0.25</constant>
         <constant name="fuelLevelSensor">"Disabled"</constant>
+        <constant digits="1" name="fuelLevelTankVolume" units="L">0.0</constant>
         <constant digits="3" name="fuelLevelUpdatePeriodSec" units="seconds">0.1</constant>
         <constant cols="1" digits="0" name="fuelLevelValues" rows="8" units="%">
          0
@@ -5275,7 +5277,7 @@ end</constant>
 </constant>
         <constant name="yesUnderstandLocking">"no"</constant>
     </page>
-    <versionInfo firmwareInfo="20260227" nPages="1" signature="rusEFI main.2026.06.15.hellen-bremen.3565589184" version="5.0"/>
+    <versionInfo firmwareInfo="20260227" nPages="1" signature="rusEFI main.2026.06.15.hellen-bremen.3704615492" version="5.0"/>
     <bibliography author="rusEFI 20260227" writeDate="date"/>
     <settings/>
     <userComments/>
