@@ -64,6 +64,7 @@ void boardDefaultConfiguration() {
 	boardEtbMapsApplyDefaults();
 	boardInstantAccelApplyDefaults();
 	boardRidingModesApplyDefaults();
+	engineConfiguration->idlePositionLowerLimit = 14;
 
 	setRpmTableBin(config->estimatedEngineTorqueRpmBins);
 	setLinearCurve(config->estimatedEngineTorqueTpsBins, 0.0f, 100.0f, 1.0f);
