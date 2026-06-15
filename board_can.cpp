@@ -485,7 +485,7 @@ void boardHandleCan(CanCycle cycle) {
 			// Remaining Range in Km = Tank volume [L] * (FuelLevel [0% - 100%] / 100) / Consumption [km / L]
 			//                       = Tank volume [L] * (FuelLevel [0% - 100%] / 100) * (100 / Consumption [L / (100 km)])
 			//                       = Tank volume [L] * (FuelLevel [0% - 100%]) / Consumption [L / (100 km)]
-			uint16_t remainingRangeKM = static_cast<uint16_t>(minF(config->fuelLevelTankVolume * (Sensor::getOrZero(SensorType::FuelLevel) / config->fuelAvgConsumption), 65535.0f));
+			uint16_t remainingRangeKM = static_cast<uint16_t>(minF(config->fuelLevelTankVolume * (Sensor::getOrZero(SensorType::FuelLevel) / config->fuelLevelAvgConsumption), 65535.0f));
 
 			switch (getCCStatus()) {
 				case CruiseControlStatus::Enabled:
