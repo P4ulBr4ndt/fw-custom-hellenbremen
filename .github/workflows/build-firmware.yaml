@@ -39,8 +39,11 @@ jobs:
           MY_REPO_PAT: ${{secrets.MY_REPO_PAT}}
           ADDITIONAL_ENV: ${{secrets.ADDITIONAL_ENV}}
 
+      - name: Copy INI to workspace root
+        run: cp generated/tunerstudio/generated/rusefi_hellen-bremen.ini rusefi_hellen-bremen.ini
+
       - name: Upload INI as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: rusefi_hellen-bremen-ini
-          path: '**/rusefi_hellen-bremen.ini'
+          name: rusefi_hellen-bremen.ini
+          path: rusefi_hellen-bremen.ini
