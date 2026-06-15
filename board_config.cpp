@@ -31,7 +31,7 @@ void boardDefaultConfiguration() {
 	engineConfiguration->mapCamDetectionAnglePosition = 50;
 
 	// Aux Outputs
-	engineConfiguration->fanPin = Gpio::C7;
+	engineConfiguration->fanPin = Gpio::Unassigned;
 	engineConfiguration->fanOnTemperature = 0.f;
 	engineConfiguration->fanOffTemperature = 0.f;
 	engineConfiguration->fan2Pin = Gpio::Unassigned;
@@ -69,6 +69,9 @@ void boardDefaultConfiguration() {
 	setRpmTableBin(config->estimatedEngineTorqueRpmBins);
 	setLinearCurve(config->estimatedEngineTorqueTpsBins, 0.0f, 100.0f, 1.0f);
 	setTable(config->estimatedEngineTorqueTable, 0);
+
+	// CFC
+	config->cfcOutputPin = Gpio::C8;
 }
 
 // Set when booted and after burn
@@ -170,7 +173,7 @@ void boardCustomInitHardware() {
 	);
 
 	// Cooling Fan Control Pin init
-	cfcPin.initPin("CFC", Gpio::C8);
+	cfcPin.initPin("CFC", config->cfcOutputPin);
 
 	// Chassis Cooling Fan Control Pin init
 	ccfcPin.initPin("CCFC", Gpio::C9);
