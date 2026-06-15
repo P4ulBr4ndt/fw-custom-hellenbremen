@@ -71,3 +71,6 @@ uint8_t cpcOnTemp;Must be greater/equal than "Lower Off Temperature";"SPECIAL_CA
 uint8_t cpcOffTemp;Must be less/equal than "Higher Off Temperature";"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 0
 bit cpcDisableWhenEngineStopped,"Yes","No";
 uint8_t cpcIdleAdder;Additional idle % when fan is active;"%", 1, 0, 0, 100, 0
+
+float fuelLevelTankVolume;;"L", 1, 0, 0, 50, 1
+float fuelLevelAvgConsumption;;"L / 100 km", 1, 0, 0, 20, 1
