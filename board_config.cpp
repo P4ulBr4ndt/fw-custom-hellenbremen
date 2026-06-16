@@ -31,7 +31,7 @@ void boardDefaultConfiguration() {
 	engineConfiguration->mapCamDetectionAnglePosition = 50;
 
 	// Aux Outputs
-	engineConfiguration->fanPin = Gpio::C7;
+	engineConfiguration->fanPin = Gpio::Unassigned;
 	engineConfiguration->fanOnTemperature = 0.f;
 	engineConfiguration->fanOffTemperature = 0.f;
 	engineConfiguration->fan2Pin = Gpio::Unassigned;
@@ -69,6 +69,18 @@ void boardDefaultConfiguration() {
 	setRpmTableBin(config->estimatedEngineTorqueRpmBins);
 	setLinearCurve(config->estimatedEngineTorqueTpsBins, 0.0f, 100.0f, 1.0f);
 	setTable(config->estimatedEngineTorqueTable, 0);
+
+	// CFC
+	config->cfcOutputPin = Gpio::C8;
+
+	// CCFC
+	config->ccfcOutputPin = Gpio::C9;
+
+	// CPC 
+	config->cpcOutputPin = Gpio::C7;
+
+	// PRGSEL
+	config->prgselOutputPin = Gpio::D10;
 }
 
 // Set when booted and after burn
@@ -163,20 +175,20 @@ void boardCustomInitHardware() {
 	startSimplePwmExt(&prgselPwm, 
 				   "PRGSEL", 
 				   &engine->scheduler, 
-				   Gpio::D10, 
+				   config->prgselOutputPin, 
 				   &prgselPin, 
 				   NAN, // Frequency
 				   config->prgselPWMDuty / 100.0f
 	);
 
 	// Cooling Fan Control Pin init
-	cfcPin.initPin("CFC", Gpio::C8);
+	cfcPin.initPin("CFC", config->cfcOutputPin);
 
 	// Chassis Cooling Fan Control Pin init
-	ccfcPin.initPin("CCFC", Gpio::C9);
+	ccfcPin.initPin("CCFC", config->ccfcOutputPin);
 
 	// Coolant Pump Control Pin init
-	cpcPin.initPin("CPC", Gpio::C7);
+	cpcPin.initPin("CPC", config->cpcOutputPin);
 }
 
 void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {
