@@ -76,3 +76,6 @@ float fuelLevelTankVolume;;"L", 1, 0, 0, 50, 1
 float fuelLevelAvgConsumption;;"L / 100 km", 1, 0, 0.1, 20, 1
 
 output_pin_e cfcOutputPin;
+output_pin_e ccfcOutputPin;
+output_pin_e cpcOutputPin;
+output_pin_e prgselOutputPin;
