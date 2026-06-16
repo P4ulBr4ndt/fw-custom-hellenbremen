@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <msq xmlns="http://www.msefi.com/:msq">
     <page/>
-    <page number="0" size="26276">
+    <page number="0" size="26288">
         <constant name="accelEnrichmentMode">"MS Adder"</constant>
         <constant name="accelerometerCsPin">"NONE"</constant>
         <constant name="accelerometerCsPinMode">"default"</constant>
@@ -561,7 +561,7 @@
         <constant name="brakePedalPin">"NONE"</constant>
         <constant name="brakePedalPinMode">"PULLUP"</constant>
         <constant digits="0" name="byFirmwareVersion" units="index">0</constant>
-        <constant digits="0" name="calibrationBirthday" units="">20260615</constant>
+        <constant digits="0" name="calibrationBirthday" units="">20260616</constant>
         <constant digits="0" name="camDecoder2jzPosition" units="angle">95</constant>
         <constant digits="0" name="camDecoder2jzPrecision" units="">40</constant>
         <constant name="camInputs1">"NONE"</constant>
@@ -609,6 +609,7 @@
         <constant digits="0" name="ccfcLowAmbDisableBelowEngTemp" units="C">0</constant>
         <constant digits="0" name="ccfcLowAmbEnableAboveEngTemp" units="C">0</constant>
         <constant digits="0" name="ccfcLowAmbTempThreshold" units="C">0</constant>
+        <constant name="ccfcOutputPin">"NONE"</constant>
         <constant name="cdmInputPin">"NONE"</constant>
         <constant digits="1" name="cel_battery_max_v" units="#">0.0</constant>
         <constant digits="1" name="cel_battery_min_v" units="#">0.0</constant>
@@ -628,6 +629,7 @@
         <constant digits="0" name="cfcLowSpeedOnTemp" units="C">0</constant>
         <constant digits="0" name="cfcLowSpeedThreshold" units="kmh">0</constant>
         <constant digits="0" name="cfcMaxRuntimeAfterEngShutdown" units="s">0</constant>
+        <constant name="cfcOutputPin">"NONE"</constant>
         <constant name="clt_adcChannel">"Disabled"</constant>
         <constant digits="1" name="clt_bias_resistor" units="Ohm">1500.0</constant>
         <constant digits="1" name="clt_resistance_1" units="Ohm">9500.0</constant>
@@ -812,6 +814,7 @@
         <constant digits="0" name="cpcIdleAdder" units="%">0</constant>
         <constant digits="0" name="cpcOffTemp" units="C">0</constant>
         <constant digits="0" name="cpcOnTemp" units="C">0</constant>
+        <constant name="cpcOutputPin">"NONE"</constant>
         <constant digits="0" name="cranking_rpm" units="RPM">550</constant>
         <constant cols="1" digits="2" name="crankingAdvance" rows="4" units="deg">
          0.0
@@ -3353,6 +3356,7 @@ end</constant>
         <constant digits="1" name="oilTempSensor_tempC_3" units="*C">0.0</constant>
         <constant name="opsPin">"NONE"</constant>
         <constant name="opsPinMode">"DEFAULT"</constant>
+        <constant digits="0" name="outputPinsAlignFill" units="">0</constant>
         <constant name="overrideTriggerGaps">"no"</constant>
         <constant name="overrideVvtTriggerGaps">"no"</constant>
         <constant name="pauseEtbControl">"no"</constant>
@@ -3441,6 +3445,7 @@ end</constant>
         <constant name="prgselActive">"No"</constant>
         <constant digits="0" name="prgselCltTemp" units="C">0</constant>
         <constant digits="0" name="prgselLowerTGS" units="%">0</constant>
+        <constant name="prgselOutputPin">"NONE"</constant>
         <constant digits="0" name="prgselPWMDuty" units="%">0</constant>
         <constant digits="0" name="prgselPWMFreq" units="Hz">0</constant>
         <constant digits="0" name="prgselRPM" units="rpm">0</constant>
@@ -5368,7 +5373,7 @@ end</constant>
 </constant>
         <constant name="yesUnderstandLocking">"no"</constant>
     </page>
-    <versionInfo firmwareInfo="20260227" nPages="1" signature="rusEFI main.2026.06.15.hellen-bremen.3704615492" version="5.0"/>
+    <versionInfo firmwareInfo="20260227" nPages="1" signature="rusEFI main.2026.06.16.hellen-bremen.3508497405" version="5.0"/>
     <bibliography author="rusEFI 20260227" writeDate="date"/>
     <settings/>
     <userComments/>
