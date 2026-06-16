@@ -8,7 +8,6 @@
 
 void boardHandleCan(CanCycle cycle);
 void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt);
-void boardPeriodicSlow();
 void setCfcForce(bool state);
 void setCcfcForce(bool state);
 void setPrgselForce(bool state);

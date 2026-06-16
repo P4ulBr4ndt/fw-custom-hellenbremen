@@ -202,7 +202,3 @@ void updateInstantAccelShot() {
 	}
 }
 } // namespace
-
-void boardInstantAccelFastCallback() {
-	updateInstantAccelShot();
-}

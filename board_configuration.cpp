@@ -5,6 +5,7 @@
 #include "board_can.h"
 #include "board_config.h"
 #include "board_instant_accel_shot.h"
+#include "board_periodic.h"
 
 #include "pwm_generator_logic.h"
 
@@ -22,7 +23,7 @@ void setup_custom_board_overrides() {
 	custom_board_can_rx = boardProcessCanRx;
 	custom_board_update_dash = boardHandleCan;
 	custom_board_periodicSlowCallback = boardPeriodicSlow;
-	custom_board_periodicFastCallback = boardInstantAccelFastCallback;
+	custom_board_periodicFastCallback = boardPeriodicFast;
 	custom_board_InitHardware = boardCustomInitHardware;
 	custom_board_ts_command = boardHandleTsCommand;
 	custom_board_OnConfigurationChange = boardCustomOnConfigurationChange;
