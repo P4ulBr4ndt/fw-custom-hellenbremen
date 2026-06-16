@@ -80,7 +80,7 @@ void boardDefaultConfiguration() {
 	config->cpcOutputPin = Gpio::C7;
 
 	// PRGSEL
-	// config->prgselOutputPin = Gpio::D10;
+	config->prgselOutputPin = Gpio::D10;
 }
 
 // Set when booted and after burn
@@ -175,7 +175,7 @@ void boardCustomInitHardware() {
 	startSimplePwmExt(&prgselPwm, 
 				   "PRGSEL", 
 				   &engine->scheduler, 
-				   Gpio::D10, 
+				   config->prgselOutputPin, 
 				   &prgselPin, 
 				   NAN, // Frequency
 				   config->prgselPWMDuty / 100.0f
