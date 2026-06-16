@@ -51,23 +51,23 @@ void boardDefaultConfiguration() {
 	// The fuel level sensor should have a resistance of 250 Ohm (full) - 60 Ohm (empty)
 	// At supply voltage of ideally 5V, this should result in 0.968V - 2.5V, respectively.
 	// Making it narrower due to supply voltage variation.
-	engineConfiguration->fuelLevelBins[0] = 0.975f;
-	engineConfiguration->fuelLevelBins[1] = 1.184f;
-	engineConfiguration->fuelLevelBins[2] = 1.394f;
-	engineConfiguration->fuelLevelBins[3] = 1.603f;
-	engineConfiguration->fuelLevelBins[4] = 1.812f;
-	engineConfiguration->fuelLevelBins[5] = 2.021f;
-	engineConfiguration->fuelLevelBins[6] = 2.231f;
-	engineConfiguration->fuelLevelBins[7] = 2.440f;
+	config->fuelLevelBins[0] = 0.975f;
+	config->fuelLevelBins[1] = 1.184f;
+	config->fuelLevelBins[2] = 1.394f;
+	config->fuelLevelBins[3] = 1.603f;
+	config->fuelLevelBins[4] = 1.812f;
+	config->fuelLevelBins[5] = 2.021f;
+	config->fuelLevelBins[6] = 2.231f;
+	config->fuelLevelBins[7] = 2.440f;
 
-	engineConfiguration->fuelLevelValues[0] = 100;
-	engineConfiguration->fuelLevelValues[1] = 86;
-	engineConfiguration->fuelLevelValues[2] = 71;
-	engineConfiguration->fuelLevelValues[3] = 57;
-	engineConfiguration->fuelLevelValues[4] = 43;
-	engineConfiguration->fuelLevelValues[5] = 29;
-	engineConfiguration->fuelLevelValues[6] = 14;
-	engineConfiguration->fuelLevelValues[7] = 0;
+	config->fuelLevelValues[0] = 100;
+	config->fuelLevelValues[1] = 86;
+	config->fuelLevelValues[2] = 71;
+	config->fuelLevelValues[3] = 57;
+	config->fuelLevelValues[4] = 43;
+	config->fuelLevelValues[5] = 29;
+	config->fuelLevelValues[6] = 14;
+	config->fuelLevelValues[7] = 0;
 
 	// AFR 
 	engineConfiguration->afr.hwChannel = EFI_ADC_NONE;
