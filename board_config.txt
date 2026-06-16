@@ -45,7 +45,7 @@ uint8_t cfcHighSpeedOffTemp;Must be less/equal than "Higher Speed On Temperature
 bit cfcDisableWhenEngineStopped,"Yes","No";
 uint8_t cfcIdleAdder;Additional idle % when fan is active;"%", 1, 0, 0, 100, 0
 uint16_t cfcMaxRuntimeAfterEngShutdown;;"s", 1, 0, 0, 65535, 0
-uint8_t cfcEngShutdownOffTemp;Coolant temperature to cool down to after engine shutdown. Must be less/equal than "Lower Speed On Temperature";"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 0
+uint8_t cfcEngShutdownOffTemp;Coolant temperature to cool down to after engine shutdown. Must be great/equal than "Lower Speed On Temperature";"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 0
 
 bit prgselActive,"Yes","No";
 uint16_t prgselRPM;;"rpm", 1, 0, 0, 10000, 0
@@ -57,8 +57,8 @@ uint8_t  prgselPWMFreq;;"Hz", 1, 0, 1, 255, 0
 uint8_t  prgselPWMDuty;;"%", 1, 0, 1, 100, 0
 uint16_t prgselActAfterTime;;"s", 1, 0, 0, 65535, 0
 
-uint8_t ccfcDisableAboveSpeed;Must be less/equal than "Enable below vehicle speed";"SPECIAL_CASE_SPEED", 1, 0, 0, 255, 0
-uint8_t ccfcEnableBelowSpeed;Must be greater/equal than "Disable above vehicle speed";"SPECIAL_CASE_SPEED", 1, 0, 0, 255, 0
+uint8_t ccfcDisableAboveSpeed;Must be greater/equal than "Enable below vehicle speed";"SPECIAL_CASE_SPEED", 1, 0, 0, 255, 0
+uint8_t ccfcEnableBelowSpeed;Must be less/equal than "Disable above vehicle speed";"SPECIAL_CASE_SPEED", 1, 0, 0, 255, 0
 uint8_t ccfcHighAmbTempThreshold;Upper ambient temperature threshold when to swtich to high coolant temperature On/Off temperatures. Muster be greater/equal than "Low ambient temperature threshold";"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 255, 0
 uint8_t ccfcLowAmbTempThreshold;Lower ambient temperature threshold when to swtich to lower coolant temperature On/Off temperatures. Muster be less/equal than "High ambient temperature threshold";"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 255, 0
 uint8_t ccfcLowAmbDisableBelowEngTemp;Must be less/equal than "Lower Amb. Temp.: Enable above engine temperature";"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 255, 0

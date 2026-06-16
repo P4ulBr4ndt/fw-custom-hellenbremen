@@ -39,7 +39,37 @@ void boardDefaultConfiguration() {
 	engineConfiguration->fan2OffTemperature = 0.f;
 	engineConfiguration->mainRelayPin = Gpio::Unassigned;
 
-	// AFR TODO
+	// Fuel level sensor
+	engineConfiguration->fuelLevelSensor = EFI_ADC_2;
+	config->fuelLevelTankVolume = 22.7f; // HD Touring Road Glide 2025 tank volume
+	config->fuelLevelAvgConsumption = 5.5f; // TODO This is hardcoded for now. Has to be dynamic
+	engineConfiguration->fuelLevelUpdatePeriodSec = 0.1f;
+	engineConfiguration->fuelLevelAveragingAlpha = 0.0001f;
+	engineConfiguration->fuelLevelLowThresholdVoltage = 0.5f;
+	engineConfiguration->fuelLevelHighThresholdVoltage = 3.0f;
+
+	// The fuel level sensor should have a resistance of 250 Ohm (full) - 60 Ohm (empty)
+	// At supply voltage of ideally 5V, this should result in 0.968V - 2.5V, respectively.
+	// Making it narrower due to supply voltage variation.
+	engineConfiguration->fuelLevelBins[0] = 0.975f;
+	engineConfiguration->fuelLevelBins[1] = 1.184f;
+	engineConfiguration->fuelLevelBins[2] = 1.394f;
+	engineConfiguration->fuelLevelBins[3] = 1.603f;
+	engineConfiguration->fuelLevelBins[4] = 1.812f;
+	engineConfiguration->fuelLevelBins[5] = 2.021f;
+	engineConfiguration->fuelLevelBins[6] = 2.231f;
+	engineConfiguration->fuelLevelBins[7] = 2.440f;
+
+	engineConfiguration->fuelLevelValues[0] = 100;
+	engineConfiguration->fuelLevelValues[1] = 86;
+	engineConfiguration->fuelLevelValues[2] = 71;
+	engineConfiguration->fuelLevelValues[3] = 57;
+	engineConfiguration->fuelLevelValues[4] = 43;
+	engineConfiguration->fuelLevelValues[5] = 29;
+	engineConfiguration->fuelLevelValues[6] = 14;
+	engineConfiguration->fuelLevelValues[7] = 0;
+
+	// AFR 
 	engineConfiguration->afr.hwChannel = EFI_ADC_NONE;
 	engineConfiguration->enableAemXSeries = false;
 
@@ -56,10 +86,6 @@ void boardDefaultConfiguration() {
 	engineConfiguration->throttlePedalWOTVoltage = 4.46;
 	engineConfiguration->throttlePedalSecondaryUpVoltage = 1.37;
 	engineConfiguration->throttlePedalSecondaryWOTVoltage = 4.48;
-	
-	engineConfiguration->fuelLevelAveragingAlpha = 0.003f; //TODO Too responsive, decrease alpha for more smoothing
-	engineConfiguration->fuelLevelLowThresholdVoltage = 0.3f;
-	engineConfiguration->fuelLevelHighThresholdVoltage = 1.3f;
 
 	boardEtbMapsApplyDefaults();
 	boardInstantAccelApplyDefaults();
@@ -72,15 +98,93 @@ void boardDefaultConfiguration() {
 
 	// CFC
 	config->cfcOutputPin = Gpio::C8;
+	config->cfcHighSpeedThreshold = 64;
+	config->cfcLowSpeedThreshold = 56;
+	config->cfcLowSpeedOnTemp = 90;
+	config->cfcLowSpeedOffTemp = 83;
+	config->cfcHighSpeedOnTemp = 110;
+	config->cfcHighSpeedOffTemp = 102;
+	config->cfcDisableWhenEngineStopped = false;
+	config->cfcIdleAdder = 0; // Not used yet
+	config->cfcMaxRuntimeAfterEngShutdown = 180;
+	config->cfcEngShutdownOffTemp = 87;
 
 	// CCFC
 	config->ccfcOutputPin = Gpio::C9;
+	config->ccfcDisableAboveSpeed = 64;
+	config->ccfcEnableBelowSpeed = 56;
+	config->ccfcHighAmbTempThreshold = 18;
+	config->ccfcLowAmbTempThreshold = 15;
+	config->ccfcLowAmbDisableBelowEngTemp = 208;
+	config->ccfcLowAmbEnableAboveEngTemp = 215;
+	config->ccfcHighAmbDisableBelowEngTemp = 88;
+	config->ccfcHighAmbEnableAboveEngTemp = 95;
+	config->ccfcIdleAdder = 0; // Not used yet
 
-	// CPC 
+	// CPC
 	config->cpcOutputPin = Gpio::C7;
+	config->cpcOnTemp = 0;
+	config->cpcOffTemp = 0;
+	config->cpcDisableWhenEngineStopped = false;
+	config->cpcIdleAdder = 0; // Not used yet
 
 	// PRGSEL
 	config->prgselOutputPin = Gpio::D10;
+	config->prgselActive = true;
+	config->prgselRPM = 2000;
+	config->prgselSpeed = 10;
+	config->prgselLowerTGS = 5;
+	config->prgselUpperTGS = 75;
+	config->prgselCltTemp = 90;
+	config->prgselPWMFreq = 32;
+	config->prgselPWMDuty = 30;
+	config->prgselActAfterTime = 180;
+}
+
+static void boardSanitizeConfig() {
+	// CFC
+	if (config->cfcHighSpeedThreshold < config->cfcLowSpeedThreshold) {
+		config->cfcHighSpeedThreshold = config->cfcLowSpeedThreshold;
+	}
+
+	if (config->cfcLowSpeedOnTemp < config->cfcLowSpeedOffTemp) {
+		config->cfcLowSpeedOnTemp = config->cfcLowSpeedOffTemp;
+	}
+	
+	if (config->cfcHighSpeedOnTemp < config->cfcHighSpeedOffTemp) {
+		config->cfcHighSpeedOnTemp = config->cfcHighSpeedOffTemp;
+	}
+
+	if (config->cfcEngShutdownOffTemp > config->cfcLowSpeedOnTemp) {
+		config->cfcEngShutdownOffTemp = config->cfcLowSpeedOnTemp;
+	}
+
+	// CCFC
+	if (config->ccfcDisableAboveSpeed < config->ccfcEnableBelowSpeed) {
+		config->ccfcDisableAboveSpeed = config->ccfcEnableBelowSpeed;
+	}
+
+	if (config->ccfcHighAmbTempThreshold < config->ccfcLowAmbTempThreshold) {
+		config->ccfcHighAmbTempThreshold = config->ccfcLowAmbTempThreshold;
+	}
+
+	if (config->ccfcLowAmbEnableAboveEngTemp < config->ccfcLowAmbDisableBelowEngTemp) {
+		config->ccfcLowAmbEnableAboveEngTemp = config->ccfcLowAmbDisableBelowEngTemp;
+	}
+
+	if (config->ccfcHighAmbEnableAboveEngTemp < config->ccfcHighAmbDisableBelowEngTemp) {
+		config->ccfcHighAmbEnableAboveEngTemp = config->ccfcHighAmbDisableBelowEngTemp;
+	}
+
+	// CPC
+	if (config->cpcOnTemp < config->cpcOffTemp) {
+		config->cpcOnTemp = config->cpcOffTemp;
+	}
+
+	// PRGSEL
+	if (config->prgselLowerTGS > config->prgselUpperTGS) {
+		config->prgselLowerTGS = config->prgselUpperTGS;
+	}
 }
 
 // Set when booted and after burn
@@ -168,6 +272,20 @@ void boardConfigOverrides() {
 
 	// VVT is controlled at 100hz
 	engineConfiguration->vvtOutputFrequency = 110;
+
+	// CFC
+	config->cfcOutputPin = Gpio::C8;
+
+	// CPC
+	config->cpcOutputPin = Gpio::C7;
+
+	// CCFC
+	config->ccfcOutputPin = Gpio::C9;
+
+	// PRGSEL
+	config->prgselOutputPin = Gpio::D10;
+
+	boardSanitizeConfig();
 }
 
 void boardCustomInitHardware() {

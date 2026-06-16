@@ -359,7 +359,7 @@ void boardPeriodicSlow() {
 		ccfcHighAmbMode = false;
 	}
 
-	bool ccfcOnSpeedCond  = (currSpeed <= config->ccfcEnableBelowSpeed) && !ccfcRunning;
+	bool ccfcOnSpeedCond  = (currSpeed < config->ccfcEnableBelowSpeed) && !ccfcRunning;
 	bool ccfcOffSpeedCond = (currSpeed >= config->ccfcDisableAboveSpeed) && ccfcRunning;
 	bool ccfcOnTempCond   = ((currEngTemp >  config->ccfcLowAmbEnableAboveEngTemp   && !ccfcHighAmbMode) ||
 	     				     (currEngTemp >  config->ccfcHighAmbEnableAboveEngTemp  && ccfcHighAmbMode)) && !ccfcRunning;
