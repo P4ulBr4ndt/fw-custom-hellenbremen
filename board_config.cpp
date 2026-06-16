@@ -285,7 +285,6 @@ void boardConfigOverrides() {
 	// PRGSEL
 	config->prgselOutputPin = Gpio::D10;
 
-	boardSanitizeConfig();
 }
 
 void boardCustomInitHardware() {
@@ -339,6 +338,8 @@ void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {
 }
 
 void boardCustomOnConfigurationChange(engine_configuration_s* previousConfiguration) {
+	boardSanitizeConfig();
+
 	if(!config->prgselActive) {
 		prgselPwm.setFrequency(NAN);
 	} else {
