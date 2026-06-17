@@ -626,9 +626,14 @@ void boardHandleCan(CanCycle cycle) {
 
 		{
 			CanTxMessage msg(CanCategory::NBC, 0x348);
-			msg[0] = 0x00;
-			msg[1] = 0x00;
-			msg[2] = 0x00;
+
+			uint32_t consumedFuelGrams = engine->module<TripOdometer>()->getConsumedGrams() * 10;
+
+			// 3-byte message
+			msg[0] = (consumedFuelGrams >> 16) & 0xFF;
+			msg[1] = (consumedFuelGrams >> 8) & 0xFF;
+			msg[2] = consumedFuelGrams & 0xFF;
+
 			msg[3] = 0x0D;
 			msg[4] = 0xAC;
 			msg[5] = 0x00;
