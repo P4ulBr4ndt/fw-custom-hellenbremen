@@ -177,6 +177,10 @@ static void boardSanitizeConfig() {
 	}
 
 	// CPC
+	if(config->cpcOnTemp > config->cfcLowSpeedOnTemp) {
+		config->cpcOnTemp = config->cfcLowSpeedOnTemp;
+	}
+
 	if (config->cpcOnTemp < config->cpcOffTemp) {
 		config->cpcOnTemp = config->cpcOffTemp;
 	}
