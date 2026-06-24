@@ -1,6 +1,7 @@
 ! type name;description;"unit", scale, offset, min, max, digits
 
 uint16_t[VE_LOAD_COUNT x VE_RPM_COUNT] autoscale veFrontTable;;"%", 0.1, 0, 0, 999, 1
+int16_t[IGN_LOAD_COUNT x IGN_RPM_COUNT] autoscale ignitionFrontTable;;"deg", 0.1, 0, -20, 90, 1
 uint8_t[PEDAL_TO_TPS_SIZE x PEDAL_TO_TPS_RPM_SIZE] etbRoadTable;;"%", 1, 0, 0, 100, 0
 uint8_t[PEDAL_TO_TPS_SIZE x PEDAL_TO_TPS_RPM_SIZE] etbRainTable;;"%", 1, 0, 0, 100, 0
 uint8_t[PEDAL_TO_TPS_SIZE x PEDAL_TO_TPS_RPM_SIZE] etbSportTable;;"%", 1, 0, 0, 100, 0
