@@ -627,12 +627,14 @@ void boardHandleCan(CanCycle cycle) {
 		{
 			CanTxMessage msg(CanCategory::NBC, 0x348);
 
-			uint32_t consumedFuelGrams = engine->module<TripOdometer>()->getConsumedGrams() * 10;
+			uint32_t consumedFuel = static_cast<uint64_t>(engine->module<TripOdometer>()->getConsumedGrams()) * 10000 / 740;
+			// with consumedFuelGrams we got an indication of about 4.8l/100km that is unrealistically low
+			// so we probably have to send milliliters here
 
 			// 3-byte message
-			msg[0] = (consumedFuelGrams >> 16) & 0xFF;
-			msg[1] = (consumedFuelGrams >> 8) & 0xFF;
-			msg[2] = consumedFuelGrams & 0xFF;
+			msg[0] = (consumedFuel >> 16) & 0xFF;
+			msg[1] = (consumedFuel >> 8) & 0xFF;
+			msg[2] = consumedFuel & 0xFF;
 
 			msg[3] = 0x0D;
 			msg[4] = 0xAC;
