@@ -759,8 +759,9 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 		}
 	}
 
-	if (CAN_SID(frame) == 0x133) {
-		bool footBrakeEngaged = (frame.data8[3] & 0x10) != 0;
+	if (CAN_SID(frame) == 0x324) {
+		uint16_t footBrakeValue = (static_cast<uint16_t>(frame.data8[2]) << 8) | frame.data8[3];
+		bool footBrakeEngaged = footBrakeValue > 0;
 		if (getCCStatus() == CruiseControlStatus::Enabled && footBrakeEngaged) {
 			setCCStatus(CruiseControlStatus::Standby);
 		}
