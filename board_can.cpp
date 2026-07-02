@@ -761,7 +761,7 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 
 	if (CAN_SID(frame) == 0x133) {
 		bool footBrakeEngaged = (frame.data8[3] & 0x10) != 0;
-		efiPrintf("frame.data[8]: %d, CC Status: %d, Foot Brake Engaged: %d, Enabled: %d, Standby: %d", frame.data8[3], static_cast<int>(getCCStatus()), footBrakeEngaged, static_cast<int>(CruiseControlStatus::Enabled), static_cast<int>(CruiseControlStatus::Standby));
+		efiPrintf("frame.data[8]: %d, CC Status: %d, Foot Brake Engaged: %d, Enabled: %d, Standby: %d", static_cast<int>(frame.data8[3]), static_cast<int>(getCCStatus()), static_cast<int>(footBrakeEngaged), static_cast<int>(CruiseControlStatus::Enabled), static_cast<int>(CruiseControlStatus::Standby));
 		if (getCCStatus() == CruiseControlStatus::Enabled && footBrakeEngaged) {
 			setCCStatus(CruiseControlStatus::Standby);
 		}
