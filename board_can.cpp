@@ -764,9 +764,10 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 		if (getCCStatus() == CruiseControlStatus::Enabled && footBrakeEngaged) {
 			setCCStatus(CruiseControlStatus::Standby);
 		}
-		
-		efiPrintf("ISX: %d, 1: %d, 2: %d, 3: %d, 4: %d, 5: %d, 6: %d, 7: %d, 8: %d", static_cast<int>(CAN_ISX(frame)), static_cast<int>(frame.data8[0]), static_cast<int>(frame.data8[1]), static_cast<int>(frame.data8[2]), static_cast<int>(frame.data8[3]), static_cast<int>(frame.data8[4]), static_cast<int>(frame.data8[5]), static_cast<int>(frame.data8[6]), static_cast<int>(frame.data8[7]));
-		efiPrintf("frame.data[8]: %d, CC Status: %d, Foot Brake Engaged: %d, Enabled: %d, Standby: %d", static_cast<int>(frame.data8[3]), static_cast<int>(getCCStatus()), static_cast<int>(footBrakeEngaged), static_cast<int>(CruiseControlStatus::Enabled), static_cast<int>(CruiseControlStatus::Standby));
+
+		uint8_t computedCrc8 = crc8(frame.data8, 7);
+		efiPrintf("bus: %d, DLC: %d, ISX: %d, 1: %d, 2: %d, 3: %d, 4: %d, 5: %d, 6: %d, 7: %d, 8: %d, computedCrc8: %d", static_cast<int>(busIndex), static_cast<int>(frame.DLC), static_cast<int>(CAN_ISX(frame)), static_cast<int>(frame.data8[0]), static_cast<int>(frame.data8[1]), static_cast<int>(frame.data8[2]), static_cast<int>(frame.data8[3]), static_cast<int>(frame.data8[4]), static_cast<int>(frame.data8[5]), static_cast<int>(frame.data8[6]), static_cast<int>(frame.data8[7]), static_cast<int>(computedCrc8));
+		efiPrintf("frame.data8[3]: %d, CC Status: %d, Foot Brake Engaged: %d, Enabled: %d, Standby: %d", static_cast<int>(frame.data8[3]), static_cast<int>(getCCStatus()), static_cast<int>(footBrakeEngaged), static_cast<int>(CruiseControlStatus::Enabled), static_cast<int>(CruiseControlStatus::Standby));
 	}
 
 	if(CAN_SID(frame) == 0x3C4) {
