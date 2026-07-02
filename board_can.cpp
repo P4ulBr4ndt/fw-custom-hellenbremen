@@ -409,6 +409,11 @@ void boardPeriodicSlow() {
 	                           + (cfcPin.getLogicValue()  ? 2.0f : 0.0f)
 							   + (prgselRunning           ? 1.0f : 0.0f), getTimeNowNt());
 
+	// Put cruise control in standby for negative TGS when CC is enabled
+	if(currTGS < 0.0f && getCCStatus() == CruiseControlStatus::Enabled) {
+		setCCStatus(CruiseControlStatus::Standby);
+	}
+
 	if(harleyIgnitionOffRequested && !harleyIgnitionOnRequested) {
 		cfcForce    = false;
 		ccfcForce   = false;
