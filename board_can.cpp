@@ -409,6 +409,11 @@ void boardPeriodicSlow() {
 	                           + (cfcPin.getLogicValue()  ? 2.0f : 0.0f)
 							   + (prgselRunning           ? 1.0f : 0.0f), getTimeNowNt());
 
+	// Put cruise control in standby for negative TGS when CC is enabled
+	 if(currTGS < -5.0f && getCCStatus() == CruiseControlStatus::Enabled) {
+		setCCStatus(CruiseControlStatus::Standby);
+	}
+
 	if(harleyIgnitionOffRequested && !harleyIgnitionOnRequested) {
 		cfcForce    = false;
 		ccfcForce   = false;
@@ -447,7 +452,7 @@ void boardHandleCan(CanCycle cycle) {
 
 		msg.setShortValueMsb(scaleTorqueForCan(targetTorque), 0x0); // TARGET ESTIMATED TORQUE
 		msg.setShortValueMsb(scaleTorqueForCan(estimatedTorque), 0x2); // ACTUAL ESTIMATED TORQUE
-		msg[4] = Sensor::getOrZero(SensorType::AcceleratorPedal) / 0.5;
+		msg[4] = Sensor::getOrZero(SensorType::AcceleratorPedal) / 0.5; // Note that for negative values this stays 0 implicitly
 		msg[5] = getHarleyTractionControlStatus();
 		msg[6] = frameCounter144;
 		msg[7] = crc8(msg.getFrame()->data8, 7);
