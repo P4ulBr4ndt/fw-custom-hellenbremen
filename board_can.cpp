@@ -40,6 +40,11 @@ static bool  cfcForce         = false;
 static bool  cfcHighSpeedMode = false;
 static Timer engNotRunningTimer;
 
+static cfcUserForceModes_e cfcUserForceAction     = cfcUserForceModes_e::Off;
+static cfcUserForceModes_e cfcPrevUserForceAction = cfcUserForceModes_e::Off;
+static cfcUserForceModes_e cfcUserForce            = cfcUserForceModes_e::Off;
+static Timer               cfcUserForceTimer; 
+
 // CCFC
 static bool ccfcForce       = false;
 static bool ccfcHighAmbMode = false;
@@ -319,6 +324,33 @@ void boardPeriodicSlow() {
 	//TODO Idle Adder is not implemented yet
 	bool cfcRunning = cfcPin.getLogicValue();
 
+	// User force CFC by TGS in idle
+	if((currTGS > 95.0f) && !isEngineActive && (cfcPrevUserForceAction != cfcUserForceModes_e::BlockChange)) {
+		if(cfcUserForceAction != cfcUserForceModes_e::Queueing) {
+			cfcPrevUserForceAction = cfcUserForceAction;
+			cfcUserForceAction     = cfcUserForceModes_e::Queueing;
+			cfcUserForceTimer.reset();
+		} else if (cfcUserForceAction == cfcUserForceModes_e::Queueing && 
+		           cfcUserForceTimer.getElapsedSeconds() > 3.0f) {
+			if (cfcPrevUserForceAction == cfcUserForceModes_e::Off) {
+				cfcUserForce       = cfcUserForceModes_e::On;
+				cfcUserForceAction = cfcUserForceModes_e::On;
+			} else if (cfcPrevUserForceAction == cfcUserForceModes_e::On) {
+				cfcUserForce       = cfcUserForceModes_e::Off;
+				cfcUserForceAction = cfcUserForceModes_e::Off;
+			}
+
+			cfcPrevUserForceAction = cfcUserForceModes_e::BlockChange;
+		}
+	} else if ((currTGS <= 95.0f) && !isEngineActive && (cfcPrevUserForceAction == cfcUserForceModes_e::BlockChange)) {
+		cfcPrevUserForceAction = cfcUserForce;
+		cfcUserForceAction     = cfcUserForce;
+	}
+
+	if(isEngineActive && cfcUserForce != cfcUserForceModes_e::Off) {
+		cfcUserForce = cfcUserForceModes_e::Off;
+	}
+
 	// Speed hysteresis cases
 	if(currSpeed >= config->cfcHighSpeedThreshold) {
 		cfcHighSpeedMode = true;
@@ -339,9 +371,9 @@ void boardPeriodicSlow() {
 	bool cfcOffTempCond        = ((currCltTemp <= config->cfcLowSpeedOffTemp  && !cfcHighSpeedMode) || 
 						          (currCltTemp <= config->cfcHighSpeedOffTemp && cfcHighSpeedMode)) && cfcRunning;
 
-	if ((cfcOnTempCond && cfcDisabledEngCond) || cfcForce) {
+	if ((cfcOnTempCond && cfcDisabledEngCond) || cfcForce || (cfcUserForce == cfcUserForceModes_e::On)) {
 		cfcPin.setValue(true);
-	} else if ((cfcOffTempCond || cfcIsShutdownComplete) && !cfcForce) {
+	} else if ((cfcOffTempCond || cfcIsShutdownComplete) && !cfcForce && (cfcUserForce != cfcUserForceModes_e::On)) {
 		cfcPin.setValue(false);
 	}
 
