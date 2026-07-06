@@ -410,7 +410,7 @@ void boardPeriodicSlow() {
 							   + (prgselRunning           ? 1.0f : 0.0f), getTimeNowNt());
 
 	// Put cruise control in standby for negative TGS when CC is enabled
-	 if(currTGS < -10.0f && getCCStatus() == CruiseControlStatus::Enabled) {
+	 if(currTGS < -5.0f && getCCStatus() == CruiseControlStatus::Enabled) {
 		setCCStatus(CruiseControlStatus::Standby);
 	}
 
