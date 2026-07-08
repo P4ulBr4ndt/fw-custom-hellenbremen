@@ -40,10 +40,10 @@ static bool  cfcForce         = false;
 static bool  cfcHighSpeedMode = false;
 static Timer engNotRunningTimer;
 
-static cfcUserForceModes_e cfcUserForceAction     = cfcUserForceModes_e::Off;
-static cfcUserForceModes_e cfcPrevUserForceAction = cfcUserForceModes_e::Off;
-static cfcUserForceModes_e cfcUserForce            = cfcUserForceModes_e::Off;
-static Timer               cfcUserForceTimer; 
+static bool  cfcUserForceOn     = false;
+static bool  cfcTgsHoldArmed    = false;
+static bool  cfcTgsPressHandled = false;
+static Timer cfcUserForceTimer;
 
 // CCFC
 static bool ccfcForce       = false;
@@ -324,31 +324,20 @@ void boardPeriodicSlow() {
 	//TODO Idle Adder is not implemented yet
 	bool cfcRunning = cfcPin.getLogicValue();
 
-	// User force CFC by TGS in idle
-	if((currTGS > 95.0f) && !isEngineActive && (cfcPrevUserForceAction != cfcUserForceModes_e::BlockChange)) {
-		if(cfcUserForceAction != cfcUserForceModes_e::Queueing) {
-			cfcPrevUserForceAction = cfcUserForceAction;
-			cfcUserForceAction     = cfcUserForceModes_e::Queueing;
-			cfcUserForceTimer.reset();
-		} else if (cfcUserForceAction == cfcUserForceModes_e::Queueing && 
-		           cfcUserForceTimer.getElapsedSeconds() > 3.0f) {
-			if (cfcPrevUserForceAction == cfcUserForceModes_e::Off) {
-				cfcUserForce       = cfcUserForceModes_e::On;
-				cfcUserForceAction = cfcUserForceModes_e::On;
-			} else if (cfcPrevUserForceAction == cfcUserForceModes_e::On) {
-				cfcUserForce       = cfcUserForceModes_e::Off;
-				cfcUserForceAction = cfcUserForceModes_e::Off;
-			}
-
-			cfcPrevUserForceAction = cfcUserForceModes_e::BlockChange;
-		}
-	} else if ((currTGS <= 95.0f) && !isEngineActive && (cfcPrevUserForceAction == cfcUserForceModes_e::BlockChange)) {
-		cfcPrevUserForceAction = cfcUserForce;
-		cfcUserForceAction     = cfcUserForce;
+	// Manual CFC Force mode routine as in OEM EMC
+	if ((currTGS > 95.0f) && !isEngineActive) {
+		cfcTgsHoldArmed    = false;
+		cfcTgsPressHandled = false;
+	} else if (!cfcTgsHoldArmed) {
+		cfcTgsHoldArmed = true;
+		cfcUserForceTimer.reset();
+	} else if (!cfcTgsPressHandled && cfcUserForceTimer.getElapsedSeconds() > 3.0f) {
+		cfcUserForceOn     = !cfcUserForceOn;
+		cfcTgsPressHandled = true;
 	}
 
-	if(isEngineActive && cfcUserForce != cfcUserForceModes_e::Off) {
-		cfcUserForce = cfcUserForceModes_e::Off;
+	if (isEngineActive) {
+		cfcUserForceOn = false;
 	}
 
 	// Speed hysteresis cases
@@ -371,9 +360,9 @@ void boardPeriodicSlow() {
 	bool cfcOffTempCond        = ((currCltTemp <= config->cfcLowSpeedOffTemp  && !cfcHighSpeedMode) || 
 						          (currCltTemp <= config->cfcHighSpeedOffTemp && cfcHighSpeedMode)) && cfcRunning;
 
-	if ((cfcOnTempCond && cfcDisabledEngCond) || cfcForce || (cfcUserForce == cfcUserForceModes_e::On)) {
+	if ((cfcOnTempCond && cfcDisabledEngCond) || cfcForce || cfcUserForceOn) {
 		cfcPin.setValue(true);
-	} else if ((cfcOffTempCond || cfcIsShutdownComplete) && !cfcForce && (cfcUserForce != cfcUserForceModes_e::On)) {
+	} else if ((cfcOffTempCond || cfcIsShutdownComplete) && !cfcForce && !cfcUserForceOn) {
 		cfcPin.setValue(false);
 	}
 
