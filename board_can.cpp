@@ -325,7 +325,9 @@ void boardPeriodicSlow() {
 	bool cfcRunning = cfcPin.getLogicValue();
 
 	// Manual CFC Force mode routine as in OEM EMC
-	if ((currTGS > 95.0f) && !isEngineActive) {
+	bool cfcUserForceTGSHeld = (currTGS > 95.0f) && !isEngineActive;
+
+	if (!cfcUserForceTGSHeld) {
 		cfcTgsHoldArmed    = false;
 		cfcTgsPressHandled = false;
 	} else if (!cfcTgsHoldArmed) {
