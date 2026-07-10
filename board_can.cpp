@@ -468,7 +468,18 @@ void boardHandleCan(CanCycle cycle) {
 
 		{
 			CanTxMessage msg(CanCategory::NBC, 0x146);
-			msg[0] = (getCCStatus() == CruiseControlStatus::Enabled) ? 0x21 : 0x11;
+			msg[0] = 0x00;
+			if (getCCStatus() == CruiseControlStatus::Enabled) {
+				msg[0] |= 0x20;
+			} else {
+				msg[0] |= 0x10;
+			}
+			
+			if (!engine->engineState.jssState) {
+				msg[0] |= 0x01;
+			} else {
+				msg[0] |= 0x02;
+			}
 
 			float desiredSpeed = getDesiredCCSpeed();
 			if (desiredSpeed < 0) {
@@ -477,12 +488,67 @@ void boardHandleCan(CanCycle cycle) {
 			uint16_t desiredSpeed10 = static_cast<uint16_t>(minF(desiredSpeed * 10.0f, 65535.0f));
 			msg[1] = (desiredSpeed10 >> 8) & 0xFF;
 			msg[2] = desiredSpeed10 & 0xFF;
-			msg[3] = running ? 0x44 : 0x04;
+
+			// msg[3]:  bit 7  6  5  4  3  2  1  0
+			//              |  |  │  |  │  │  │  └── 0 (Always off?, observation)
+			//              |  |  │  |  │  │  └───── 0 (Always off?, observation)
+			//              |  |  │  |  │  └──────── 1 (Always on?,  observation)
+			// 				|  |  |  |  └─────────── 0 (Always off?, observation)
+			//              |  |  |  └────────────── 0 (Always off?, observation)
+			//              |  |  └───────────────── 0 (Always off?, observation)
+			//				|  └──────────────────── running
+			//              └─────────────────────── 1 (Always on?,  observation)
+			msg[3] = 0x84;
+
+			if(running) {
+				msg[3] |= 0x40;
+			}
+
 			msg[4] = 0x00;
 			msg[5] = 0x00;
 			msg[6] = frameCounter146_342;
 			msg[7] = crc8(msg.getFrame()->data8, 7);
 		}
+
+		//{
+			//CanTxMessage msg(CanCategory::NBC, 0x133);
+			// msg[0]:  bit 7  6  5  4  3  2  1  0
+			//              |  |  │  |  │  │  │  └── 0 (Always off?, observation)
+			//              |  |  │  |  │  │  └───── 1 (Always on?,  observation)
+			//              |  |  │  |  │  └──────── 1 (Always on?,  observation)
+			// 				|  |  |  |  └─────────── 0 (Always off?, observation)
+			//              |  |  |  └────────────── 0 (Always off?, observation)
+			//              |  |  └───────────────── 0 (Always off?, observation)
+			//				|  └──────────────────── 0 (Always off?, observation)
+			//              └─────────────────────── 0 (Always off?, observation)
+			// msg[0] = 0x60;
+
+			// msg[1] = 0x00;
+			// msg[2] = 0x00;
+
+			// msg[3]:  bit 7  6  5  4  3  2  1  0
+			//              |  |  │  |  │  │  │  └── 0 (Always off?, observation)
+			//              |  |  │  |  │  │  └───── 0 (Always off?, observation)
+			//              |  |  │  |  │  └──────── 0 (Always off?, observation)
+			// 				|  |  |  |  └─────────── Foot brake switch (not analogue), lights?
+			//              |  |  |  └────────────── 0 (Always off?, observation)
+			//              |  |  └───────────────── 0 (Always off?, observation)
+			//				|  └──────────────────── 1 (Always on?,  observation)
+			//              └─────────────────────── 0 (Always off?, observation)
+			// msg[3] = ...
+
+			// msg[4]:  bit 7  6  5  4  3  2  1  0
+			//              |  |  │  |  │  │  │  └── 0 (Always off?, observation)
+			//              |  |  │  |  │  │  └───── 0 (Always off?, observation)
+			//              |  |  │  |  │  └──────── 0 (Always off?, observation)
+			// 				|  |  |  |  └─────────── 1 (Always on?,  observation)
+			//              |  |  |  └────────────── 0 (Always off?, observation)
+			//              |  |  └───────────────── 0 (Always off?, observation)
+			//				|  └──────────────────── 0 (Always off?, observation)
+			//              └─────────────────────── 0 (Always off?, observation)
+
+			// msg[5] = 0x00; 
+		//}
 
 		{
 			CanTxMessage msg(CanCategory::NBC, 0x342);
@@ -492,26 +558,43 @@ void boardHandleCan(CanCycle cycle) {
 			//                       = Tank volume [L] * (FuelLevel [0% - 100%]) / Consumption [L / (100 km)]
 			uint16_t remainingRangeKM = static_cast<uint16_t>(minF(config->fuelLevelTankVolume * (Sensor::getOrZero(SensorType::FuelLevel) / config->fuelLevelAvgConsumption), 65535.0f));
 
+			// msg[0]:  bit 7  6  5  4  3  2  1  0
+			//              |  |  │  |  │  │  │  └── 0 (Always off?, observation)
+			//              |  |  │  |  │  │  └───── JSS
+			//              |  |  │  |  │  └──────── 1 (Always on?,  observation)
+			// 				|  |  |  |  └─────────── 0 (Always off?, observation)
+			//              |  |  |  └────────────── CC Disabled
+			//              |  |  └───────────────── CC Standby
+			//				|  └──────────────────── !CC Enabled
+			//              └─────────────────────── CC Enabled
+			msg[0] = 0x04;
+
 			switch (getCCStatus()) {
 				case CruiseControlStatus::Enabled:
-					msg[0] = 0xA4;
+					msg[0] |= 0xA0; // 0b1010 0000
 					break;
 				case CruiseControlStatus::Standby:
-					msg[0] = 0x64;
+					msg[0] |= 0x60; // 0b0110 0000
 					break;
 				case CruiseControlStatus::Disabled:
 				default:
-					msg[0] = 0x54; //0x56? 0b0101 0100 vs. 0b0101 0110 (0x54)
+					msg[0] |= 0x50; // 0b0101 0000
 					break;
 			}
 
+			if(engine->engineState.jssState) {
+				msg[0] |= 0x02;
+			}
+
 			// msg[1]:  bit 7  6  5  4  3  2  1  0
-			//                    │  |  │  │  │  └── FuelLevel <= 1%
-			//                    │  |  │  │  └───── FuelLevel <= 10%
-			//                    │  |  │  └──────── !opsSwitchedState
-			// 				      |  |  └─────────── opsSwitchedState (0b11 and 0b00 not observed, 0b10 causes OP warn lamp)
-			//                    |  └────────────── Ignition Switch off
-			//                    └───────────────── running (successful start and running)
+			//              |  |  │  |  │  │  │  └── FuelLevel <= 1%
+			//              |  |  │  |  │  │  └───── FuelLevel <= 10%
+			//              |  |  │  |  │  └──────── !opsSwitchedState
+			// 				|  |  |  |  └─────────── opsSwitchedState (0b11 and 0b00 not observed, 0b10 causes OP warn lamp)
+			//              |  |  |  └────────────── Ignition Switch off
+			//              |  |  └───────────────── running (successful start and running)
+			//				|  └──────────────────── ?
+			//              └─────────────────────── ?
 			if (running) {
 				msg[1] |= 0x20;
 			}
@@ -663,6 +746,64 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 		boardRidingModesPublishLive();
 	}
 
+	//if (CAN_SID(frame) == 0x128) {
+	// 	msg[0] = 0x27; 
+	// 	msg[1] = 0x10;
+	// 	msg[2] = 0x00;  
+	// 	msg[3] = 0x00; 
+	// 	msg[4] = 0x90; 
+
+ 	// 	msg[5]:  bit 7  6  5  4  3  2  1  0
+	//  	         |  |  │  |  │  │  │  └── Handbrake on
+	//      	     |  |  │  |  │  │  └───── Handbrake off
+	//         	     |  |  │  |  │  └──────── 0 (Always off?,  observation)
+	// 		   		 |  |  |  |  └─────────── 0 (Always off?, observation)
+	//             	 |  |  |  └────────────── 0 (Always off?, observation)
+	//             	 |  |  └───────────────── 0 (Always off?, observation)
+	//				 |  └──────────────────── 0 (Always off?,  observation)
+	//               └─────────────────────── 0 (Always off?, observation)
+	// 	msg[5] = 0x60;
+	//}
+
+	//if (CAN_SID(frame) == 0x133) {
+	// 	msg[0]:  bit 7  6  5  4  3  2  1  0
+	//  	         |  |  │  |  │  │  │  └── 0 (Always off?, observation)
+	//      	     |  |  │  |  │  │  └───── 0 (Always off?,  observation)
+	//         	     |  |  │  |  │  └──────── 0 (Always off?,  observation)
+	// 		   		 |  |  |  |  └─────────── 0 (Always off?, observation)
+	//             	 |  |  |  └────────────── 0 (Always off?, observation)
+	//             	 |  |  └───────────────── 1 (Always on?, observation)
+	//				 |  └──────────────────── 1 (Always on?, observation, 0 in shutdown)
+	//               └─────────────────────── 0 (Always off?, observation)
+	// 	msg[0] = 0x60; ?
+
+	// 	msg[1] = 0x00;
+	// 	msg[2] = 0x00;
+
+	// 	msg[3]:  bit 7  6  5  4  3  2  1  0
+	//               |  |  │  |  │  │  │  └── 0 (Always off?, observation)
+	//               |  |  │  |  │  │  └───── 1 (Always on?, observation, 1 When Battery good?)
+	//               |  |  │  |  │  └──────── 0 (Always off?, observation, 1 When Battery low?)
+	// 				 |  |  |  |  └─────────── 0 (Always off?, observation)
+	//               |  |  |  └────────────── Foot brake switch (not analogue), lights?
+	//               |  |  └───────────────── 0 (Always off?, observation)
+	//				 |  └──────────────────── 0 (Always off?, observation)
+	//               └─────────────────────── 0 (Always off?, observation)
+	// 	msg[3] = ...
+
+	// 	msg[4]:  bit 7  6  5  4  3  2  1  0
+	//               |  |  │  |  │  │  │  └── 0 (Always off?, observation)
+	//               |  |  │  |  │  │  └───── 0 (Always off?, observation)
+	//               |  |  │  |  │  └──────── 0 (Always off?, observation)
+	// 				 |  |  |  |  └─────────── 0 (Always off?,  observation)
+	//               |  |  |  └────────────── 1 (Always on?, observation, 1 when running?)
+	//               |  |  └───────────────── 0 (Always off?, observation, 1 when finally shutting down?)
+	//				 |  └──────────────────── 0 (Always off?, observation)
+	//               └─────────────────────── 0 (Always off?, observation)
+
+	// 	msg[5] = 0x00; 
+	//}
+
 	if (CAN_SID(frame) == 0x500) {
 			bool cfcRunning = cfcPin.getLogicValue();
 			if(!cfcRunning || config->cfcDisableWhenEngineStopped)
@@ -670,6 +811,38 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 	}
 
 	if (CAN_SID(frame) == 0x15A) {
+		// msg[0] = 0x10;
+
+		// 	msg[1]:  bit 7  6  5  4  3  2  1  0
+		//               |  |  │  |  │  │  │  └── !Ign On
+		//               |  |  │  |  │  │  └───── 0 (Always off?, observation)
+		//               |  |  │  |  │  └──────── 0 (Always off?, observation)
+		// 				 |  |  |  |  └─────────── 0 (Always off?, observation)	
+		//               |  |  |  └────────────── Warning lamp switch
+		//               |  |  └───────────────── 0 (Always off?, observation)
+		//				 |  └──────────────────── 0 (Always off?, observation)
+		//               └─────────────────────── 0 (Always off?, observation)
+
+		// 	msg[2]:  bit 7  6  5  4  3  2  1  0
+		//               |  |  │  |  │  │  │  └── Ign On
+		//               |  |  │  |  │  │  └───── 0 (Always off?, observation)
+		//               |  |  │  |  │  └──────── 0 (Always off?, observation)
+		// 				 |  |  |  |  └─────────── 0 (Always off?, observation)
+		//               |  |  |  └────────────── Mode Switch
+		//               |  |  └───────────────── 0 (Always off?, observation)
+		//				 |  └──────────────────── 0 (Always off?, observation)
+		//               └─────────────────────── 0 (Always off?, observation)	
+
+		// 	msg[3]:  bit 7  6  5  4  3  2  1  0
+		//               |  |  │  |  │  │  │  └── TC Switch
+		//               |  |  │  |  │  │  └───── 0 (Always off?, observation)
+		//               |  |  │  |  │  └──────── 0 (Always off?, observation)
+		// 				 |  |  |  |  └─────────── 0 (Always off?, observation)
+		//               |  |  |  └────────────── 0 (Always off?, observation)
+		//               |  |  └───────────────── 0 (Always off?, observation)
+		//				 |  └──────────────────── 0 (Always off?, observation)
+		//               └─────────────────────── 0 (Always off?, observation)	
+
 		harleyIgnitionOffRequested = (frame.data8[1] & 0x01) == 1 && (frame.data8[2] & 0x01) == 0;
 		harleyIgnitionOnRequested = (frame.data8[1] & 0x01) == 0 && (frame.data8[2] & 0x01) == 1;
 		if (harleyIgnitionOffRequested && !harleyIgnitionOffRequestedPrev) {
@@ -689,6 +862,38 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 	}
 
 	if (CAN_SID(frame) == 0x154) {
+		// msg[0] = 0x00;
+
+		// 	msg[1]:  bit 7  6  5  4  3  2  1  0
+		//               |  |  │  |  │  │  │  └── SET/- Switch
+		//               |  |  │  |  │  │  └───── 0 (Always off?, observation)
+		//               |  |  │  |  │  └──────── 0 (Always off?, observation)
+		// 				 |  |  |  |  └─────────── 0 (Always off?, observation)
+		//               |  |  |  └────────────── RES/+ Switch
+		//               |  |  └───────────────── 0 (Always off?, observation)
+		//				 |  └──────────────────── 0 (Always off?, observation)
+		//               └─────────────────────── 0 (Always off?, observation)		
+
+		// 	msg[2]:  bit 7  6  5  4  3  2  1  0
+		//               |  |  │  |  │  │  │  └── 0 (Always off?, observation)
+		//               |  |  │  |  │  │  └───── 0 (Always off?, observation)
+		//               |  |  │  |  │  └──────── 0 (Always off?, observation)
+		// 				 |  |  |  |  └─────────── 0 (Always off?, observation)
+		//               |  |  |  └────────────── Cruise Control Switch
+		//               |  |  └───────────────── 0 (Always off?, observation)
+		//				 |  └──────────────────── 0 (Always off?, observation)
+		//               └─────────────────────── 0 (Always off?, observation)
+
+		// 	msg[3]:  bit 7  6  5  4  3  2  1  0
+		//               |  |  │  |  │  │  │  └── 0 (Always off?, observation)
+		//               |  |  │  |  │  │  └───── 0 (Always off?, observation)
+		//               |  |  │  |  │  └──────── 0 (Always off?, observation)
+		// 				 |  |  |  |  └─────────── 0 (Always off?, observation)
+		//               |  |  |  └────────────── Left turn switch
+		//               |  |  └───────────────── 0 (Always off?, observation)
+		//				 |  └──────────────────── 0 (Always off?, observation)
+		//               └─────────────────────── 0 (Always off?, observation)
+
 		bool cruiseEnablePressed = (frame.data8[2] & 0x10) != 0;
 		bool cruiseDecPressed = (frame.data8[1] & 0x01) != 0;
 		bool cruiseIncPressed = (frame.data8[1] & 0x10) != 0;
