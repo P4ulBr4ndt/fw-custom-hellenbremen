@@ -40,6 +40,11 @@ static bool  cfcForce         = false;
 static bool  cfcHighSpeedMode = false;
 static Timer engNotRunningTimer;
 
+static bool  cfcUserForceOn     = false;
+static bool  cfcTgsHoldArmed    = false;
+static bool  cfcTgsPressHandled = false;
+static Timer cfcUserForceTimer;
+
 // CCFC
 static bool ccfcForce       = false;
 static bool ccfcHighAmbMode = false;
@@ -319,6 +324,24 @@ void boardPeriodicSlow() {
 	//TODO Idle Adder is not implemented yet
 	bool cfcRunning = cfcPin.getLogicValue();
 
+	// Manual CFC Force mode routine as in OEM EMC
+	bool cfcUserForceTGSHeld = (currTGS > 95.0f) && !isEngineActive;
+
+	if (!cfcUserForceTGSHeld) {
+		cfcTgsHoldArmed    = false;
+		cfcTgsPressHandled = false;
+	} else if (!cfcTgsHoldArmed) {
+		cfcTgsHoldArmed = true;
+		cfcUserForceTimer.reset();
+	} else if (!cfcTgsPressHandled && cfcUserForceTimer.getElapsedSeconds() > 3.0f) {
+		cfcUserForceOn     = !cfcUserForceOn;
+		cfcTgsPressHandled = true;
+	}
+
+	if (isEngineActive) {
+		cfcUserForceOn = false;
+	}
+
 	// Speed hysteresis cases
 	if(currSpeed >= config->cfcHighSpeedThreshold) {
 		cfcHighSpeedMode = true;
@@ -339,9 +362,9 @@ void boardPeriodicSlow() {
 	bool cfcOffTempCond        = ((currCltTemp <= config->cfcLowSpeedOffTemp  && !cfcHighSpeedMode) || 
 						          (currCltTemp <= config->cfcHighSpeedOffTemp && cfcHighSpeedMode)) && cfcRunning;
 
-	if ((cfcOnTempCond && cfcDisabledEngCond) || cfcForce) {
+	if ((cfcOnTempCond && cfcDisabledEngCond) || cfcForce || cfcUserForceOn) {
 		cfcPin.setValue(true);
-	} else if ((cfcOffTempCond || cfcIsShutdownComplete) && !cfcForce) {
+	} else if ((cfcOffTempCond || cfcIsShutdownComplete) && !cfcForce && !cfcUserForceOn) {
 		cfcPin.setValue(false);
 	}
 
