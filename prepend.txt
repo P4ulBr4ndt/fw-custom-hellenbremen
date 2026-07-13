@@ -2,8 +2,6 @@
 
 #define GAUGE_NAME_AUX_TEMP1 "Engine Temperature"
 #define MENU_NAME_AUX_TEMP1 "Engine Temperature Sensor"
-#define GAUGE_NAME_AUX_TEMP2 "Coolant Temperature"
-#define MENU_NAME_AUX_TEMP2 "Coolant Temperature Sensor"
 #define COIL_1_NAME "Rear Spark"
 #define COIL_2_NAME "Front Spark"
 
@@ -38,7 +36,7 @@
 #define ts_show_gdi_low_level false
 #define show_tcu_gauges false
 #define ts_show_tcu_gauges false
-#define ts_show_vvt_output true
+#define ts_show_vvt_output false
 #define ts_show_tle8888 false
 #define ts_show_l9779 false
 

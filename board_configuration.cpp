@@ -12,10 +12,6 @@
 SimplePwm    prgselPwm("PRGSEL");
 OutputPin    prgselPin;
 
-OutputPin    cfcPin;
-OutputPin    ccfcPin;
-OutputPin    cpcPin;
-
 void setup_custom_board_overrides() {
 	custom_board_DefaultConfiguration = boardDefaultConfiguration;
 	custom_board_ConfigOverrides = boardConfigOverrides;

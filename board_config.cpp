@@ -25,9 +25,8 @@ void boardDefaultConfiguration() {
 	engineConfiguration->triggerGapOverrideFrom[2] = 1.850; // this one is custom
 	engineConfiguration->triggerGapOverrideTo[2] = 6;
 
-	// Cam // VVT is controlled at 110hz
-	engineConfiguration->vvtMode[0] = VVT_MAP_V_TWIN;
-	engineConfiguration->vvtOutputFrequency = 110;
+	// Cam
+	engineConfiguration->vvtMode[0] = VVT_INACTIVE;
 	engineConfiguration->mapCamDetectionAnglePosition = 50;
 
 	// Aux Outputs
@@ -96,38 +95,6 @@ void boardDefaultConfiguration() {
 	setLinearCurve(config->estimatedEngineTorqueTpsBins, 0.0f, 100.0f, 1.0f);
 	setTable(config->estimatedEngineTorqueTable, 0);
 
-	// CFC
-	config->cfcOutputPin = Gpio::C8;
-	config->cfcHighSpeedThreshold = 64;
-	config->cfcLowSpeedThreshold = 56;
-	config->cfcLowSpeedOnTemp = 90;
-	config->cfcLowSpeedOffTemp = 83;
-	config->cfcHighSpeedOnTemp = 110;
-	config->cfcHighSpeedOffTemp = 102;
-	config->cfcDisableWhenEngineStopped = false;
-	config->cfcIdleAdder = 0; // Not used yet
-	config->cfcMaxRuntimeAfterEngShutdown = 180;
-	config->cfcEngShutdownOffTemp = 87;
-
-	// CCFC
-	config->ccfcOutputPin = Gpio::C9;
-	config->ccfcDisableAboveSpeed = 64;
-	config->ccfcEnableBelowSpeed = 56;
-	config->ccfcHighAmbTempThreshold = 18;
-	config->ccfcLowAmbTempThreshold = 15;
-	config->ccfcLowAmbDisableBelowEngTemp = 208;
-	config->ccfcLowAmbEnableAboveEngTemp = 215;
-	config->ccfcHighAmbDisableBelowEngTemp = 88;
-	config->ccfcHighAmbEnableAboveEngTemp = 95;
-	config->ccfcIdleAdder = 0; // Not used yet
-
-	// CPC
-	config->cpcOutputPin = Gpio::C7;
-	config->cpcOnTemp = 0;
-	config->cpcOffTemp = 0;
-	config->cpcDisableWhenEngineStopped = false;
-	config->cpcIdleAdder = 0; // Not used yet
-
 	// PRGSEL
 	config->prgselOutputPin = Gpio::D10;
 	config->prgselActive = true;
@@ -135,56 +102,13 @@ void boardDefaultConfiguration() {
 	config->prgselSpeed = 10;
 	config->prgselLowerTGS = 5;
 	config->prgselUpperTGS = 75;
-	config->prgselCltTemp = 90;
+	config->prgselEtsTemp = 90;
 	config->prgselPWMFreq = 32;
 	config->prgselPWMDuty = 30;
 	config->prgselActAfterTime = 180;
 }
 
 static void boardSanitizeConfig() {
-	// CFC
-	if (config->cfcHighSpeedThreshold < config->cfcLowSpeedThreshold) {
-		config->cfcHighSpeedThreshold = config->cfcLowSpeedThreshold;
-	}
-
-	if (config->cfcLowSpeedOnTemp < config->cfcLowSpeedOffTemp) {
-		config->cfcLowSpeedOnTemp = config->cfcLowSpeedOffTemp;
-	}
-	
-	if (config->cfcHighSpeedOnTemp < config->cfcHighSpeedOffTemp) {
-		config->cfcHighSpeedOnTemp = config->cfcHighSpeedOffTemp;
-	}
-
-	if (config->cfcEngShutdownOffTemp > config->cfcLowSpeedOnTemp) {
-		config->cfcEngShutdownOffTemp = config->cfcLowSpeedOnTemp;
-	}
-
-	// CCFC
-	if (config->ccfcDisableAboveSpeed < config->ccfcEnableBelowSpeed) {
-		config->ccfcDisableAboveSpeed = config->ccfcEnableBelowSpeed;
-	}
-
-	if (config->ccfcHighAmbTempThreshold < config->ccfcLowAmbTempThreshold) {
-		config->ccfcHighAmbTempThreshold = config->ccfcLowAmbTempThreshold;
-	}
-
-	if (config->ccfcLowAmbEnableAboveEngTemp < config->ccfcLowAmbDisableBelowEngTemp) {
-		config->ccfcLowAmbEnableAboveEngTemp = config->ccfcLowAmbDisableBelowEngTemp;
-	}
-
-	if (config->ccfcHighAmbEnableAboveEngTemp < config->ccfcHighAmbDisableBelowEngTemp) {
-		config->ccfcHighAmbEnableAboveEngTemp = config->ccfcHighAmbDisableBelowEngTemp;
-	}
-
-	// CPC
-	if(config->cpcOnTemp > config->cfcLowSpeedOnTemp) {
-		config->cpcOnTemp = config->cfcLowSpeedOnTemp;
-	}
-
-	if (config->cpcOnTemp < config->cpcOffTemp) {
-		config->cpcOnTemp = config->cpcOffTemp;
-	}
-
 	// PRGSEL
 	if (config->prgselLowerTGS > config->prgselUpperTGS) {
 		config->prgselLowerTGS = config->prgselUpperTGS;
@@ -239,15 +163,11 @@ void boardConfigOverrides() {
 	// As CLT we use ETS because thats the important figure for us
 	engineConfiguration->clt.config.bias_resistor = 1000; // ETS
 	engineConfiguration->auxTempSensor1.config.bias_resistor = 1000; // ETS
-	engineConfiguration->auxTempSensor2.config.bias_resistor = 1000; // CLT
-	engineConfiguration->ambientTempSensor.config.bias_resistor = 10000; // AAT
 	engineConfiguration->iat.config.bias_resistor = 1000; // IAT
 
 	// Temp Sensors
 	engineConfiguration->clt.adcChannel = EFI_ADC_17; // ETS PA1 MUX = 1
 	engineConfiguration->auxTempSensor1.adcChannel = EFI_ADC_17; // ETS
-	engineConfiguration->auxTempSensor2.adcChannel = EFI_ADC_5; // CLT
-	engineConfiguration->ambientTempSensor.adcChannel = EFI_ADC_1; // PA1 // AAT for CANBUS
 	engineConfiguration->iat.adcChannel = EFI_ADC_18; // PA2 MUX = 1
 
 	// Injection
@@ -274,21 +194,8 @@ void boardConfigOverrides() {
 	engineConfiguration->maximumIgnitionTiming = 90;
 	engineConfiguration->minimumIgnitionTiming = -90;
 
-	// VVT is controlled at 100hz
-	engineConfiguration->vvtOutputFrequency = 110;
-
-	// CFC
-	config->cfcOutputPin = Gpio::C8;
-
-	// CPC
-	config->cpcOutputPin = Gpio::C7;
-
-	// CCFC
-	config->ccfcOutputPin = Gpio::C9;
-
 	// PRGSEL
 	config->prgselOutputPin = Gpio::D10;
-
 }
 
 void boardCustomInitHardware() {
@@ -301,42 +208,15 @@ void boardCustomInitHardware() {
 				   NAN, // Frequency
 				   config->prgselPWMDuty / 100.0f
 	);
-
-	// Cooling Fan Control Pin init
-	cfcPin.initPin("CFC", config->cfcOutputPin);
-
-	// Chassis Cooling Fan Control Pin init
-	ccfcPin.initPin("CCFC", config->ccfcOutputPin);
-
-	// Coolant Pump Control Pin init
-	cpcPin.initPin("CPC", config->cpcOutputPin);
 }
 
 void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {
 	switch(index) {
-		case 0:
-			setCfcForce(false);
-			break;
-		case 1:
-			setCfcForce(true);
-			break;
 		case 2:
 			setPrgselForce(false);
 			break;
 		case 3:
 			setPrgselForce(true);
-			break;
-		case 4:
-			setCcfcForce(false);
-			break;
-		case 5:
-			setCcfcForce(true);
-			break;
-		case 6:
-			setCpcForce(false);
-			break;
-		case 7:
-			setCpcForce(true);
 			break;
 	}
 }

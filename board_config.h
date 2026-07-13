@@ -6,15 +6,6 @@
 extern OutputPin    prgselPin;
 extern SimplePwm    prgselPwm;
 
-// Cooling Fan Control
-extern OutputPin    cfcPin;
-
-// Chassis Cooling Fan Control
-extern OutputPin	ccfcPin;
-
-// Coolant Pump Control
-extern OutputPin	cpcPin;
-
 void boardDefaultConfiguration();
 void boardConfigOverrides();
 void boardCustomInitHardware();
