@@ -295,7 +295,7 @@ void boardHandleCan(CanCycle cycle) {
 
 	uint32_t tripDistanceMeters = engine->module<TripOdometer>()->getDistanceMeters();
 
-	if (cycle.isInterval(CI::_10ms)) {
+	if (cycle.isInterval(CI::_10ms)) { // Softail OEM sends in 8ms periods
 		CanTxMessage msg(CanCategory::NBC, 0x142);
 		msg.setShortValueMsb(Sensor::getOrZero(SensorType::Rpm), 0x0);
 		msg.setShortValueMsb(Sensor::getOrZero(SensorType::VehicleSpeed) * 10.f, 0x2);
@@ -378,48 +378,8 @@ void boardHandleCan(CanCycle cycle) {
 			msg[7] = crc8(msg.getFrame()->data8, 7);
 		}
 
-		//{
-			//CanTxMessage msg(CanCategory::NBC, 0x133);
-			// msg[0]:  bit 7  6  5  4  3  2  1  0
-			//              |  |  │  |  │  │  │  └── 0 (Always off?, observation)
-			//              |  |  │  |  │  │  └───── 1 (Always on?,  observation)
-			//              |  |  │  |  │  └──────── 1 (Always on?,  observation)
-			// 				|  |  |  |  └─────────── 0 (Always off?, observation)
-			//              |  |  |  └────────────── 0 (Always off?, observation)
-			//              |  |  └───────────────── 0 (Always off?, observation)
-			//				|  └──────────────────── 0 (Always off?, observation)
-			//              └─────────────────────── 0 (Always off?, observation)
-			// msg[0] = 0x60;
-
-			// msg[1] = 0x00;
-			// msg[2] = 0x00;
-
-			// msg[3]:  bit 7  6  5  4  3  2  1  0
-			//              |  |  │  |  │  │  │  └── 0 (Always off?, observation)
-			//              |  |  │  |  │  │  └───── 0 (Always off?, observation)
-			//              |  |  │  |  │  └──────── 0 (Always off?, observation)
-			// 				|  |  |  |  └─────────── Foot brake switch (not analogue), lights?
-			//              |  |  |  └────────────── 0 (Always off?, observation)
-			//              |  |  └───────────────── 0 (Always off?, observation)
-			//				|  └──────────────────── 1 (Always on?,  observation)
-			//              └─────────────────────── 0 (Always off?, observation)
-			// msg[3] = ...
-
-			// msg[4]:  bit 7  6  5  4  3  2  1  0
-			//              |  |  │  |  │  │  │  └── 0 (Always off?, observation)
-			//              |  |  │  |  │  │  └───── 0 (Always off?, observation)
-			//              |  |  │  |  │  └──────── 0 (Always off?, observation)
-			// 				|  |  |  |  └─────────── 1 (Always on?,  observation)
-			//              |  |  |  └────────────── 0 (Always off?, observation)
-			//              |  |  └───────────────── 0 (Always off?, observation)
-			//				|  └──────────────────── 0 (Always off?, observation)
-			//              └─────────────────────── 0 (Always off?, observation)
-
-			// msg[5] = 0x00; 
-		//}
-
 		{
-			CanTxMessage msg(CanCategory::NBC, 0x342);
+			CanTxMessage msg(CanCategory::NBC, 0x342); // Softail OEM sends in 48ms periods
 
 			// Remaining Range in Km = Tank volume [L] * (FuelLevel [0% - 100%] / 100) / Consumption [km / L]
 			//                       = Tank volume [L] * (FuelLevel [0% - 100%] / 100) * (100 / Consumption [L / (100 km)])
