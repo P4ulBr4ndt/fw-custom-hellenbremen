@@ -26,7 +26,9 @@ void boardDefaultConfiguration() {
 	engineConfiguration->triggerGapOverrideTo[2] = 6;
 
 	// Cam
-	engineConfiguration->vvtMode[0] = VVT_INACTIVE;
+	// This isn't a physical VVT solenoid - there is none on this bike. VVT_MAP_V_TWIN
+	// is this engine's cam/phase-sync mechanism (via MAP signal), since it has no cam sensor.
+	engineConfiguration->vvtMode[0] = VVT_MAP_V_TWIN;
 	engineConfiguration->mapCamDetectionAnglePosition = 50;
 
 	// Aux Outputs
@@ -40,7 +42,7 @@ void boardDefaultConfiguration() {
 
 	// Fuel level sensor
 	engineConfiguration->fuelLevelSensor = EFI_ADC_2;
-	config->fuelLevelTankVolume = 22.7f; // HD Touring Road Glide 2025 tank volume
+	config->fuelLevelTankVolume = 18.9f; // H-D Softail Low Rider ST 2025 FXLRST
 	config->fuelLevelAvgConsumption = 5.5f; // TODO This is hardcoded for now. Has to be dynamic
 	engineConfiguration->fuelLevelUpdatePeriodSec = 0.1f;
 	engineConfiguration->fuelLevelAveragingAlpha = 0.0001f;

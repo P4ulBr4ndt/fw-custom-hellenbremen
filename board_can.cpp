@@ -75,11 +75,21 @@ uint32_t getFourBytesMsb(const CANRxFrame& frame, size_t offset) {
 		static_cast<uint32_t>(frame.data8[offset + 3]);
 }
 
+uint16_t getTwoBytesMsb(const CANRxFrame& frame, size_t offset) {
+	return (static_cast<uint32_t>(frame.data8[offset]) << 8) |
+		static_cast<uint32_t>(frame.data8[offset + 1]);
+}
+
 void setFourBytesMsb(CanTxMessage& msg, uint32_t value, size_t offset) {
 	msg[offset] = (value >> 24) & 0xFF;
 	msg[offset + 1] = (value >> 16) & 0xFF;
 	msg[offset + 2] = (value >> 8) & 0xFF;
 	msg[offset + 3] = value & 0xFF;
+}
+
+void setTwoBytesMsb(CanTxMessage& msg, uint16_t value, size_t offset) {
+	msg[offset + 1] = (value >> 8) & 0xFF;
+	msg[offset] = value & 0xFF;
 }
 
 uint8_t calculateHarleyGearIndex() {
@@ -99,6 +109,7 @@ uint8_t calculateHarleyGearIndex() {
 	return bestOffs;
 }
 
+// Dictionary more efficient?
 uint8_t calculateHarleyGearValue() {
 	uint8_t bestOffs = calculateHarleyGearIndex();
 
@@ -118,7 +129,7 @@ uint8_t calculateHarleyGearValue() {
 		case 6:
 			return 0x60; // 6
 		default:
-			return 0x0;
+			return 0x0; // 0xD0?
 	}
 }
 
@@ -299,7 +310,7 @@ void boardHandleCan(CanCycle cycle) {
 		CanTxMessage msg(CanCategory::NBC, 0x142);
 		msg.setShortValueMsb(Sensor::getOrZero(SensorType::Rpm), 0x0);
 		msg.setShortValueMsb(Sensor::getOrZero(SensorType::VehicleSpeed) * 10.f, 0x2);
-		msg[0x4] = calculateHarleyGearValue();
+		msg[4] = calculateHarleyGearValue();
 		msg[6] = frameCounter142;
 		msg[7] = crc8(msg.getFrame()->data8, 7);
 		frameCounter142 = (frameCounter142 + 1) % 64;
@@ -320,7 +331,7 @@ void boardHandleCan(CanCycle cycle) {
 
 		msg.setShortValueMsb(scaleTorqueForCan(targetTorque), 0x0); // TARGET ESTIMATED TORQUE
 		msg.setShortValueMsb(scaleTorqueForCan(estimatedTorque), 0x2); // ACTUAL ESTIMATED TORQUE
-		msg[4] = Sensor::getOrZero(SensorType::AcceleratorPedal) / 0.5; // Note that for negative values this stays 0 implicitly
+		msg[4] = Sensor::getOrZero(SensorType::AcceleratorPedal) * 2.0f; // Note that for negative values this stays 0 implicitly
 		msg[5] = getHarleyTractionControlStatus();
 		msg[6] = frameCounter144;
 		msg[7] = crc8(msg.getFrame()->data8, 7);
