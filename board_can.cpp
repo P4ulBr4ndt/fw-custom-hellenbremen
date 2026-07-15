@@ -75,10 +75,10 @@ uint32_t getFourBytesMsb(const CANRxFrame& frame, size_t offset) {
 		static_cast<uint32_t>(frame.data8[offset + 3]);
 }
 
-uint16_t getTwoBytesMsb(const CANRxFrame& frame, size_t offset) {
-	return (static_cast<uint32_t>(frame.data8[offset]) << 8) |
-		static_cast<uint32_t>(frame.data8[offset + 1]);
-}
+// uint16_t getTwoBytesMsb(const CANRxFrame& frame, size_t offset) {
+// 	return (static_cast<uint32_t>(frame.data8[offset]) << 8) |
+// 		static_cast<uint32_t>(frame.data8[offset + 1]);
+// }
 
 void setFourBytesMsb(CanTxMessage& msg, uint32_t value, size_t offset) {
 	msg[offset] = (value >> 24) & 0xFF;
@@ -87,10 +87,10 @@ void setFourBytesMsb(CanTxMessage& msg, uint32_t value, size_t offset) {
 	msg[offset + 3] = value & 0xFF;
 }
 
-void setTwoBytesMsb(CanTxMessage& msg, uint16_t value, size_t offset) {
-	msg[offset + 1] = (value >> 8) & 0xFF;
-	msg[offset] = value & 0xFF;
-}
+// void setTwoBytesMsb(CanTxMessage& msg, uint16_t value, size_t offset) {
+// 	msg[offset + 1] = (value >> 8) & 0xFF;
+// 	msg[offset] = value & 0xFF;
+// }
 
 uint8_t calculateHarleyGearIndex() {
 	float sensorValue = Sensor::getOrZero(SensorType::AuxLinear1);
