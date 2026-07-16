@@ -698,7 +698,7 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 		}
 	}
 
-	if (CAN_SID(frame) == 0x154) {
+		if (CAN_SID(frame) == 0x154) {
 		// msg[0] = 0x00;
 
 		// 	msg[1]:  bit 7  6  5  4  3  2  1  0
@@ -737,7 +737,15 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 		const efitick_t cruiseHoldDelayNt = MS2NT(500);
 		const efitick_t cruiseRepeatDelayNt = MS2NT(200);
 
-		if (cruiseEnablePressed && !cruiseEnablePressedPrev) {
+		// Speed dependent standby when enabled
+		if (getCCStatus() == CruiseControlStatus::Enabled) {
+			if (Sensor::getOrZero(SensorType::VehicleSpeed) - 16.0f >= getDesiredCCSpeed()) {
+				setCCStatus(CruiseControlStatus::Standby);
+			}
+		}
+
+		// CC Switch handle
+		if (cruiseEnablePressed && !cruiseEnablePressedPrev && (engine->fuelComputer.running.timeSinceCrankingInSecs > 10.0f)) {
 			if (getCCStatus() == CruiseControlStatus::Disabled) {
 				setCCStatus(CruiseControlStatus::Standby);
 			} else {
@@ -746,20 +754,27 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 			}
 		}
 
+		// CC SET/- Switch handle
 		if (cruiseDecPressed && !cruiseDecPressedPrev) {
 			cruiseDecPressStartNt = nowNt;
 			cruiseDecLastRepeatNt = nowNt;
 			if (getDesiredCCSpeed() > 0 && getCCStatus() == CruiseControlStatus::Enabled) {
+				if (Sensor::getOrZero(SensorType::VehicleSpeed) - getDesiredCCSpeed() >= 5.0f) {
+					engageCCAtCurrentSpeedForCurrentGear();
+				}
+
 				decreaseDesiredCCSpeedForCurrentGear();
 			} else if (getCCStatus() == CruiseControlStatus::Standby) {
 				engageCCAtCurrentSpeedForCurrentGear();
 			}
 		}
+
 		if (!cruiseDecPressed && cruiseDecPressedPrev) {
 			cruiseDecPressStartNt = 0;
 			cruiseDecLastRepeatNt = 0;
 		}
-		if (cruiseDecPressed && cruiseDecPressStartNt != 0) {
+
+		if (cruiseDecPressed && cruiseDecPressStartNt != 0) { // Delay of dec when pressed
 			if ((nowNt - cruiseDecPressStartNt) >= cruiseHoldDelayNt &&
 				(nowNt - cruiseDecLastRepeatNt) >= cruiseRepeatDelayNt) {
 				if (getDesiredCCSpeed() > 0 && getCCStatus() == CruiseControlStatus::Enabled) {
@@ -769,20 +784,25 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 			}
 		}
 
+		// CC RES/+ Switch handle
 		if (cruiseIncPressed && !cruiseIncPressedPrev) {
 			cruiseIncPressStartNt = nowNt;
 			cruiseIncLastRepeatNt = nowNt;
-			if (getCCStatus() == CruiseControlStatus::Standby) {
-				resumeCCForCurrentGear();
-			} else if (getCCStatus() == CruiseControlStatus::Enabled) {
+			if (getCCStatus() == CruiseControlStatus::Enabled) {
 				increaseDesiredCCSpeedForCurrentGear();
+			} else if (getCCStatus() == CruiseControlStatus::Standby) {
+				if (!(Sensor::getOrZero(SensorType::VehicleSpeed) + 24.0f <= getDesiredCCSpeed())) {
+					resumeCCForCurrentGear();
+				}
 			}
 		}
+
 		if (!cruiseIncPressed && cruiseIncPressedPrev) {
 			cruiseIncPressStartNt = 0;
 			cruiseIncLastRepeatNt = 0;
 		}
-		if (cruiseIncPressed && cruiseIncPressStartNt != 0) {
+
+		if (cruiseIncPressed && cruiseIncPressStartNt != 0) { // Delay of inc when pressed
 			if ((nowNt - cruiseIncPressStartNt) >= cruiseHoldDelayNt &&
 				(nowNt - cruiseIncLastRepeatNt) >= cruiseRepeatDelayNt) {
 				if (getCCStatus() == CruiseControlStatus::Enabled) {
@@ -792,6 +812,7 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 			}
 		}
 
+		// Current/Prev setting
 		cruiseEnablePressedPrev = cruiseEnablePressed;
 		cruiseDecPressedPrev = cruiseDecPressed;
 		cruiseIncPressedPrev = cruiseIncPressed;
