@@ -524,7 +524,7 @@ void boardHandleCan(CanCycle cycle) {
 			//              |  |  └───────────────── 0 (Always off?, observation)
 			//				|  └──────────────────── running
 			//              └─────────────────────── 1 (Always on?,  observation)
-			msg[3] = 0x84;
+			msg[3] = 0x04; // Sometimes 0x84
 
 			if(running) {
 				msg[3] |= 0x40;
