@@ -334,7 +334,10 @@ void boardPeriodicSlow() {
 		cfcTgsHoldArmed = true;
 		cfcUserForceTimer.reset();
 	} else if (!cfcTgsPressHandled && cfcUserForceTimer.getElapsedSeconds() > 3.0f) {
-		cfcUserForceOn     = !cfcUserForceOn;
+		bool cfcRunningFromTempCond = cfcRunning && !cfcUserForceOn && !cfcForce;
+		if (cfcUserForceOn || !cfcRunningFromTempCond) {
+			cfcUserForceOn = !cfcUserForceOn;
+		}
 		cfcTgsPressHandled = true;
 	}
 
@@ -828,9 +831,10 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 	//}
 
 	if (CAN_SID(frame) == 0x500) {
-			bool cfcRunning = cfcPin.getLogicValue();
-			if(!cfcRunning || config->cfcDisableWhenEngineStopped)
+			bool cfcRunning = !cfcUserForceOn && cfcPin.getLogicValue();
+			if(!cfcRunning || config->cfcDisableWhenEngineStopped) {
 				harleyKeepAlive = frame.data8[0];
+			}
 	}
 
 	if (CAN_SID(frame) == 0x15A) {
