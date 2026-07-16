@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <msq xmlns="http://www.msefi.com/:msq">
     <page/>
-    <page number="0" size="27056">
+    <page number="0" size="27096">
         <constant name="accelEnrichmentMode">"MS Adder"</constant>
         <constant name="accelerometerCsPin">"NONE"</constant>
         <constant name="accelerometerCsPinMode">"default"</constant>
@@ -1752,41 +1752,25 @@
         <constant digits="1" name="iacByTpsDecayTime" units="seconds">0.0</constant>
         <constant digits="1" name="iacByTpsHoldTime" units="seconds">0.0</constant>
         <constant digits="0" name="iacByTpsTaper" units="percent">2</constant>
-        <constant cols="1" digits="1" name="iacCoasting" rows="16" units="%">
-         0.0
-         0.0
-         0.0
-         0.0
-         0.0
-         0.0
-         0.0
-         0.0
-         0.0
-         0.0
-         0.0
-         0.0
-         0.0
-         0.0
-         0.0
-         0.0
+        <constant cols="8" digits="1" name="iacCoasting" rows="8" units="%">
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
 </constant>
-        <constant cols="1" digits="0" name="iacCoastingRpmBins" rows="16" units="RPM">
-         0
+        <constant cols="1" digits="0" name="iacCoastingRpmBins" rows="8" units="RPM">
          500
-         1100
-         1600
+         1300
          2100
-         2700
-         3200
-         3700
-         4300
-         4800
-         5300
-         5900
-         6400
-         6900
-         7500
-         8000
+         2900
+         3600
+         4400
+         5200
+         6000
 </constant>
         <constant cols="1" digits="2" name="iacPidMultLoadBins" rows="8" units="Load">
          0.0
@@ -5401,7 +5385,7 @@ end</constant>
 </constant>
         <constant name="yesUnderstandLocking">"no"</constant>
     </page>
-    <versionInfo firmwareInfo="20260227" nPages="1" signature="rusEFI main.2026.07.16.hellen-bremen.1590086055" version="5.0"/>
+    <versionInfo firmwareInfo="20260227" nPages="1" signature="rusEFI main.2026.07.16.hellen-bremen.1503211197" version="5.0"/>
     <bibliography author="rusEFI 20260227" writeDate="date"/>
     <settings/>
     <userComments/>
