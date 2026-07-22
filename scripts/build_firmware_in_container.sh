@@ -57,6 +57,14 @@ cd "${RUSEFI_DIR}"
 misc/git_scripts/common_submodule_init.sh
 
 cd "${RUSEFI_DIR}/firmware"
+
+# Mirror the CI action (ext/rusefi/.github/workflows/custom-board-build/action.yaml):
+# redirect generated config output to the root customization's generated/ folder.
+# board.mk puts that folder first on the include path (BOARDINC), so without this,
+# gen_config_board.sh writes into the submodule's own tree instead, leaving the
+# root copy stale and shadowing the fresh headers with mismatched, out-of-date ones.
+export META_OUTPUT_ROOT_FOLDER="../../../generated/"
+
 bash bin/compile.sh "${META_INFO}" config
 if [ "${BUILD_BOOTLOADER}" = "1" ]; then
   bash bin/compile.sh "${META_INFO}" bootloader

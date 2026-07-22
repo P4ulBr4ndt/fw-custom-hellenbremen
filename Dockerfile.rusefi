@@ -8,10 +8,10 @@ ARG TARGETARCH
 SHELL ["/bin/bash", "-c"]
 
 RUN apt-get update && apt-get install -y \
-  ca-certificates curl wget xz-utils git \
+  ca-certificates curl wget xz-utils git xxd \
   build-essential make python3 \
   openjdk-17-jdk openjdk-11-jdk \
-  mtools sshpass zip dosfstools \
+  mtools sshpass zip dosfstools xxd p7zip-full \
   && rm -rf /var/lib/apt/lists/*
 
 RUN set -euo pipefail; \
