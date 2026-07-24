@@ -30,6 +30,7 @@ float engineBrakingMinVss;Engine braking minimum VSS;"kph", 1, 0, 0, 300, 1
 float engineBrakingMaxBaseEtbTarget;Engine braking max ETB target;"%", 1, 0, 0, 100, 1
 float[ETB_TARGET_SLEW_BINS_COUNT] etbTargetSlewOpeningBins;;"%", 1, 0, 0, 100, 1
 float[ETB_TARGET_SLEW_BINS_COUNT] etbTargetSlewMaxUpRate;;"%/s", 1, 0, 0, 1200, 1
+float[ETB_TARGET_SLEW_BINS_COUNT] etbTargetSlewMaxDownRate;;"%/s", 1, 0, 0, 1200, 1
 
 float[INSTANT_ACCEL_SHOT_TPS_COUNT x INSTANT_ACCEL_SHOT_TPS_COUNT] instantAccelShotTpsTable;;"ms", 1, 0, 0, 50, 2
 float[INSTANT_ACCEL_SHOT_TPS_COUNT] instantAccelShotTpsFromBins;;"%", 1, 0, 0, 100, 1

@@ -33,6 +33,10 @@ static constexpr float etbTargetSlewDefaultMaxUpRate[ETB_TARGET_SLEW_BINS_COUNT]
 	20.0f, 25.0f, 50.0f, 62.5f, 100.0f, 166.7f, 200.0f, 230.0f, 260.0f, 300.0f, 350.0f, 400.0f
 };
 
+static constexpr float etbTargetSlewDefaultMaxDownRate[ETB_TARGET_SLEW_BINS_COUNT] = {
+	20.0f, 25.0f, 50.0f, 62.5f, 100.0f, 166.7f, 200.0f, 230.0f, 260.0f, 300.0f, 350.0f, 400.0f
+};
+
 struct HarleyRideModeState {
 	uint8_t activeMode = HD_MODE_SPORT;
 	uint8_t requestedMode = HD_MODE_SPORT;
@@ -51,6 +55,30 @@ struct EtbTargetSlewState {
 };
 
 EtbTargetSlewState etbTargetSlewState;
+
+float getEtbTargetSlewRate(float target, const float (&rates)[ETB_TARGET_SLEW_BINS_COUNT]) {
+	float rate = interpolate2d(target, config->etbTargetSlewOpeningBins, rates);
+	return std::max(rate, 0.0f);
+}
+
+float slewEtbTargetToward(float currentTarget, float requestedTarget, float maxOpeningRate, float maxClosingRate, float dt) {
+	const float delta = requestedTarget - currentTarget;
+
+	if (delta > 0.0f) {
+		return currentTarget + std::min(delta, maxOpeningRate * dt);
+	}
+
+	if (delta < 0.0f) {
+		if (maxClosingRate <= 0.0f) {
+			// Fail toward the old behavior: an invalid/unset closing rate should not hold the throttle open.
+			return requestedTarget;
+		}
+
+		return currentTarget - std::min(-delta, maxClosingRate * dt);
+	}
+
+	return currentTarget;
+}
 
 uint8_t highNibble(uint8_t value) {
 	return (value >> 4) & 0x0F;
@@ -193,18 +221,9 @@ float applyEtbTargetSlewLimit(float requestedEtbTarget) {
 		return requestedEtbTarget;
 	}
 
-	float upRate = interpolate2d(state.limitedTarget, config->etbTargetSlewOpeningBins, config->etbTargetSlewMaxUpRate);
-	if (upRate < 0.0f) {
-		upRate = 0.0f;
-	}
-
-	float limitedTarget = state.limitedTarget;
-	if (requestedEtbTarget > limitedTarget) {
-		limitedTarget += std::min((requestedEtbTarget - limitedTarget), upRate * dt);
-	} else if (requestedEtbTarget < limitedTarget) {
-		// Closing is intentionally not slewed.
-		limitedTarget = requestedEtbTarget;
-	}
+	float upRate = getEtbTargetSlewRate(state.limitedTarget, config->etbTargetSlewMaxUpRate);
+	float downRate = getEtbTargetSlewRate(state.limitedTarget, config->etbTargetSlewMaxDownRate);
+	float limitedTarget = slewEtbTargetToward(state.limitedTarget, requestedEtbTarget, upRate, downRate, dt);
 
 	state.limitedTarget = clampPercentValue(limitedTarget);
 	return state.limitedTarget;
@@ -224,6 +243,7 @@ void boardRidingModesApplyDefaults() {
 
 	copyArray(config->etbTargetSlewOpeningBins, etbTargetSlewDefaultOpeningBins);
 	copyArray(config->etbTargetSlewMaxUpRate, etbTargetSlewDefaultMaxUpRate);
+	copyArray(config->etbTargetSlewMaxDownRate, etbTargetSlewDefaultMaxDownRate);
 }
 
 void boardRidingModesPublishLive() {
