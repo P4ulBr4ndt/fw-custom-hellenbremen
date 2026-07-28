@@ -8,7 +8,7 @@
 #include <cmath>
 #include <cstdint>
 
-#include "board_riding_modes.h"
+#include "board_etb_control.h"
 #include "board_uds.h"
 #include "board_config.h"
 #include "cruise_control.h"

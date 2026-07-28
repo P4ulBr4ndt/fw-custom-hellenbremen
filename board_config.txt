@@ -28,6 +28,8 @@ float engineBrakingRpmEngage;Engine braking minimum engage RPM;"rpm", 1, 0, 0, 1
 float engineBrakingRpmFull;Engine braking full-effect RPM;"rpm", 1, 0, 0, 10000, 0
 float engineBrakingMinVss;Engine braking minimum VSS;"kph", 1, 0, 0, 300, 1
 float engineBrakingMaxBaseEtbTarget;Engine braking max ETB target;"%", 1, 0, 0, 100, 1
+uint16_t vmaxLimit;Vehicle speed where ETB Vmax limiting starts. Set to 0 to disable.;"SPECIAL_CASE_SPEED", 1, 0, 0, 300, 0
+uint16_t vmaxLimitRange;Speed range above Vmax where ETB target tapers to closed.;"SPECIAL_CASE_SPEED", 1, 0, 0, 100, 0
 float[ETB_TARGET_SLEW_BINS_COUNT] etbTargetSlewOpeningBins;;"%", 1, 0, 0, 100, 1
 float[ETB_TARGET_SLEW_BINS_COUNT] etbTargetSlewMaxUpRate;;"%/s", 1, 0, 0, 1200, 1
 float[ETB_TARGET_SLEW_BINS_COUNT] etbTargetSlewMaxDownRate;;"%/s", 1, 0, 0, 1200, 1

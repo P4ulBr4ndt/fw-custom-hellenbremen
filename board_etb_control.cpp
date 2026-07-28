@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "board_riding_modes.h"
+#include "board_etb_control.h"
 
 #include <algorithm>
 
@@ -24,6 +24,8 @@ static constexpr float ENGINE_BRAKING_DEFAULT_RPM_ENGAGE = 1300.0f;
 static constexpr float ENGINE_BRAKING_DEFAULT_RPM_FULL = 4500.0f;
 static constexpr float ENGINE_BRAKING_DEFAULT_MIN_VSS = 3.0f;
 static constexpr float ENGINE_BRAKING_DEFAULT_MAX_BASE_ETB_TARGET = 10.0f;
+static constexpr uint16_t VMAX_DEFAULT_LIMIT = 0;
+static constexpr uint16_t VMAX_DEFAULT_LIMIT_RANGE = 10;
 
 static constexpr float etbTargetSlewDefaultOpeningBins[ETB_TARGET_SLEW_BINS_COUNT] = {
 	0.0f, 5.0f, 10.0f, 15.0f, 20.0f, 25.0f, 30.0f, 40.0f, 50.0f, 60.0f, 80.0f, 100.0f
@@ -190,6 +192,29 @@ float applyEngineBrakingOffset(float currentEtbTarget) {
 	return currentEtbTarget + harleyRideModeState.engineBrakeEtbOffset;
 }
 
+float applyVmaxLimit(float currentEtbTarget) {
+	const auto vmaxLimit = config->vmaxLimit;
+	if (vmaxLimit == 0) {
+		return currentEtbTarget;
+	}
+
+	auto vss = Sensor::get(SensorType::VehicleSpeed);
+	if (!vss.Valid) {
+		return currentEtbTarget;
+	}
+
+	const float range = std::max(static_cast<float>(config->vmaxLimitRange), 1.0f);
+	const float fullyLimitedSpeed = static_cast<float>(vmaxLimit) + range;
+
+	return clampPercentValue(interpolateClamped(
+		static_cast<float>(vmaxLimit),
+		currentEtbTarget,
+		fullyLimitedSpeed,
+		0.0f,
+		vss.Value
+	));
+}
+
 float applyEtbTargetSlewLimit(float requestedEtbTarget) {
 	auto& state = etbTargetSlewState;
 
@@ -230,7 +255,7 @@ float applyEtbTargetSlewLimit(float requestedEtbTarget) {
 }
 } // namespace
 
-void boardRidingModesApplyDefaults() {
+void boardEtbControlApplyDefaults() {
 	config->engineBrakingEtbOffsetMode1 = ENGINE_BRAKING_DEFAULT_ETB_OFFSET_MODE_1;
 	config->engineBrakingEtbOffsetMode2 = ENGINE_BRAKING_DEFAULT_ETB_OFFSET_MODE_2;
 	config->engineBrakingEtbOffsetMode3 = ENGINE_BRAKING_DEFAULT_ETB_OFFSET_MODE_3;
@@ -240,6 +265,8 @@ void boardRidingModesApplyDefaults() {
 	config->engineBrakingRpmFull = ENGINE_BRAKING_DEFAULT_RPM_FULL;
 	config->engineBrakingMinVss = ENGINE_BRAKING_DEFAULT_MIN_VSS;
 	config->engineBrakingMaxBaseEtbTarget = ENGINE_BRAKING_DEFAULT_MAX_BASE_ETB_TARGET;
+	config->vmaxLimit = VMAX_DEFAULT_LIMIT;
+	config->vmaxLimitRange = VMAX_DEFAULT_LIMIT_RANGE;
 
 	copyArray(config->etbTargetSlewOpeningBins, etbTargetSlewDefaultOpeningBins);
 	copyArray(config->etbTargetSlewMaxUpRate, etbTargetSlewDefaultMaxUpRate);
@@ -294,5 +321,6 @@ uint8_t boardGetHarleyEngineMap() {
 
 float boardAdjustEtbTarget(float currentEtbTarget) {
 	float targetWithEngineBraking = applyEngineBrakingOffset(currentEtbTarget);
-	return applyEtbTargetSlewLimit(targetWithEngineBraking);
+	float targetWithVmaxLimit = applyVmaxLimit(targetWithEngineBraking);
+	return applyEtbTargetSlewLimit(targetWithVmaxLimit);
 }

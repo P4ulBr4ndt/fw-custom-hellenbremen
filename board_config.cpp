@@ -7,7 +7,7 @@
 
 #include "board_etb_maps.h"
 #include "board_instant_accel_shot.h"
-#include "board_riding_modes.h"
+#include "board_etb_control.h"
 #include "defaults.h"
 #include "hellen_meta.h"
 
@@ -89,7 +89,7 @@ void boardDefaultConfiguration() {
 
 	boardEtbMapsApplyDefaults();
 	boardInstantAccelApplyDefaults();
-	boardRidingModesApplyDefaults();
+	boardEtbControlApplyDefaults();
 	engineConfiguration->idlePositionLowerLimit = 14;
 
 	setRpmTableBin(config->estimatedEngineTorqueRpmBins);
@@ -188,6 +188,11 @@ static void boardSanitizeConfig() {
 	// PRGSEL
 	if (config->prgselLowerTGS > config->prgselUpperTGS) {
 		config->prgselLowerTGS = config->prgselUpperTGS;
+	}
+
+	// Vmax
+	if (config->vmaxLimit > 0 && config->vmaxLimitRange == 0) {
+		config->vmaxLimitRange = 1;
 	}
 }
 
