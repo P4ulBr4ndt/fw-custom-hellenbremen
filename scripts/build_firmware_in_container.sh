@@ -53,6 +53,8 @@ case "${MODE}" in
     ;;
 esac
 
+git -C "${ROOT_DIR}" submodule update --init ext/rusefi
+
 cd "${RUSEFI_DIR}"
 misc/git_scripts/common_submodule_init.sh
 
