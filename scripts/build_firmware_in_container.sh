@@ -94,7 +94,7 @@ fi
 
 SHORT_BOARD_NAME="$(awk -F= '$1=="SHORT_BOARD_NAME"{print $2; exit}' "${META_INFO}" | tr -d '\r')"
 if [ -n "${SHORT_BOARD_NAME}" ]; then
-  INI_SRC="${RUSEFI_DIR}/firmware/tunerstudio/generated/rusefi_${SHORT_BOARD_NAME}.ini"
+  INI_SRC="${ROOT_DIR}/generated/tunerstudio/generated/rusefi_${SHORT_BOARD_NAME}.ini"
   if [ -f "${INI_SRC}" ]; then
     cp -f "${INI_SRC}" "${RUSEFI_DIR}/firmware/build/"
   fi
