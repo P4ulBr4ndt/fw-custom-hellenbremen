@@ -67,6 +67,13 @@ cd "${RUSEFI_DIR}/firmware"
 # root copy stale and shadowing the fresh headers with mismatched, out-of-date ones.
 export META_OUTPUT_ROOT_FOLDER="../../../generated/"
 
+# .config-sentinel (and friends) are gitignored, so they persist across container
+# runs via the bind mount. If one is left over from an earlier/stale build, make
+# can decide config generation is already up to date and skip gen_config_board.sh
+# entirely, silently leaving stale git-tracked generated files in place. Force a
+# fresh run every time - generation is fast, so there's no reason to trust the cache.
+rm -f .config-sentinel .ramdisk-sentinel .bootloader-sentinel
+
 bash bin/compile.sh "${META_INFO}" config
 if [ "${BUILD_BOOTLOADER}" = "1" ]; then
   bash bin/compile.sh "${META_INFO}" bootloader
