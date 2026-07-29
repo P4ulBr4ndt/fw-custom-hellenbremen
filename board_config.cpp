@@ -69,9 +69,13 @@ void boardDefaultConfiguration() {
 	config->fuelLevelValues[6] = 14;
 	config->fuelLevelValues[7] = 0;
 
-	// AFR 
+	// AFR - wideband O2 via CAN (rusEFI native protocol on CAN1)
 	engineConfiguration->afr.hwChannel = EFI_ADC_NONE;
-	engineConfiguration->enableAemXSeries = false;
+	engineConfiguration->enableAemXSeries = true;
+	engineConfiguration->canWbo[0].type = can_wbo_type_e::RUSEFI;
+	engineConfiguration->canWbo[1].type = can_wbo_type_e::RUSEFI;
+	engineConfiguration->widebandOnSecondBus = false; // Use CAN1
+	engineConfiguration->afrExpAverageAlpha = 1; // no smoothing
 
 	// MAP
 	setCustomMap(/*lowValue*/ 20, /*mapLowValueVoltage*/ 0.79, /*highValue*/ 101.3, /*mapHighValueVoltage*/ 4);
