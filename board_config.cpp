@@ -10,6 +10,7 @@
 #include "board_etb_control.h"
 #include "defaults.h"
 #include "hellen_meta.h"
+#include "tunerstudio.h"
 
 #define HARLEY_V_TWIN 45.0
 
@@ -348,6 +349,14 @@ void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {
 			setCpcForce(true);
 			break;
 	}
+}
+
+// Front VE table lives at a different offset than the stock VE table, so the default
+// isTouchingVe() (which only watches veTable) never sees TunerStudio's front-table
+// autotune writes - STFT/LTFT would keep learning uninterrupted during that tuning.
+bool isTouchingVe(uint16_t offset, uint16_t count) {
+	return isTouchingArea(offset, count, offsetof(persistent_config_s, veTable), sizeof(config->veTable))
+		|| isTouchingArea(offset, count, offsetof(persistent_config_s, veFrontTable), sizeof(config->veFrontTable));
 }
 
 void boardCustomOnConfigurationChange(engine_configuration_s* previousConfiguration) {
