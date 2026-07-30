@@ -14,6 +14,8 @@
 
 #define HARLEY_V_TWIN 45.0
 
+static bool calibrationWriteSignal = false;
+
 // Executed after flash when empty or when factory resetted
 void boardDefaultConfiguration() {
 	// Trigger
@@ -355,8 +357,18 @@ void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {
 // isTouchingVe() (which only watches veTable) never sees TunerStudio's front-table
 // autotune writes - STFT/LTFT would keep learning uninterrupted during that tuning.
 bool isTouchingVe(uint16_t offset, uint16_t count) {
+	// onCalibrationWrite() only reaches this call for TS_PAGE_SETTINGS writes,
+	// so being called at all means a calibration write just landed.
+	calibrationWriteSignal = true;
+
 	return isTouchingArea(offset, count, offsetof(persistent_config_s, veTable), sizeof(config->veTable))
 		|| isTouchingArea(offset, count, offsetof(persistent_config_s, veFrontTable), sizeof(config->veFrontTable));
+}
+
+bool consumeCalibrationWriteSignal() {
+	bool result = calibrationWriteSignal;
+	calibrationWriteSignal = false;
+	return result;
 }
 
 void boardCustomOnConfigurationChange(engine_configuration_s* previousConfiguration) {
