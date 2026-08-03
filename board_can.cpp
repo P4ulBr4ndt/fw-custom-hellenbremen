@@ -100,37 +100,47 @@ N: 0.872V => 17.44% => 0xA0
 5: 3.643V => 72,96% => 0x50
 6: 4.439V => 88,78% => 0x60
 */
-float harleyGearValues[] = { 17.44f, 9.86f, 25.24f, 41.96f, 57.48f, 72.96f, 88.78f };
+constexpr float harleyGearValues[] = { 17.44f, 9.86f, 25.24f, 41.96f, 57.48f, 72.96f, 88.78f };
 
-uint32_t getFourBytesMsb(const CANRxFrame& frame, size_t offset) {
-	return (static_cast<uint32_t>(frame.data8[offset]) << 24) |
-		(static_cast<uint32_t>(frame.data8[offset + 1]) << 16) |
-		(static_cast<uint32_t>(frame.data8[offset + 2]) << 8) |
-		static_cast<uint32_t>(frame.data8[offset + 3]);
-}
+// Each gear's range is harleyGearValues[i] +/- 10%, so the sensor value must actually fall
+// within a gear's expected band rather than just being closest to it.
+//
+// 1st, N, and 2nd sit close together and are shifted between constantly at a stop, so there
+// must be no dead zone among them: their touching edges are stretched to meet exactly at the
+// midpoint between neighboring gear centers instead of using the raw +/-10% value. 2nd through
+// 6th keep their raw +/-10% ranges, which leaves an intentional gap between each of them so a
+// mid-shift sensor reading is reported as HARLEY_GEAR_UNKNOWN instead of a wrong gear.
+constexpr float harleyGearFirstNBoundary = (harleyGearValues[1] + harleyGearValues[0]) / 2; // midpoint(1st, N)
+constexpr float harleyGearNSecondBoundary = (harleyGearValues[0] + harleyGearValues[2]) / 2; // midpoint(N, 2nd)
 
-void setFourBytesMsb(CanTxMessage& msg, uint32_t value, size_t offset) {
-	msg[offset] = (value >> 24) & 0xFF;
-	msg[offset + 1] = (value >> 16) & 0xFF;
-	msg[offset + 2] = (value >> 8) & 0xFF;
-	msg[offset + 3] = value & 0xFF;
-}
+struct HarleyGearRange {
+	float rangeMin;
+	float rangeMax;
+};
+
+// Index order matches harleyGearValues: N, 1st, 2nd, 3rd, 4th, 5th, 6th.
+constexpr HarleyGearRange harleyGearRanges[] = {
+	{ harleyGearFirstNBoundary,   harleyGearNSecondBoundary },              // N
+	{ harleyGearValues[1] * 0.9f, harleyGearFirstNBoundary },               // 1st
+	{ harleyGearNSecondBoundary,  harleyGearValues[2] * 1.1f },             // 2nd
+	{ harleyGearValues[3] * 0.9f, harleyGearValues[3] * 1.1f },             // 3rd
+	{ harleyGearValues[4] * 0.9f, harleyGearValues[4] * 1.1f },             // 4th
+	{ harleyGearValues[5] * 0.9f, harleyGearValues[5] * 1.1f },             // 5th
+	{ harleyGearValues[6] * 0.9f, harleyGearValues[6] * 1.1f },             // 6th
+};
+
+constexpr uint8_t HARLEY_GEAR_UNKNOWN = 7;
 
 uint8_t calculateHarleyGearIndex() {
 	float sensorValue = Sensor::getOrZero(SensorType::AuxLinear1);
-	float bestMatch = 0.0f;
-	uint8_t bestOffs = 0;
 
-	for (uint8_t i = 0; i < sizeof(harleyGearValues) / sizeof(harleyGearValues[0]); i++) {
-		float i_delta = std::abs(harleyGearValues[i] - sensorValue);
-		float x_delta = std::abs(bestMatch - sensorValue);
-		if (i_delta < x_delta) {
-			bestMatch = harleyGearValues[i];
-			bestOffs = i;
+	for (uint8_t i = 0; i < sizeof(harleyGearRanges) / sizeof(harleyGearRanges[0]); i++) {
+		if (sensorValue >= harleyGearRanges[i].rangeMin && sensorValue <= harleyGearRanges[i].rangeMax) {
+			return i;
 		}
 	}
 
-	return bestOffs;
+	return HARLEY_GEAR_UNKNOWN;
 }
 
 uint8_t calculateHarleyGearValue() {
@@ -151,8 +161,8 @@ uint8_t calculateHarleyGearValue() {
 			return 0x50; // 5
 		case 6:
 			return 0x60; // 6
-		default:
-			return 0x0;
+		case 7:
+			return 0xD0;
 	}
 }
 
@@ -173,6 +183,20 @@ CruiseGearLimits getCruiseGearLimitsForCurrentGear() {
 		default:
 			return { false, 0.0f, 0.0f };
 	}
+}
+
+uint32_t getFourBytesMsb(const CANRxFrame& frame, size_t offset) {
+	return (static_cast<uint32_t>(frame.data8[offset]) << 24) |
+		(static_cast<uint32_t>(frame.data8[offset + 1]) << 16) |
+		(static_cast<uint32_t>(frame.data8[offset + 2]) << 8) |
+		static_cast<uint32_t>(frame.data8[offset + 3]);
+}
+
+void setFourBytesMsb(CanTxMessage& msg, uint32_t value, size_t offset) {
+	msg[offset] = (value >> 24) & 0xFF;
+	msg[offset + 1] = (value >> 16) & 0xFF;
+	msg[offset + 2] = (value >> 8) & 0xFF;
+	msg[offset + 3] = value & 0xFF;
 }
 
 float clampDesiredCcSpeedForCurrentGear(float requestedKph) {
