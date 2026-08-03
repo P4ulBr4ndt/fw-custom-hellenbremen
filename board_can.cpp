@@ -530,7 +530,7 @@ void boardHandleCan(CanCycle cycle) {
 				msg[3] |= 0x40;
 			}
 
-			msg[4] = consumeCalibrationWriteSignal() ? 0xFF : 0x00;
+			msg[4] = 0x00;
 			msg[5] = 0x00;
 			msg[6] = frameCounter146_342;
 			msg[7] = crc8(msg.getFrame()->data8, 7);
