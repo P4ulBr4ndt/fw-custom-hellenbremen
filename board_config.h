@@ -20,6 +20,3 @@ void boardConfigOverrides();
 void boardCustomInitHardware();
 void boardHandleTsCommand(uint16_t subsystem, uint16_t index);
 void boardCustomOnConfigurationChange(engine_configuration_s* previousConfiguration);
-
-// Returns true exactly once after a TS calibration write is observed, then clears itself.
-bool consumeCalibrationWriteSignal();
