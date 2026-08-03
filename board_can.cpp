@@ -90,28 +90,25 @@ struct CruiseGearLimits {
 };
 
 namespace {
-/*
-TODO CLUTCH looks like 0xD0
-N: 0.872V => 17.44% => 0xA0
-1: 0.484V => 09.86% => 0x10
-2: 1.262V => 25,24% => 0x20
-3: 2.098V => 41,96% => 0x30
-4: 2.874V => 57,48% => 0x40
-5: 3.643V => 72,96% => 0x50
-6: 4.439V => 88,78% => 0x60
-*/
-constexpr float harleyGearValues[] = { 17.44f, 9.86f, 25.24f, 41.96f, 57.48f, 72.96f, 88.78f };
 
-// Each gear's range is harleyGearValues[i] +/- 10%, so the sensor value must actually fall
-// within a gear's expected band rather than just being closest to it.
-//
-// 1st, N, and 2nd sit close together and are shifted between constantly at a stop, so there
-// must be no dead zone among them: their touching edges are stretched to meet exactly at the
-// midpoint between neighboring gear centers instead of using the raw +/-10% value. 2nd through
-// 6th keep their raw +/-10% ranges, which leaves an intentional gap between each of them so a
-// mid-shift sensor reading is reported as HARLEY_GEAR_UNKNOWN instead of a wrong gear.
-constexpr float harleyGearFirstNBoundary = (harleyGearValues[1] + harleyGearValues[0]) / 2; // midpoint(1st, N)
-constexpr float harleyGearNSecondBoundary = (harleyGearValues[0] + harleyGearValues[2]) / 2; // midpoint(N, 2nd)
+/* Gear voltages (Pin 29 - Pin 78) for respective gears
+	1: 0.484V => 09.68% => 0x10
+	N: 0.872V => 17.44% => 0xA0
+	2: 1.262V => 25,24% => 0x20
+	3: 2.098V => 41,96% => 0x30
+	4: 2.874V => 57,48% => 0x40
+	5: 3.643V => 72,86% => 0x50
+	6: 4.439V => 88,78% => 0x60
+*/
+// constexpr float harleyGearVoltages[] = {0.872f, 0.484f, 1.262f, 2.098f, 2.874f, 3.643f, 4.439f};
+
+// TODO maybe get rid of the percentages and go full voltage definition
+// Requires an adaptation in Sensors -> Aux Sensors -> Aux Sensors -> Aux Linear Sensor #1 -> High Value = 5.0
+// harleyGearValues[] = harleyGearVoltages[i] / 5.0 * 100.0
+constexpr float harleyGearValues[] = { 17.44f, 9.68f, 25.24f, 41.96f, 57.48f, 72.86f, 88.78f };
+
+constexpr float harleyGearRange = 0.250f / 5.0f * 100.0f;
+constexpr float harleyNGearRange = 0.125f / 5.0f * 100.0f;
 
 struct HarleyGearRange {
 	float rangeMin;
@@ -120,13 +117,13 @@ struct HarleyGearRange {
 
 // Index order matches harleyGearValues: N, 1st, 2nd, 3rd, 4th, 5th, 6th.
 constexpr HarleyGearRange harleyGearRanges[] = {
-	{ harleyGearFirstNBoundary,   harleyGearNSecondBoundary },              // N
-	{ harleyGearValues[1] * 0.9f, harleyGearFirstNBoundary },               // 1st
-	{ harleyGearNSecondBoundary,  harleyGearValues[2] * 1.1f },             // 2nd
-	{ harleyGearValues[3] * 0.9f, harleyGearValues[3] * 1.1f },             // 3rd
-	{ harleyGearValues[4] * 0.9f, harleyGearValues[4] * 1.1f },             // 4th
-	{ harleyGearValues[5] * 0.9f, harleyGearValues[5] * 1.1f },             // 5th
-	{ harleyGearValues[6] * 0.9f, harleyGearValues[6] * 1.1f },             // 6th
+	{harleyGearValues[0] - harleyNGearRange, harleyGearValues[0] + harleyNGearRange},              // N
+	{harleyGearValues[1] - harleyGearRange, harleyGearValues[0] - harleyNGearRange},               // 1st
+	{harleyGearValues[0] + harleyNGearRange, harleyGearValues[2] + harleyGearRange},             // 2nd
+	{harleyGearValues[3] - harleyGearRange, harleyGearValues[3] + harleyGearRange},             // 3rd
+	{harleyGearValues[4] - harleyGearRange, harleyGearValues[4] + harleyGearRange},             // 4th
+	{harleyGearValues[5] - harleyGearRange, harleyGearValues[5] + harleyGearRange},             // 5th
+	{harleyGearValues[6] - harleyGearRange, harleyGearValues[6] + harleyGearRange},             // 6th
 };
 
 constexpr uint8_t HARLEY_GEAR_UNKNOWN = 7;
@@ -143,10 +140,8 @@ uint8_t calculateHarleyGearIndex() {
 	return HARLEY_GEAR_UNKNOWN;
 }
 
-uint8_t calculateHarleyGearValue() {
-	uint8_t bestOffs = calculateHarleyGearIndex();
-
-	switch (bestOffs) {
+uint8_t calculateHarleyGearCANValue() {
+	switch (calculateHarleyGearIndex()) {
 		case 0:
 			return 0xA0; // N
 		case 1:
@@ -161,7 +156,8 @@ uint8_t calculateHarleyGearValue() {
 			return 0x50; // 5
 		case 6:
 			return 0x60; // 6
-		case 7:
+		case HARLEY_GEAR_UNKNOWN:
+		default:
 			return 0xD0;
 	}
 }
@@ -481,7 +477,7 @@ void boardHandleCan(CanCycle cycle) {
 		CanTxMessage msg(CanCategory::NBC, 0x142);
 		msg.setShortValueMsb(Sensor::getOrZero(SensorType::Rpm), 0x0);
 		msg.setShortValueMsb(Sensor::getOrZero(SensorType::VehicleSpeed) * 10.f, 0x2);
-		msg[0x4] = calculateHarleyGearValue();
+		msg[4] = calculateHarleyGearCANValue();
 		msg[6] = frameCounter142;
 		msg[7] = crc8(msg.getFrame()->data8, 7);
 		frameCounter142 = (frameCounter142 + 1) % 64;
