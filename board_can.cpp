@@ -57,7 +57,8 @@ static bool        ccfcActivated = false;
 static bool prgselForce = false;
 
 // CPC
-static bool cpcForce = false;
+static bool cpcForce       = false;
+static bool cpcUserForceOn = false;
 
 // Required for indicators
 extern StoredValueSensor luaGauges[LUA_GAUGE_COUNT];
@@ -337,12 +338,14 @@ void boardPeriodicSlow() {
 		bool cfcRunningFromTempCond = cfcRunning && !cfcUserForceOn && !cfcForce;
 		if (cfcUserForceOn || !cfcRunningFromTempCond) {
 			cfcUserForceOn = !cfcUserForceOn;
+			cpcUserForceOn = cfcUserForceOn;
 		}
 		cfcTgsPressHandled = true;
 	}
 
 	if (isEngineActive) {
 		cfcUserForceOn = false;
+		cpcUserForceOn = false;
 	}
 
 	// Speed hysteresis cases
@@ -421,9 +424,9 @@ void boardPeriodicSlow() {
 	bool cpcDisabledEngCond = isEngineActive || !config->cpcDisableWhenEngineStopped;
 	bool cpcCurrentCfc      = cfcPin.getLogicValue();
 
-	if (((cpcCurrentCfc || cpcOnTempCond) && cpcDisabledEngCond) || cpcForce) {
+	if (((cpcCurrentCfc || cpcOnTempCond) && cpcDisabledEngCond) || cpcForce || cpcUserForceOn) {
 		cpcPin.setValue(true);
-	} else if (!cpcForce && !cpcCurrentCfc && (!isEngineActive || cpcOffTempCond)) {
+	} else if (!cpcForce && !cpcUserForceOn && !cpcCurrentCfc && (!isEngineActive || cpcOffTempCond)) {
 		cpcPin.setValue(false);
 	}
 
