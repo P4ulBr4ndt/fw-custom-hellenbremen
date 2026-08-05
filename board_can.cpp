@@ -100,36 +100,30 @@ namespace {
 	5: 3.643V => 72,86% => 0x50
 	6: 4.439V => 88,78% => 0x60
 */
-// constexpr float harleyGearVoltages[] = {0.872f, 0.484f, 1.262f, 2.098f, 2.874f, 3.643f, 4.439f};
+constexpr float   harleyGearVoltages[] = {0.872f, 0.484f, 1.262f, 2.098f, 2.874f, 3.643f, 4.439f};
+constexpr float   harleyGearRange      = 0.250f;
+constexpr float   harleyNGearRange     = 0.125f;
 
-// TODO maybe get rid of the percentages and go full voltage definition
-// Requires an adaptation in Sensors -> Aux Sensors -> Aux Sensors -> Aux Linear Sensor #1 -> High Value = 5.0
-// harleyGearValues[] = harleyGearVoltages[i] / 5.0 * 100.0
-constexpr float harleyGearValues[] = { 17.44f, 9.68f, 25.24f, 41.96f, 57.48f, 72.86f, 88.78f };
-
-constexpr float harleyGearRange = 0.250f / 5.0f * 100.0f;
-constexpr float harleyNGearRange = 0.125f / 5.0f * 100.0f;
+constexpr uint8_t HARLEY_GEAR_UNKNOWN  = 7;
 
 struct HarleyGearRange {
 	float rangeMin;
 	float rangeMax;
 };
 
-// Index order matches harleyGearValues: N, 1st, 2nd, 3rd, 4th, 5th, 6th.
+// Index order matches harleyGearVoltages: N, 1st, 2nd, 3rd, 4th, 5th, 6th.
 constexpr HarleyGearRange harleyGearRanges[] = {
-	{harleyGearValues[0] - harleyNGearRange, harleyGearValues[0] + harleyNGearRange},              // N
-	{harleyGearValues[1] - harleyGearRange, harleyGearValues[0] - harleyNGearRange},               // 1st
-	{harleyGearValues[0] + harleyNGearRange, harleyGearValues[2] + harleyGearRange},             // 2nd
-	{harleyGearValues[3] - harleyGearRange, harleyGearValues[3] + harleyGearRange},             // 3rd
-	{harleyGearValues[4] - harleyGearRange, harleyGearValues[4] + harleyGearRange},             // 4th
-	{harleyGearValues[5] - harleyGearRange, harleyGearValues[5] + harleyGearRange},             // 5th
-	{harleyGearValues[6] - harleyGearRange, harleyGearValues[6] + harleyGearRange},             // 6th
+	{harleyGearVoltages[0] - harleyNGearRange, harleyGearVoltages[0] + harleyNGearRange}, // N
+	{harleyGearVoltages[1] - harleyGearRange,  harleyGearVoltages[0] - harleyNGearRange}, // 1st
+	{harleyGearVoltages[0] + harleyNGearRange, harleyGearVoltages[2] + harleyGearRange},  // 2nd
+	{harleyGearVoltages[3] - harleyGearRange,  harleyGearVoltages[3] + harleyGearRange},  // 3rd
+	{harleyGearVoltages[4] - harleyGearRange,  harleyGearVoltages[4] + harleyGearRange},  // 4th
+	{harleyGearVoltages[5] - harleyGearRange,  harleyGearVoltages[5] + harleyGearRange},  // 5th
+	{harleyGearVoltages[6] - harleyGearRange,  harleyGearVoltages[6] + harleyGearRange},  // 6th
 };
 
-constexpr uint8_t HARLEY_GEAR_UNKNOWN = 7;
-
 uint8_t calculateHarleyGearIndex() {
-	float sensorValue = Sensor::getOrZero(SensorType::AuxLinear1);
+	float sensorValue = Sensor::getRaw(SensorType::AuxLinear1);
 
 	for (uint8_t i = 0; i < sizeof(harleyGearRanges) / sizeof(harleyGearRanges[0]); i++) {
 		if (sensorValue >= harleyGearRanges[i].rangeMin && sensorValue <= harleyGearRanges[i].rangeMax) {
@@ -305,6 +299,8 @@ void boardPeriodicSlow() {
 
 	if (currentGear == HARLEY_GEAR_UNKNOWN) {
 		harleyDetectedGearSensor.invalidate();
+	} else if (currentGear == 0) {
+		harleyDetectedGearSensor.setValidValue(0.5, getTimeNowNt());
 	} else {
 		harleyDetectedGearSensor.setValidValue(currentGear, getTimeNowNt());
 	}
