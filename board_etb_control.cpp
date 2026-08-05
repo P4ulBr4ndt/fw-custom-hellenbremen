@@ -26,6 +26,7 @@ static constexpr float ENGINE_BRAKING_DEFAULT_MIN_VSS = 3.0f;
 static constexpr float ENGINE_BRAKING_DEFAULT_MAX_BASE_ETB_TARGET = 10.0f;
 static constexpr uint16_t VMAX_DEFAULT_LIMIT = 0;
 static constexpr uint16_t VMAX_DEFAULT_LIMIT_RANGE = 10;
+static constexpr float VMAX_LIMIT_RELEASE_HYSTERESIS = 2.0f;
 
 static constexpr float etbTargetSlewDefaultOpeningBins[ETB_TARGET_SLEW_BINS_COUNT] = {
 	0.0f, 5.0f, 10.0f, 15.0f, 20.0f, 25.0f, 30.0f, 40.0f, 50.0f, 60.0f, 80.0f, 100.0f
@@ -57,6 +58,15 @@ struct EtbTargetSlewState {
 };
 
 EtbTargetSlewState etbTargetSlewState;
+
+struct VmaxLimiterState {
+	float lastValidSpeed = 0.0f;
+	bool hasLastValidSpeed = false;
+	bool active = false;
+	bool hardLimited = false;
+};
+
+VmaxLimiterState vmaxLimiterState;
 
 float getEtbTargetSlewRate(float target, const float (&rates)[ETB_TARGET_SLEW_BINS_COUNT]) {
 	float rate = interpolate2d(target, config->etbTargetSlewOpeningBins, rates);
@@ -195,23 +205,52 @@ float applyEngineBrakingOffset(float currentEtbTarget) {
 float applyVmaxLimit(float currentEtbTarget) {
 	const auto vmaxLimit = config->vmaxLimit;
 	if (vmaxLimit == 0) {
+		vmaxLimiterState.active = false;
+		vmaxLimiterState.hardLimited = false;
 		return currentEtbTarget;
 	}
 
 	auto vss = Sensor::get(SensorType::VehicleSpeed);
-	if (!vss.Valid) {
-		return currentEtbTarget;
+	if (vss.Valid) {
+		vmaxLimiterState.lastValidSpeed = std::max(vss.Value, 0.0f);
+		vmaxLimiterState.hasLastValidSpeed = true;
+	} else {
+		// If already limiting, keep using the last valid speed instead of reopening.
+		if (!vmaxLimiterState.active || !vmaxLimiterState.hasLastValidSpeed) {
+			return currentEtbTarget;
+		}
 	}
 
 	const float range = std::max(static_cast<float>(config->vmaxLimitRange), 1.0f);
-	const float fullyLimitedSpeed = static_cast<float>(vmaxLimit) + range;
+	const float limitStartSpeed = static_cast<float>(vmaxLimit);
+	const float fullyLimitedSpeed = limitStartSpeed + range;
+	const float releaseSpeed = std::max(limitStartSpeed - VMAX_LIMIT_RELEASE_HYSTERESIS, 0.0f);
+	const float speed = vmaxLimiterState.hasLastValidSpeed ? vmaxLimiterState.lastValidSpeed : vss.Value;
+	const bool wasActive = vmaxLimiterState.active;
+	const float activeThreshold = wasActive ? releaseSpeed : limitStartSpeed;
+
+	if (speed < activeThreshold) {
+		vmaxLimiterState.active = false;
+		vmaxLimiterState.hardLimited = false;
+		return currentEtbTarget;
+	}
+
+	vmaxLimiterState.active = true;
+
+	if (speed >= fullyLimitedSpeed) {
+		vmaxLimiterState.hardLimited = true;
+	}
+
+	if (vmaxLimiterState.hardLimited) {
+		return 0.0f;
+	}
 
 	return clampPercentValue(interpolateClamped(
-		static_cast<float>(vmaxLimit),
+		limitStartSpeed,
 		currentEtbTarget,
 		fullyLimitedSpeed,
 		0.0f,
-		vss.Value
+		speed
 	));
 }
 
@@ -320,7 +359,10 @@ uint8_t boardGetHarleyEngineMap() {
 }
 
 float boardAdjustEtbTarget(float currentEtbTarget) {
-	float targetWithEngineBraking = applyEngineBrakingOffset(currentEtbTarget);
-	float targetWithVmaxLimit = applyVmaxLimit(targetWithEngineBraking);
+	return applyEngineBrakingOffset(currentEtbTarget);
+}
+
+float boardAdjustEtbTargetFinal(float currentEtbTarget) {
+	float targetWithVmaxLimit = applyVmaxLimit(currentEtbTarget);
 	return applyEtbTargetSlewLimit(targetWithVmaxLimit);
 }
