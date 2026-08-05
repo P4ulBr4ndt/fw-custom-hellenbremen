@@ -228,6 +228,10 @@ void boardConfigOverrides() {
 	engineConfiguration->map.sensor.hwChannel = EFI_ADC_13; // PC3
 	engineConfiguration->fuelLevelSensor = EFI_ADC_2; // PA2
 
+	// Gear is detected from AuxLinear1 in board_can.cpp, not rusEFI's ratio-based GearDetector.
+	// Keep this 0 so GearDetector never registers SensorType::DetectedGear itself.
+	engineConfiguration->totalGearsCount = 0;
+
 	// Switch Inputs
 	engineConfiguration->jssPin = Gpio::G11;
 	engineConfiguration->opsPin = Gpio::G12;
@@ -319,6 +323,8 @@ void boardCustomInitHardware() {
 
 	// Coolant Pump Control Pin init
 	cpcPin.initPin("CPC", config->cpcOutputPin);
+
+	harleyDetectedGearSensor.Register();
 }
 
 void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {

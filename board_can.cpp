@@ -302,6 +302,12 @@ void boardPeriodicSlow() {
 	bool jssDown        = engine->engineState.jssState != 0;
 	uint8_t currentGear = calculateHarleyGearIndex();
 	bool isNeutral      = currentGear == 0;
+
+	if (currentGear == HARLEY_GEAR_UNKNOWN) {
+		harleyDetectedGearSensor.invalidate();
+	} else {
+		harleyDetectedGearSensor.setValidValue(currentGear, getTimeNowNt());
+	}
 	bool isEngineActive = engine->rpmCalculator.isRunning() || engine->rpmCalculator.isCranking();
 	
 	float currRPM     = Sensor::getOrZero(SensorType::Rpm);

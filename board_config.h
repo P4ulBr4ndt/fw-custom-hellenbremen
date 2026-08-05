@@ -15,6 +15,9 @@ extern OutputPin	ccfcPin;
 // Coolant Pump Control
 extern OutputPin	cpcPin;
 
+// TunerStudio's detectedGearGauge, fed from board_can.cpp
+extern StoredValueSensor harleyDetectedGearSensor;
+
 void boardDefaultConfiguration();
 void boardConfigOverrides();
 void boardCustomInitHardware();
