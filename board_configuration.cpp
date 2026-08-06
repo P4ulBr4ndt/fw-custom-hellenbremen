@@ -17,6 +17,11 @@ OutputPin    cfcPin;
 OutputPin    ccfcPin;
 OutputPin    cpcPin;
 
+// Feeds TunerStudio's detectedGearGauge from board_can.cpp's AuxLinear1-based gear detection.
+// Requires totalGearsCount == 0 (see boardConfigOverrides) so rusEFI's built-in ratio-based
+// GearDetector never registers SensorType::DetectedGear itself.
+StoredValueSensor harleyDetectedGearSensor(SensorType::DetectedGear, MS2NT(250));
+
 #if EFI_TUNER_STUDIO
 bool isTouchingVe(uint16_t offset, uint16_t count) {
 	return isTouchingArea(offset, count, offsetof(persistent_config_s, veTable), sizeof(config->veTable)) ||
