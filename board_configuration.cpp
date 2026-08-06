@@ -7,6 +7,7 @@
 #include "board_instant_accel_shot.h"
 
 #include "pwm_generator_logic.h"
+#include "tunerstudio.h"
 
 // Required by Purge Solenoid PWM 
 SimplePwm    prgselPwm("PRGSEL");
@@ -20,6 +21,13 @@ OutputPin    cpcPin;
 // Requires totalGearsCount == 0 (see boardConfigOverrides) so rusEFI's built-in ratio-based
 // GearDetector never registers SensorType::DetectedGear itself.
 StoredValueSensor harleyDetectedGearSensor(SensorType::DetectedGear, MS2NT(250));
+
+#if EFI_TUNER_STUDIO
+bool isTouchingVe(uint16_t offset, uint16_t count) {
+	return isTouchingArea(offset, count, offsetof(persistent_config_s, veTable), sizeof(config->veTable)) ||
+		isTouchingArea(offset, count, offsetof(persistent_config_s, veFrontTable), sizeof(config->veFrontTable));
+}
+#endif // EFI_TUNER_STUDIO
 
 void setup_custom_board_overrides() {
 	custom_board_DefaultConfiguration = boardDefaultConfiguration;

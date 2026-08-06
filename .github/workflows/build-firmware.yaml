@@ -42,6 +42,25 @@ jobs:
       - name: Copy INI to workspace root
         run: cp generated/tunerstudio/generated/rusefi_hellen-bremen.ini rusefi_hellen-bremen.ini
 
+      - name: Upload INI to TS definitions API
+        env:
+          TS_DEFINITION_UPLOAD_URL: ${{ secrets.TS_DEFINITION_UPLOAD_URL }}
+          TS_DEFINITION_UPLOAD_SECRET: ${{ secrets.TS_DEFINITION_UPLOAD_SECRET }}
+          TS_DEFINITION_PATH: rusefi_hellen-bremen.ini
+        run: |
+          set -euo pipefail
+
+          : "${TS_DEFINITION_UPLOAD_URL:?Set TS_DEFINITION_UPLOAD_URL repository secret}"
+          : "${TS_DEFINITION_UPLOAD_SECRET:?Set TS_DEFINITION_UPLOAD_SECRET repository secret}"
+          test -s "${TS_DEFINITION_PATH}"
+
+          curl --fail --show-error --silent \
+            --retry 3 \
+            --retry-delay 5 \
+            -X POST "${TS_DEFINITION_UPLOAD_URL}" \
+            -H "Authorization: Bearer ${TS_DEFINITION_UPLOAD_SECRET}" \
+            -F "definition=@${TS_DEFINITION_PATH}"
+
       - name: Upload INI as artifact
         uses: actions/upload-artifact@v4
         with:

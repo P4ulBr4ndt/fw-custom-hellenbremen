@@ -26,6 +26,11 @@ static constexpr float ENGINE_BRAKING_DEFAULT_MIN_VSS = 3.0f;
 static constexpr float ENGINE_BRAKING_DEFAULT_MAX_BASE_ETB_TARGET = 10.0f;
 static constexpr uint16_t VMAX_DEFAULT_LIMIT = 0;
 static constexpr uint16_t VMAX_DEFAULT_LIMIT_RANGE = 10;
+static constexpr float VMAX_LIMIT_RELEASE_HYSTERESIS = 2.0f;
+static constexpr float VMAX_LIMIT_MAX_DT = 0.25f;
+static constexpr float VMAX_LIMIT_MIN_CLOSE_RATE = 60.0f;
+static constexpr float VMAX_LIMIT_CLOSE_RATE_PER_KPH = 25.0f;
+static constexpr float VMAX_LIMIT_OPEN_RATE = 10.0f;
 
 static constexpr float etbTargetSlewDefaultOpeningBins[ETB_TARGET_SLEW_BINS_COUNT] = {
 	0.0f, 5.0f, 10.0f, 15.0f, 20.0f, 25.0f, 30.0f, 40.0f, 50.0f, 60.0f, 80.0f, 100.0f
@@ -57,6 +62,17 @@ struct EtbTargetSlewState {
 };
 
 EtbTargetSlewState etbTargetSlewState;
+
+struct VmaxLimiterState {
+	Timer timer;
+	float lastValidSpeed = 0.0f;
+	float targetCap = 100.0f;
+	bool hasLastValidSpeed = false;
+	bool active = false;
+	bool initialized = false;
+};
+
+VmaxLimiterState vmaxLimiterState;
 
 float getEtbTargetSlewRate(float target, const float (&rates)[ETB_TARGET_SLEW_BINS_COUNT]) {
 	float rate = interpolate2d(target, config->etbTargetSlewOpeningBins, rates);
@@ -193,26 +209,80 @@ float applyEngineBrakingOffset(float currentEtbTarget) {
 }
 
 float applyVmaxLimit(float currentEtbTarget) {
+	auto& state = vmaxLimiterState;
 	const auto vmaxLimit = config->vmaxLimit;
 	if (vmaxLimit == 0) {
+		state.active = false;
+		state.initialized = false;
+		state.targetCap = currentEtbTarget;
 		return currentEtbTarget;
 	}
 
 	auto vss = Sensor::get(SensorType::VehicleSpeed);
-	if (!vss.Valid) {
-		return currentEtbTarget;
+	if (vss.Valid) {
+		state.lastValidSpeed = std::max(vss.Value, 0.0f);
+		state.hasLastValidSpeed = true;
+	} else {
+		// If already limiting, keep using the last valid speed instead of reopening.
+		if (!state.active || !state.hasLastValidSpeed) {
+			return currentEtbTarget;
+		}
 	}
 
 	const float range = std::max(static_cast<float>(config->vmaxLimitRange), 1.0f);
-	const float fullyLimitedSpeed = static_cast<float>(vmaxLimit) + range;
+	const float limitStartSpeed = static_cast<float>(vmaxLimit);
+	const float fullyLimitedSpeed = limitStartSpeed + range;
+	const float releaseSpeed = std::max(limitStartSpeed - VMAX_LIMIT_RELEASE_HYSTERESIS, 0.0f);
+	const float speed = state.hasLastValidSpeed ? state.lastValidSpeed : vss.Value;
+	efitick_t nowNt = getTimeNowNt();
 
-	return clampPercentValue(interpolateClamped(
-		static_cast<float>(vmaxLimit),
-		currentEtbTarget,
-		fullyLimitedSpeed,
-		0.0f,
-		vss.Value
-	));
+	if (!state.initialized) {
+		state.timer.reset(nowNt);
+		state.targetCap = currentEtbTarget;
+		state.initialized = true;
+	}
+
+	float dt = state.timer.getElapsedSecondsAndReset(nowNt);
+	if (dt <= 0.0f || dt > VMAX_LIMIT_MAX_DT) {
+		dt = 0.0f;
+	}
+
+	if (!state.active && speed < limitStartSpeed) {
+		state.targetCap = currentEtbTarget;
+		return currentEtbTarget;
+	}
+
+	state.active = true;
+
+	// Ratchet closed above Vmax, hold through the deadband, and only reopen slowly below release.
+	if (speed >= limitStartSpeed) {
+		const float linearTarget = clampPercentValue(interpolateClamped(
+			limitStartSpeed,
+			currentEtbTarget,
+			fullyLimitedSpeed,
+			0.0f,
+			speed
+		));
+		const float overspeed = std::max(speed - limitStartSpeed, 0.0f);
+		const float closeRate = VMAX_LIMIT_MIN_CLOSE_RATE + overspeed * VMAX_LIMIT_CLOSE_RATE_PER_KPH;
+
+		state.targetCap = std::min(state.targetCap, linearTarget);
+		if (overspeed > 0.0f) {
+			state.targetCap -= closeRate * dt;
+		}
+	} else if (speed < releaseSpeed) {
+		state.targetCap += VMAX_LIMIT_OPEN_RATE * dt;
+	}
+
+	state.targetCap = clampPercentValue(state.targetCap);
+
+	if (speed < releaseSpeed && state.targetCap >= currentEtbTarget) {
+		state.active = false;
+		state.targetCap = currentEtbTarget;
+		return currentEtbTarget;
+	}
+
+	return std::min(currentEtbTarget, state.targetCap);
 }
 
 float applyEtbTargetSlewLimit(float requestedEtbTarget) {
@@ -320,7 +390,10 @@ uint8_t boardGetHarleyEngineMap() {
 }
 
 float boardAdjustEtbTarget(float currentEtbTarget) {
-	float targetWithEngineBraking = applyEngineBrakingOffset(currentEtbTarget);
-	float targetWithVmaxLimit = applyVmaxLimit(targetWithEngineBraking);
+	return applyEngineBrakingOffset(currentEtbTarget);
+}
+
+float boardAdjustEtbTargetFinal(float currentEtbTarget) {
+	float targetWithVmaxLimit = applyVmaxLimit(currentEtbTarget);
 	return applyEtbTargetSlewLimit(targetWithVmaxLimit);
 }
