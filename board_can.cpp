@@ -13,7 +13,10 @@
 #include "board_config.h"
 #include "cruise_control.h"
 #include "electronic_throttle.h"
+#include "error_handling.h"
+#include "malfunction_central.h"
 #include "shutdown_controller.h"
+#include "trigger_central.h"
 
 static uint8_t frameCounter142 = 0x0;
 static uint8_t frameCounter144 = 0x0;
@@ -132,6 +135,36 @@ uint8_t calculateHarleyGearIndex() {
 	}
 
 	return bestOffs;
+}
+
+bool hasSensorError(SensorType sensorType) {
+	return Sensor::hasSensor(sensorType) && !Sensor::get(sensorType).Valid;
+}
+
+bool hasHarleyMilRequestingFault() {
+	const bool hasTpsError = hasSensorError(SensorType::Tps1);
+	const bool hasTps2Error = hasSensorError(SensorType::Tps2);
+	const bool hasPedalError = hasSensorError(SensorType::AcceleratorPedal);
+	const bool hasCltError = hasSensorError(SensorType::Clt);
+	const bool hasIatError = hasSensorError(SensorType::Iat);
+	const bool hasMapError = hasSensorError(SensorType::Map);
+#if EFI_ENGINE_CONTROL && EFI_SHAFT_POSITION_INPUT
+	const bool hasTriggerError = engine->triggerCentral.triggerState.someSortOfTriggerError()
+		|| engine->triggerCentral.isTriggerDecoderError();
+#else
+	const bool hasTriggerError = false;
+#endif
+
+	return hasFirmwareError()
+		|| hasConfigError()
+		|| hasErrorCodes()
+		|| hasTpsError
+		|| hasTps2Error
+		|| hasPedalError
+		|| hasCltError
+		|| hasMapError
+		|| hasIatError
+		|| hasTriggerError;
 }
 
 uint8_t calculateHarleyGearValue() {
@@ -526,11 +559,24 @@ void boardHandleCan(CanCycle cycle) {
 			//              |  |  |  └────────────── 0 (Always off?, observation)
 			//              |  |  └───────────────── 0 (Always off?, observation)
 			//				|  └──────────────────── running
-			//              └─────────────────────── 1 (Always on?,  observation)
-			msg[3] = 0x04; // Sometimes 0x84
+			//              └─────────────────────── 1 MIL aka Check Engine Light
+			msg[3] = 0x04;
 
-			if(running) {
+			if (running) {
 				msg[3] |= 0x40;
+			}
+
+			/* MIL aka Check Engine Light
+			| Vehicle state                                      | Expected MIL indication |
+			| -------------------------------------------------- | ----------------------- |
+			| Ignition off                                       | MIL off                 |
+			| Ignition on, engine not running                    | MIL continuously on     |
+			| Engine successfully running, no relevant fault     | MIL off                 |
+			| Engine running with confirmed MIL-requesting fault | MIL continuously on     |
+			| Severe misfire/catalyst-damage condition           | MIL may flash           |
+			*/
+			if (!running || hasHarleyMilRequestingFault()) {
+				msg[3] |= 0x80;
 			}
 
 			msg[4] = 0x00;
