@@ -32,15 +32,43 @@ jobs:
       - uses: ./ext/rusefi/.github/workflows/custom-board-build
         with:
           new_tag: ${{steps.set-variables.outputs.release_date}}
-          artifacts: bin bundle 
+          artifacts: bundle
           # artifacts: bin srec hex list map elf bundle autoupdate
           push: ${{steps.set-variables.outputs.push}}
           run_simulator: ${{ steps.set-variables.outputs.sim }}
           MY_REPO_PAT: ${{secrets.MY_REPO_PAT}}
           ADDITIONAL_ENV: ${{secrets.ADDITIONAL_ENV}}
 
-      - name: Copy INI to workspace root
-        run: cp generated/tunerstudio/generated/rusefi_hellen-bremen.ini rusefi_hellen-bremen.ini
+      - name: Extract firmware artifacts from bundle
+        run: |
+          set -euo pipefail
+
+          mapfile -t bundle_zips < <(find ext/rusefi/artifacts -maxdepth 1 -type f -name '*_bundle_hellen-bremen.zip' ! -name '*_autoupdate.zip' | sort)
+          if [ "${#bundle_zips[@]}" -ne 1 ]; then
+            printf 'Expected exactly one hellen-bremen bundle, found %s:\n' "${#bundle_zips[@]}"
+            printf '  %s\n' "${bundle_zips[@]:-}"
+            exit 1
+          fi
+
+          bundle_zip="${bundle_zips[0]}"
+          ini_entry="$(zipinfo -1 "${bundle_zip}" | awk '/\/rusefi_hellen-bremen\.ini$/ { print; exit }')"
+          bin_entry="$(zipinfo -1 "${bundle_zip}" | awk '/\/rusefi\.bin$/ { print; exit }')"
+
+          if [ -z "${ini_entry}" ]; then
+            echo "Could not find rusefi_hellen-bremen.ini in ${bundle_zip}"
+            exit 1
+          fi
+          if [ -z "${bin_entry}" ]; then
+            echo "Could not find rusefi.bin in ${bundle_zip}"
+            exit 1
+          fi
+
+          unzip -p "${bundle_zip}" "${ini_entry}" > rusefi_hellen-bremen.ini
+          unzip -p "${bundle_zip}" "${bin_entry}" > rusefi_hellen-bremen.bin
+
+          test -s rusefi_hellen-bremen.ini
+          test -s rusefi_hellen-bremen.bin
+          sha256sum rusefi_hellen-bremen.ini rusefi_hellen-bremen.bin
 
       - name: Upload INI to TS definitions API
         env:
@@ -66,3 +94,9 @@ jobs:
         with:
           name: rusefi_hellen-bremen.ini
           path: rusefi_hellen-bremen.ini
+
+      - name: Upload BIN as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rusefi_hellen-bremen.bin
+          path: rusefi_hellen-bremen.bin
