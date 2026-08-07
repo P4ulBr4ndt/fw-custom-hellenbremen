@@ -138,9 +138,9 @@ uint8_t calculateHarleyGearIndex() {
 	return HARLEY_GEAR_UNKNOWN;
 }
 
-bool hasSensorError(SensorType sensorType) {
+/*bool hasSensorError(SensorType sensorType) {
 	return Sensor::hasSensor(sensorType) && !Sensor::get(sensorType).Valid;
-}
+}*/
 
 bool hasHarleyMilRequestingFault() {
 	/*const bool hasTpsError = hasSensorError(SensorType::Tps1);
