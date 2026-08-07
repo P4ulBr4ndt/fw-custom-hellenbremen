@@ -143,7 +143,7 @@ bool hasSensorError(SensorType sensorType) {
 }
 
 bool hasHarleyMilRequestingFault() {
-	const bool hasTpsError = hasSensorError(SensorType::Tps1);
+	/*const bool hasTpsError = hasSensorError(SensorType::Tps1);
 	const bool hasTps2Error = hasSensorError(SensorType::Tps2);
 	const bool hasPedalError = hasSensorError(SensorType::AcceleratorPedal);
 	const bool hasCltError = hasSensorError(SensorType::Clt);
@@ -165,7 +165,9 @@ bool hasHarleyMilRequestingFault() {
 		|| hasCltError
 		|| hasMapError
 		|| hasIatError
-		|| hasTriggerError;
+		|| hasTriggerError;*/
+
+	return false;
 }
 
 uint8_t calculateHarleyGearCANValue() {
