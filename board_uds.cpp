@@ -11,25 +11,13 @@
 #include "efitime.h"
 #include "can_msg_tx.h"
 #include "flash_main.h"
-#include "flash_int.h"
-#include "mpu_watchdog.h"
-#include "persistent_configuration.h"
-#include "storage.h"
-#include "serial_can.h"
 
 namespace {
 constexpr uint32_t kUdsReqId = 0x7E0;
 constexpr uint32_t kUdsBroadcastId = 0x7DF;
 constexpr uint32_t kUdsRespId = 0x7E8;
 
-constexpr size_t kMaxTransferDataPayload = 255;
-constexpr size_t kMaxUdsPayload = kMaxTransferDataPayload + 8;
-
-constexpr size_t kContainerSize = sizeof(persistent_config_container_s);
-constexpr size_t kConfigOffset = offsetof(persistent_config_container_s, persistentConfiguration);
-constexpr size_t kVersionOffset = offsetof(persistent_config_container_s, version);
-constexpr size_t kSizeOffset = offsetof(persistent_config_container_s, size);
-constexpr size_t kCrcOffset = offsetof(persistent_config_container_s, crc);
+constexpr size_t kMaxUdsPayload = 263;
 
 constexpr efitick_t kIsoTpTimeout = MS2NT(1000);
 constexpr float kMinBatteryVoltage = 11.0f;
@@ -39,8 +27,6 @@ constexpr uint8_t kNrcIncorrectLength = 0x13;
 constexpr uint8_t kNrcConditionsNotCorrect = 0x22;
 constexpr uint8_t kNrcRequestSequenceError = 0x24;
 constexpr uint8_t kNrcRequestOutOfRange = 0x31;
-constexpr uint8_t kNrcSecurityAccessDenied = 0x33;
-constexpr uint8_t kNrcInvalidKey = 0x35;
 constexpr uint8_t kNrcGeneralProgrammingFailure = 0x72;
 
 constexpr uint16_t kDidBasicEngineData = 0x0200;
@@ -52,12 +38,6 @@ constexpr size_t kDidStringMaxLen = 11;
 constexpr size_t kDidProgrammingDateLen = 8;
 constexpr size_t kVinLength = sizeof(engineConfiguration->vinNumber);
 constexpr size_t kMaxUdsTxPayload = 32;
-constexpr uint8_t kTsSessionControl = 0x40;
-
-enum class UdsCanMode : uint8_t {
-	Uds,
-	TunerStudio
-};
 
 struct IsoTpRxState {
 	bool active = false;
@@ -78,35 +58,9 @@ struct IsoTpTxState {
 	std::array<uint8_t, kMaxUdsTxPayload> buffer{};
 };
 
-struct UdsReflashState {
-	bool programmingSession = false;
-	bool securityUnlocked = false;
-	bool downloadActive = false;
-	size_t expectedLen = 0;
-	size_t receivedLen = 0;
-	uint8_t nextBlockSeq = 1;
-	uint16_t seed = 0;
-	flashaddr_t stagingBase = 0;
-	flashaddr_t primaryBase = 0;
-	uint32_t runningCrc = 0;
-	bool watchdogExtended = false;
-};
-
 IsoTpRxState isoTpRx;
 IsoTpTxState isoTpTx;
-UdsReflashState udsState;
-std::array<uint8_t, kMaxTransferDataPayload> flashBlockBuffer{};
-UdsCanMode udsCanMode = UdsCanMode::Uds;
-
-static_assert(kConfigOffset + sizeof(persistent_config_s) <= kContainerSize,
-	"persistent_config_container_s layout is smaller than persistent_config_s");
-
-static uint32_t readU32be(const uint8_t* data) {
-	return (static_cast<uint32_t>(data[0]) << 24) |
-		(static_cast<uint32_t>(data[1]) << 16) |
-		(static_cast<uint32_t>(data[2]) << 8) |
-		static_cast<uint32_t>(data[3]);
-}
+bool udsProgrammingSession = false;
 
 static uint16_t readU16be(const uint8_t* data) {
 	return static_cast<uint16_t>((data[0] << 8) | data[1]);
@@ -332,10 +286,6 @@ static const char* nrcToString(uint8_t nrc) {
 			return "RequestSequenceError";
 		case kNrcRequestOutOfRange:
 			return "RequestOutOfRange";
-		case kNrcSecurityAccessDenied:
-			return "SecurityAccessDenied";
-		case kNrcInvalidKey:
-			return "InvalidKey";
 		case kNrcGeneralProgrammingFailure:
 			return "GeneralProgrammingFailure";
 		default:
@@ -351,16 +301,8 @@ static const char* serviceToString(uint8_t service) {
 			return "EcuReset";
 		case 0x22:
 			return "ReadDataByIdentifier";
-		case 0x27:
-			return "SecurityAccess";
 		case 0x2E:
 			return "WriteDataByIdentifier";
-		case 0x34:
-			return "RequestDownload";
-		case 0x36:
-			return "TransferData";
-		case 0x37:
-			return "TransferExit";
 		case 0x3E:
 			return "TesterPresent";
 		default:
@@ -575,339 +517,12 @@ static void resetIsoTpState() {
 	isoTpRx.lastRxNt = 0;
 }
 
-static void resetUdsDownloadState() {
-	udsState.downloadActive = false;
-	udsState.expectedLen = 0;
-	udsState.receivedLen = 0;
-	udsState.nextBlockSeq = 1;
-	udsState.stagingBase = 0;
-	udsState.primaryBase = 0;
-	udsState.runningCrc = 0;
-	if (udsState.watchdogExtended) {
-		startWatchdog();
-		udsState.watchdogExtended = false;
-	}
-}
-
-static void resetUdsSecurity() {
-	udsState.securityUnlocked = false;
-	udsState.seed = 0;
-}
-
 static void startProgrammingSession() {
-	udsState.programmingSession = true;
-	resetUdsSecurity();
-	resetUdsDownloadState();
+	udsProgrammingSession = true;
 }
 
 static void stopProgrammingSession() {
-	udsState.programmingSession = false;
-	resetUdsSecurity();
-	resetUdsDownloadState();
-}
-
-static void switchToTunerStudioOverUds() {
-#if EFI_CAN_SERIAL
-	setCanSerialOverrideIds(kUdsReqId, kUdsRespId);
-#endif
-	stopProgrammingSession();
-	resetIsoTpState();
-	resetIsoTpTx();
-	udsCanMode = UdsCanMode::TunerStudio;
-}
-
-static bool eraseFlashRegion(flashaddr_t base, size_t size) {
-	engine->configBurnTimer.reset();
-	return intFlashErase(base, size) == FLASH_RETURN_SUCCESS;
-}
-
-static bool writeFlashRegion(flashaddr_t base, const void* data, size_t size) {
-	engine->configBurnTimer.reset();
-	return intFlashWrite(base, reinterpret_cast<const char*>(data), size) == FLASH_RETURN_SUCCESS;
-}
-
-static bool readFlashRegion(flashaddr_t base, void* data, size_t size) {
-	return intFlashRead(base, reinterpret_cast<char*>(data), size) == FLASH_RETURN_SUCCESS;
-}
-
-static bool copyFlashRegion(flashaddr_t src, flashaddr_t dst, size_t size) {
-	if (!eraseFlashRegion(dst, size)) {
-		return false;
-	}
-
-	size_t offset = 0;
-	while (offset < size) {
-		size_t chunk = std::min(kMaxTransferDataPayload, size - offset);
-		if (!readFlashRegion(src + offset, flashBlockBuffer.data(), chunk)) {
-			return false;
-		}
-		if (!writeFlashRegion(dst + offset, flashBlockBuffer.data(), chunk)) {
-			return false;
-		}
-		offset += chunk;
-	}
-
-	return true;
-}
-
-static bool handleRequestDownload(size_t busIndex, const uint8_t* data, size_t len) {
-	if (!udsState.programmingSession || !udsState.securityUnlocked) {
-		sendUdsNegativeResponse(busIndex, 0x34, kNrcSecurityAccessDenied,
-			"programming session inactive or security not unlocked");
-		return true;
-	}
-
-	if (!isProgrammingAllowed()) {
-		sendUdsNegativeResponse(busIndex, 0x34, kNrcConditionsNotCorrect,
-			"programming conditions not met");
-		return true;
-	}
-
-	if (len < 3) {
-		sendUdsNegativeResponse(busIndex, 0x34, kNrcIncorrectLength,
-			"request too short");
-		return true;
-	}
-
-	uint8_t addrLen = (data[2] >> 4) & 0x0F;
-	uint8_t sizeLen = data[2] & 0x0F;
-
-	if (addrLen != 4 || sizeLen != 4) {
-		sendUdsNegativeResponse(busIndex, 0x34, kNrcRequestOutOfRange,
-			"address/size length not 4 bytes");
-		return true;
-	}
-
-	if (len < static_cast<size_t>(3 + addrLen + sizeLen)) {
-		sendUdsNegativeResponse(busIndex, 0x34, kNrcIncorrectLength,
-			"request length does not match format");
-		return true;
-	}
-
-	const uint8_t* addrPtr = &data[3];
-	const uint8_t* sizePtr = &data[3 + addrLen];
-
-	uint32_t address = readU32be(addrPtr);
-	uint32_t size = readU32be(sizePtr);
-
-	if (address != 0) {
-		sendUdsNegativeResponse(busIndex, 0x34, kNrcRequestOutOfRange,
-			"address not supported");
-		return true;
-	}
-
-	if (size != sizeof(persistent_config_s)) {
-		sendUdsNegativeResponse(busIndex, 0x34, kNrcRequestOutOfRange,
-			"size not supported");
-		return true;
-	}
-
-	flashaddr_t primaryBase = getFlashAddrFirstCopy();
-	flashaddr_t stagingBase = getFlashAddrSecondCopy();
-	if (primaryBase == 0 || stagingBase == 0) {
-		sendUdsNegativeResponse(busIndex, 0x34, kNrcGeneralProgrammingFailure,
-			"primaryBase or stagingBase is 0");
-		return true;
-	}
-
-	udsState.downloadActive = true;
-	udsState.expectedLen = size;
-	udsState.receivedLen = 0;
-	udsState.nextBlockSeq = 1;
-	udsState.runningCrc = 0;
-	udsState.primaryBase = primaryBase;
-	udsState.stagingBase = stagingBase;
-	if (!udsState.watchdogExtended) {
-		startWatchdog(WATCHDOG_FLASH_TIMEOUT_MS);
-		udsState.watchdogExtended = true;
-	}
-
-	if (!eraseFlashRegion(udsState.stagingBase, kContainerSize)) {
-		sendUdsNegativeResponse(busIndex, 0x34, kNrcGeneralProgrammingFailure,
-			"erase staging flash failed");
-		resetUdsDownloadState();
-		return true;
-	}
-
-	const uint8_t response[] = {0x74, 0x10, static_cast<uint8_t>(kMaxTransferDataPayload)};
-	sendIsoTpSingleFrame(busIndex, response, sizeof(response));
-	return true;
-}
-
-static bool handleTransferData(size_t busIndex, const uint8_t* data, size_t len) {
-	if (!udsState.downloadActive) {
-		sendUdsNegativeResponse(busIndex, 0x36, kNrcRequestSequenceError,
-			"no active download");
-		return true;
-	}
-
-	if (len < 2) {
-		sendUdsNegativeResponse(busIndex, 0x36, kNrcIncorrectLength,
-			"missing block sequence counter");
-		return true;
-	}
-
-	uint8_t seq = data[1];
-	if (seq != udsState.nextBlockSeq) {
-		sendUdsNegativeResponse(busIndex, 0x36, kNrcRequestSequenceError,
-			"block sequence mismatch");
-		return true;
-	}
-
-	size_t payloadLen = len - 2;
-	if (payloadLen == 0 || payloadLen > kMaxTransferDataPayload) {
-		sendUdsNegativeResponse(busIndex, 0x36, kNrcIncorrectLength,
-			"payload length invalid");
-		return true;
-	}
-
-	if (!isProgrammingAllowed()) {
-		sendUdsNegativeResponse(busIndex, 0x36, kNrcConditionsNotCorrect,
-			"programming conditions not met");
-		return true;
-	}
-
-	if (udsState.receivedLen + payloadLen > udsState.expectedLen) {
-		sendUdsNegativeResponse(busIndex, 0x36, kNrcRequestOutOfRange,
-			"payload exceeds expected length");
-		return true;
-	}
-
-	flashaddr_t writeAddr = udsState.stagingBase + kConfigOffset + udsState.receivedLen;
-	if (!writeFlashRegion(writeAddr, &data[2], payloadLen)) {
-		sendUdsNegativeResponse(busIndex, 0x36, kNrcGeneralProgrammingFailure,
-			"flash write failed");
-		resetUdsDownloadState();
-		return true;
-	}
-
-	udsState.runningCrc = crc32inc(&data[2], udsState.runningCrc, static_cast<uint32_t>(payloadLen));
-	udsState.receivedLen += payloadLen;
-
-	udsState.nextBlockSeq++;
-	if (udsState.nextBlockSeq == 0) {
-		udsState.nextBlockSeq = 1;
-	}
-
-	const uint8_t response[] = {0x76, seq};
-	sendIsoTpSingleFrame(busIndex, response, sizeof(response));
-	return true;
-}
-
-static bool handleTransferExit(size_t busIndex, const uint8_t* data, size_t len) {
-	if (!udsState.downloadActive) {
-		sendUdsNegativeResponse(busIndex, 0x37, kNrcRequestSequenceError,
-			"no active download");
-		return true;
-	}
-
-	if (udsState.receivedLen != udsState.expectedLen) {
-		sendUdsNegativeResponse(busIndex, 0x37, kNrcRequestSequenceError,
-			"received length mismatch");
-		return true;
-	}
-
-	if (len != 5) {
-		sendUdsNegativeResponse(busIndex, 0x37, kNrcIncorrectLength,
-			"transfer exit length invalid");
-		return true;
-	}
-
-	uint32_t expectedCrc = readU32be(&data[1]);
-	if (expectedCrc != udsState.runningCrc) {
-		sendUdsNegativeResponse(busIndex, 0x37, kNrcGeneralProgrammingFailure,
-			"crc mismatch");
-		resetUdsDownloadState();
-		return true;
-	}
-
-	if (!isProgrammingAllowed()) {
-		sendUdsNegativeResponse(busIndex, 0x37, kNrcConditionsNotCorrect,
-			"programming conditions not met");
-		return true;
-	}
-
-	int version = FLASH_DATA_VERSION;
-	int size = sizeof(persistentState);
-	uint32_t crc = udsState.runningCrc;
-	if (!writeFlashRegion(udsState.stagingBase + kVersionOffset, &version, sizeof(version)) ||
-		!writeFlashRegion(udsState.stagingBase + kSizeOffset, &size, sizeof(size)) ||
-		!writeFlashRegion(udsState.stagingBase + kCrcOffset, &crc, sizeof(crc))) {
-		sendUdsNegativeResponse(busIndex, 0x37, kNrcGeneralProgrammingFailure,
-			"staging header write failed");
-		resetUdsDownloadState();
-		return true;
-	}
-
-	if (!copyFlashRegion(udsState.stagingBase, udsState.primaryBase, kContainerSize)) {
-		sendUdsNegativeResponse(busIndex, 0x37, kNrcGeneralProgrammingFailure,
-			"copy staged data to primary failed");
-		resetUdsDownloadState();
-		return true;
-	}
-
-	if (storageRead(EFI_SETTINGS_RECORD_ID, reinterpret_cast<uint8_t*>(&persistentState), sizeof(persistentState)) != StorageStatus::Ok) {
-		sendUdsNegativeResponse(busIndex, 0x37, kNrcGeneralProgrammingFailure,
-			"storage readback failed");
-		resetUdsDownloadState();
-		return true;
-	}
-
-	applyNonPersistentConfiguration();
-	engineConfiguration->byFirmwareVersion = getRusEfiVersion();
-	engine->preCalculate();
-
-	resetUdsDownloadState();
-
-	const uint8_t response[] = {0x77};
-	sendIsoTpSingleFrame(busIndex, response, sizeof(response));
-	return true;
-}
-
-static bool handleSecurityAccess(size_t busIndex, const uint8_t* data, size_t len) {
-	if (len < 2) {
-		sendUdsNegativeResponse(busIndex, 0x27, kNrcIncorrectLength,
-			"security access length invalid");
-		return true;
-	}
-
-	uint8_t subFunction = data[1];
-	if (subFunction == 0x01) {
-		if (len != 2) {
-			sendUdsNegativeResponse(busIndex, 0x27, kNrcIncorrectLength,
-				"security seed length invalid");
-			return true;
-		}
-		udsState.seed = static_cast<uint16_t>((getTimeNowNt() ^ 0xA5A5) & 0xFFFF);
-		uint8_t response[] = {0x67, 0x01,
-			static_cast<uint8_t>((udsState.seed >> 8) & 0xFF),
-			static_cast<uint8_t>(udsState.seed & 0xFF)};
-		sendIsoTpSingleFrame(busIndex, response, sizeof(response));
-		return true;
-	}
-
-	if (subFunction == 0x02) {
-		if (len != 4) {
-			sendUdsNegativeResponse(busIndex, 0x27, kNrcIncorrectLength,
-				"security key length invalid");
-			return true;
-		}
-		uint16_t key = static_cast<uint16_t>((data[2] << 8) | data[3]);
-		uint16_t expectedKey = udsState.seed ^ 0xA5A5;
-		if (key != expectedKey) {
-			sendUdsNegativeResponse(busIndex, 0x27, kNrcInvalidKey,
-				"security key mismatch");
-			return true;
-		}
-		udsState.securityUnlocked = true;
-		const uint8_t response[] = {0x67, 0x02};
-		sendIsoTpSingleFrame(busIndex, response, sizeof(response));
-		return true;
-	}
-
-	sendUdsNegativeResponse(busIndex, 0x27, kNrcRequestOutOfRange,
-		"security subfunction not supported");
-	return true;
+	udsProgrammingSession = false;
 }
 
 static bool handleDiagnosticSessionControl(size_t busIndex, const uint8_t* data, size_t len) {
@@ -937,13 +552,6 @@ static bool handleDiagnosticSessionControl(size_t busIndex, const uint8_t* data,
 		return true;
 	}
 
-	if (sessionType == kTsSessionControl) {
-		const uint8_t response[] = {0x50, kTsSessionControl};
-		sendIsoTpSingleFrame(busIndex, response, sizeof(response));
-		switchToTunerStudioOverUds();
-		return true;
-	}
-
 	sendUdsNegativeResponse(busIndex, 0x10, kNrcRequestOutOfRange,
 		"session type not supported");
 	return true;
@@ -961,18 +569,10 @@ static bool handleUdsRequest(size_t busIndex, const uint8_t* data, size_t len) {
 			return handleEcuReset(busIndex, data, len);
 		case 0x22:
 			return handleReadDataByIdentifier(busIndex, data, len);
-		case 0x27:
-			return handleSecurityAccess(busIndex, data, len);
 		case 0x2E:
 			return handleWriteDataByIdentifier(busIndex, data, len);
 		case 0x3E:
 			return handleTesterPresent(busIndex, data, len);
-		case 0x34:
-			return handleRequestDownload(busIndex, data, len);
-		case 0x36:
-			return handleTransferData(busIndex, data, len);
-		case 0x37:
-			return handleTransferExit(busIndex, data, len);
 		default:
 			sendUdsNegativeResponse(busIndex, data[0], kNrcRequestOutOfRange,
 				"service not supported");
@@ -1062,10 +662,6 @@ static void handleIsoTpFrame(size_t busIndex, const CANRxFrame& frame, efitick_t
 } // namespace
 
 void handleUdsCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt) {
-	if (udsCanMode != UdsCanMode::Uds) {
-		return;
-	}
-
 	if (CAN_ISX(frame)) {
 		return;
 	}
