@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "board_riding_modes.h"
+#include "board_etb_control.h"
 
 #include <algorithm>
 
@@ -24,12 +24,23 @@ static constexpr float ENGINE_BRAKING_DEFAULT_RPM_ENGAGE = 1300.0f;
 static constexpr float ENGINE_BRAKING_DEFAULT_RPM_FULL = 4500.0f;
 static constexpr float ENGINE_BRAKING_DEFAULT_MIN_VSS = 3.0f;
 static constexpr float ENGINE_BRAKING_DEFAULT_MAX_BASE_ETB_TARGET = 10.0f;
+static constexpr uint16_t VMAX_DEFAULT_LIMIT = 0;
+static constexpr uint16_t VMAX_DEFAULT_LIMIT_RANGE = 10;
+static constexpr float VMAX_LIMIT_RELEASE_HYSTERESIS = 2.0f;
+static constexpr float VMAX_LIMIT_MAX_DT = 0.25f;
+static constexpr float VMAX_LIMIT_MIN_CLOSE_RATE = 60.0f;
+static constexpr float VMAX_LIMIT_CLOSE_RATE_PER_KPH = 25.0f;
+static constexpr float VMAX_LIMIT_OPEN_RATE = 10.0f;
 
 static constexpr float etbTargetSlewDefaultOpeningBins[ETB_TARGET_SLEW_BINS_COUNT] = {
 	0.0f, 5.0f, 10.0f, 15.0f, 20.0f, 25.0f, 30.0f, 40.0f, 50.0f, 60.0f, 80.0f, 100.0f
 };
 
 static constexpr float etbTargetSlewDefaultMaxUpRate[ETB_TARGET_SLEW_BINS_COUNT] = {
+	20.0f, 25.0f, 50.0f, 62.5f, 100.0f, 166.7f, 200.0f, 230.0f, 260.0f, 300.0f, 350.0f, 400.0f
+};
+
+static constexpr float etbTargetSlewDefaultMaxDownRate[ETB_TARGET_SLEW_BINS_COUNT] = {
 	20.0f, 25.0f, 50.0f, 62.5f, 100.0f, 166.7f, 200.0f, 230.0f, 260.0f, 300.0f, 350.0f, 400.0f
 };
 
@@ -51,6 +62,41 @@ struct EtbTargetSlewState {
 };
 
 EtbTargetSlewState etbTargetSlewState;
+
+struct VmaxLimiterState {
+	Timer timer;
+	float lastValidSpeed = 0.0f;
+	float targetCap = 100.0f;
+	bool hasLastValidSpeed = false;
+	bool active = false;
+	bool initialized = false;
+};
+
+VmaxLimiterState vmaxLimiterState;
+
+float getEtbTargetSlewRate(float target, const float (&rates)[ETB_TARGET_SLEW_BINS_COUNT]) {
+	float rate = interpolate2d(target, config->etbTargetSlewOpeningBins, rates);
+	return std::max(rate, 0.0f);
+}
+
+float slewEtbTargetToward(float currentTarget, float requestedTarget, float maxOpeningRate, float maxClosingRate, float dt) {
+	const float delta = requestedTarget - currentTarget;
+
+	if (delta > 0.0f) {
+		return currentTarget + std::min(delta, maxOpeningRate * dt);
+	}
+
+	if (delta < 0.0f) {
+		if (maxClosingRate <= 0.0f) {
+			// Fail toward the old behavior: an invalid/unset closing rate should not hold the throttle open.
+			return requestedTarget;
+		}
+
+		return currentTarget - std::min(-delta, maxClosingRate * dt);
+	}
+
+	return currentTarget;
+}
 
 uint8_t highNibble(uint8_t value) {
 	return (value >> 4) & 0x0F;
@@ -162,6 +208,83 @@ float applyEngineBrakingOffset(float currentEtbTarget) {
 	return currentEtbTarget + harleyRideModeState.engineBrakeEtbOffset;
 }
 
+float applyVmaxLimit(float currentEtbTarget) {
+	auto& state = vmaxLimiterState;
+	const auto vmaxLimit = config->vmaxLimit;
+	if (vmaxLimit == 0) {
+		state.active = false;
+		state.initialized = false;
+		state.targetCap = currentEtbTarget;
+		return currentEtbTarget;
+	}
+
+	auto vss = Sensor::get(SensorType::VehicleSpeed);
+	if (vss.Valid) {
+		state.lastValidSpeed = std::max(vss.Value, 0.0f);
+		state.hasLastValidSpeed = true;
+	} else {
+		// If already limiting, keep using the last valid speed instead of reopening.
+		if (!state.active || !state.hasLastValidSpeed) {
+			return currentEtbTarget;
+		}
+	}
+
+	const float range = std::max(static_cast<float>(config->vmaxLimitRange), 1.0f);
+	const float limitStartSpeed = static_cast<float>(vmaxLimit);
+	const float fullyLimitedSpeed = limitStartSpeed + range;
+	const float releaseSpeed = std::max(limitStartSpeed - VMAX_LIMIT_RELEASE_HYSTERESIS, 0.0f);
+	const float speed = state.hasLastValidSpeed ? state.lastValidSpeed : vss.Value;
+	efitick_t nowNt = getTimeNowNt();
+
+	if (!state.initialized) {
+		state.timer.reset(nowNt);
+		state.targetCap = currentEtbTarget;
+		state.initialized = true;
+	}
+
+	float dt = state.timer.getElapsedSecondsAndReset(nowNt);
+	if (dt <= 0.0f || dt > VMAX_LIMIT_MAX_DT) {
+		dt = 0.0f;
+	}
+
+	if (!state.active && speed < limitStartSpeed) {
+		state.targetCap = currentEtbTarget;
+		return currentEtbTarget;
+	}
+
+	state.active = true;
+
+	// Ratchet closed above Vmax, hold through the deadband, and only reopen slowly below release.
+	if (speed >= limitStartSpeed) {
+		const float linearTarget = clampPercentValue(interpolateClamped(
+			limitStartSpeed,
+			currentEtbTarget,
+			fullyLimitedSpeed,
+			0.0f,
+			speed
+		));
+		const float overspeed = std::max(speed - limitStartSpeed, 0.0f);
+		const float closeRate = VMAX_LIMIT_MIN_CLOSE_RATE + overspeed * VMAX_LIMIT_CLOSE_RATE_PER_KPH;
+
+		state.targetCap = std::min(state.targetCap, linearTarget);
+		if (overspeed > 0.0f) {
+			state.targetCap -= closeRate * dt;
+		}
+	} else if (speed < releaseSpeed) {
+		state.targetCap += VMAX_LIMIT_OPEN_RATE * dt;
+	}
+
+	state.targetCap = clampPercentValue(state.targetCap);
+
+	if (speed < releaseSpeed && state.targetCap >= currentEtbTarget) {
+		state.active = false;
+		state.targetCap = currentEtbTarget;
+		return currentEtbTarget;
+	}
+
+	return std::min(currentEtbTarget, state.targetCap);
+}
+
 float applyEtbTargetSlewLimit(float requestedEtbTarget) {
 	auto& state = etbTargetSlewState;
 
@@ -193,25 +316,16 @@ float applyEtbTargetSlewLimit(float requestedEtbTarget) {
 		return requestedEtbTarget;
 	}
 
-	float upRate = interpolate2d(state.limitedTarget, config->etbTargetSlewOpeningBins, config->etbTargetSlewMaxUpRate);
-	if (upRate < 0.0f) {
-		upRate = 0.0f;
-	}
-
-	float limitedTarget = state.limitedTarget;
-	if (requestedEtbTarget > limitedTarget) {
-		limitedTarget += std::min((requestedEtbTarget - limitedTarget), upRate * dt);
-	} else if (requestedEtbTarget < limitedTarget) {
-		// Closing is intentionally not slewed.
-		limitedTarget = requestedEtbTarget;
-	}
+	float upRate = getEtbTargetSlewRate(state.limitedTarget, config->etbTargetSlewMaxUpRate);
+	float downRate = getEtbTargetSlewRate(state.limitedTarget, config->etbTargetSlewMaxDownRate);
+	float limitedTarget = slewEtbTargetToward(state.limitedTarget, requestedEtbTarget, upRate, downRate, dt);
 
 	state.limitedTarget = clampPercentValue(limitedTarget);
 	return state.limitedTarget;
 }
 } // namespace
 
-void boardRidingModesApplyDefaults() {
+void boardEtbControlApplyDefaults() {
 	config->engineBrakingEtbOffsetMode1 = ENGINE_BRAKING_DEFAULT_ETB_OFFSET_MODE_1;
 	config->engineBrakingEtbOffsetMode2 = ENGINE_BRAKING_DEFAULT_ETB_OFFSET_MODE_2;
 	config->engineBrakingEtbOffsetMode3 = ENGINE_BRAKING_DEFAULT_ETB_OFFSET_MODE_3;
@@ -221,9 +335,12 @@ void boardRidingModesApplyDefaults() {
 	config->engineBrakingRpmFull = ENGINE_BRAKING_DEFAULT_RPM_FULL;
 	config->engineBrakingMinVss = ENGINE_BRAKING_DEFAULT_MIN_VSS;
 	config->engineBrakingMaxBaseEtbTarget = ENGINE_BRAKING_DEFAULT_MAX_BASE_ETB_TARGET;
+	config->vmaxLimit = VMAX_DEFAULT_LIMIT;
+	config->vmaxLimitRange = VMAX_DEFAULT_LIMIT_RANGE;
 
 	copyArray(config->etbTargetSlewOpeningBins, etbTargetSlewDefaultOpeningBins);
 	copyArray(config->etbTargetSlewMaxUpRate, etbTargetSlewDefaultMaxUpRate);
+	copyArray(config->etbTargetSlewMaxDownRate, etbTargetSlewDefaultMaxDownRate);
 }
 
 void boardRidingModesPublishLive() {
@@ -273,6 +390,10 @@ uint8_t boardGetHarleyEngineMap() {
 }
 
 float boardAdjustEtbTarget(float currentEtbTarget) {
-	float targetWithEngineBraking = applyEngineBrakingOffset(currentEtbTarget);
-	return applyEtbTargetSlewLimit(targetWithEngineBraking);
+	return applyEngineBrakingOffset(currentEtbTarget);
+}
+
+float boardAdjustEtbTargetFinal(float currentEtbTarget) {
+	float targetWithVmaxLimit = applyVmaxLimit(currentEtbTarget);
+	return applyEtbTargetSlewLimit(targetWithVmaxLimit);
 }

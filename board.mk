@@ -5,7 +5,7 @@ else
   BOARDCPPSRC = $(BOARD_DIR)/board_configuration.cpp \
                 $(BOARD_DIR)/board_config.cpp \
                 $(BOARD_DIR)/board_can.cpp \
-                $(BOARD_DIR)/board_riding_modes.cpp \
+                $(BOARD_DIR)/board_etb_control.cpp \
                 $(BOARD_DIR)/board_etb_maps.cpp \
                 $(BOARD_DIR)/board_instant_accel_shot.cpp \
                 $(BOARD_DIR)/board_uds.cpp
@@ -55,6 +55,8 @@ DDEFS += -DBOOT_COM_CAN_RX_MSG_ID=0x7E0 -DBOOT_COM_CAN_TX_MSG_ID=0x7E8 -DBOOT_CO
 DDEFS += -DBOOT_COM_CAN_CHANNEL_INDEX=0
 DDEFS += -DOPENBLT_CAN_RX_PORT=GPIOD -DOPENBLT_CAN_RX_PIN=0
 DDEFS += -DOPENBLT_CAN_TX_PORT=GPIOD -DOPENBLT_CAN_TX_PIN=1
+# Keep CAN1 TX recessive while bootloader/main firmware are still before CAN init.
+DDEFS += -DEFI_GPIOD1_DEFAULT_PULLUP=1 -DEFI_CAN_TX_RECESSIVE_PULLUP=1
 
 # Keep TunerStudio-over-CAN ISO-TP frames padded to classic CAN DLC 8.
 DDEFS += -DTSCAN_ALWAYS_DLC_8=TRUE

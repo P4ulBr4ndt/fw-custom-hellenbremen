@@ -1,7 +1,7 @@
 #include "pch.h"
 
 #include "board_etb_maps.h"
-#include "board_riding_modes.h"
+#include "board_etb_control.h"
 
 #include "table_helper.h"
 

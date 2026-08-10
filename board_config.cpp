@@ -7,7 +7,7 @@
 
 #include "board_etb_maps.h"
 #include "board_instant_accel_shot.h"
-#include "board_riding_modes.h"
+#include "board_etb_control.h"
 #include "defaults.h"
 #include "hellen_meta.h"
 
@@ -70,9 +70,13 @@ void boardDefaultConfiguration() {
 	config->fuelLevelValues[6] = 14;
 	config->fuelLevelValues[7] = 0;
 
-	// AFR 
+	// AFR - wideband O2 via CAN (rusEFI native protocol on CAN1)
 	engineConfiguration->afr.hwChannel = EFI_ADC_NONE;
-	engineConfiguration->enableAemXSeries = false;
+	engineConfiguration->enableAemXSeries = true;
+	engineConfiguration->canWbo[0].type = can_wbo_type_e::RUSEFI;
+	engineConfiguration->canWbo[1].type = can_wbo_type_e::RUSEFI;
+	engineConfiguration->widebandOnSecondBus = false; // Use CAN1
+	engineConfiguration->afrExpAverageAlpha = 1; // no smoothing
 
 	// MAP
 	setCustomMap(/*lowValue*/ 20, /*mapLowValueVoltage*/ 0.79, /*highValue*/ 101.3, /*mapHighValueVoltage*/ 4);
@@ -90,7 +94,7 @@ void boardDefaultConfiguration() {
 
 	boardEtbMapsApplyDefaults();
 	boardInstantAccelApplyDefaults();
-	boardRidingModesApplyDefaults();
+	boardEtbControlApplyDefaults();
 	engineConfiguration->idlePositionLowerLimit = 14;
 
 	setRpmTableBin(config->estimatedEngineTorqueRpmBins);
@@ -114,6 +118,11 @@ static void boardSanitizeConfig() {
 	// PRGSEL
 	if (config->prgselLowerTGS > config->prgselUpperTGS) {
 		config->prgselLowerTGS = config->prgselUpperTGS;
+	}
+
+	// Vmax
+	if (config->vmaxLimit > 0 && config->vmaxLimitRange == 0) {
+		config->vmaxLimitRange = 1;
 	}
 }
 
@@ -144,6 +153,10 @@ void boardConfigOverrides() {
 	// Sensors
 	engineConfiguration->map.sensor.hwChannel = EFI_ADC_13; // PC3
 	engineConfiguration->fuelLevelSensor = EFI_ADC_2; // PA2
+
+	// Gear is detected from AuxLinear1 in board_can.cpp, not rusEFI's ratio-based GearDetector.
+	// Keep this 0 so GearDetector never registers SensorType::DetectedGear itself.
+	engineConfiguration->totalGearsCount = 0;
 
 	// Switch Inputs
 	engineConfiguration->jssPin = Gpio::G11;
@@ -210,6 +223,8 @@ void boardCustomInitHardware() {
 				   NAN, // Frequency
 				   config->prgselPWMDuty / 100.0f
 	);
+
+	harleyDetectedGearSensor.Register();
 }
 
 void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {

@@ -53,10 +53,27 @@ case "${MODE}" in
     ;;
 esac
 
+git -C "${ROOT_DIR}" submodule update --init ext/rusefi
+
 cd "${RUSEFI_DIR}"
 misc/git_scripts/common_submodule_init.sh
 
 cd "${RUSEFI_DIR}/firmware"
+
+# Mirror the CI action (ext/rusefi/.github/workflows/custom-board-build/action.yaml):
+# redirect generated config output to the root customization's generated/ folder.
+# board.mk puts that folder first on the include path (BOARDINC), so without this,
+# gen_config_board.sh writes into the submodule's own tree instead, leaving the
+# root copy stale and shadowing the fresh headers with mismatched, out-of-date ones.
+export META_OUTPUT_ROOT_FOLDER="../../../generated/"
+
+# .config-sentinel (and friends) are gitignored, so they persist across container
+# runs via the bind mount. If one is left over from an earlier/stale build, make
+# can decide config generation is already up to date and skip gen_config_board.sh
+# entirely, silently leaving stale git-tracked generated files in place. Force a
+# fresh run every time - generation is fast, so there's no reason to trust the cache.
+rm -f .config-sentinel .ramdisk-sentinel .bootloader-sentinel
+
 bash bin/compile.sh "${META_INFO}" config
 if [ "${BUILD_BOOTLOADER}" = "1" ]; then
   bash bin/compile.sh "${META_INFO}" bootloader
@@ -77,7 +94,7 @@ fi
 
 SHORT_BOARD_NAME="$(awk -F= '$1=="SHORT_BOARD_NAME"{print $2; exit}' "${META_INFO}" | tr -d '\r')"
 if [ -n "${SHORT_BOARD_NAME}" ]; then
-  INI_SRC="${RUSEFI_DIR}/firmware/tunerstudio/generated/rusefi_${SHORT_BOARD_NAME}.ini"
+  INI_SRC="${ROOT_DIR}/generated/tunerstudio/generated/rusefi_${SHORT_BOARD_NAME}.ini"
   if [ -f "${INI_SRC}" ]; then
     cp -f "${INI_SRC}" "${RUSEFI_DIR}/firmware/build/"
   fi

@@ -7,12 +7,15 @@
 #include <cmath>
 #include <cstdint>
 
-#include "board_riding_modes.h"
+#include "board_etb_control.h"
 #include "board_uds.h"
 #include "board_config.h"
 #include "cruise_control.h"
 #include "electronic_throttle.h"
+#include "error_handling.h"
+#include "malfunction_central.h"
 #include "shutdown_controller.h"
+#include "trigger_central.h"
 
 static uint8_t frameCounter142 = 0x0;
 static uint8_t frameCounter144 = 0x0;
@@ -56,36 +59,37 @@ struct CruiseGearLimits {
 };
 
 namespace {
-/*
-TODO CLUTCH looks like 0xD0
-N: 0.872V => 17.44% => 0xA0
-1: 0.484V => 09.86% => 0x10
-2: 1.262V => 25,24% => 0x20
-3: 2.098V => 41,96% => 0x30
-4: 2.874V => 57,48% => 0x40
-5: 3.643V => 72,96% => 0x50
-6: 4.439V => 88,78% => 0x60
+
+/* Gear voltages (Pin 29 - Pin 78) for respective gears
+	1: 0.484V => 09.68% => 0x10
+	N: 0.872V => 17.44% => 0xA0
+	2: 1.262V => 25,24% => 0x20
+	3: 2.098V => 41,96% => 0x30
+	4: 2.874V => 57,48% => 0x40
+	5: 3.643V => 72,86% => 0x50
+	6: 4.439V => 88,78% => 0x60
 */
-float harleyGearValues[] = { 17.44f, 9.86f, 25.24f, 41.96f, 57.48f, 72.96f, 88.78f };
+constexpr float   harleyGearVoltages[] = {0.872f, 0.484f, 1.262f, 2.098f, 2.874f, 3.643f, 4.439f};
+constexpr float   harleyGearRange      = 0.250f;
+constexpr float   harleyNGearRange     = 0.125f;
 
-uint32_t getFourBytesMsb(const CANRxFrame& frame, size_t offset) {
-	return (static_cast<uint32_t>(frame.data8[offset]) << 24) |
-		(static_cast<uint32_t>(frame.data8[offset + 1]) << 16) |
-		(static_cast<uint32_t>(frame.data8[offset + 2]) << 8) |
-		static_cast<uint32_t>(frame.data8[offset + 3]);
-}
+constexpr uint8_t HARLEY_GEAR_UNKNOWN  = 7;
 
-// uint16_t getTwoBytesMsb(const CANRxFrame& frame, size_t offset) {
-// 	return (static_cast<uint32_t>(frame.data8[offset]) << 8) |
-// 		static_cast<uint32_t>(frame.data8[offset + 1]);
-// }
+struct HarleyGearRange {
+	float rangeMin;
+	float rangeMax;
+};
 
-void setFourBytesMsb(CanTxMessage& msg, uint32_t value, size_t offset) {
-	msg[offset] = (value >> 24) & 0xFF;
-	msg[offset + 1] = (value >> 16) & 0xFF;
-	msg[offset + 2] = (value >> 8) & 0xFF;
-	msg[offset + 3] = value & 0xFF;
-}
+// Index order matches harleyGearVoltages: N, 1st, 2nd, 3rd, 4th, 5th, 6th.
+constexpr HarleyGearRange harleyGearRanges[] = {
+	{harleyGearVoltages[0] - harleyNGearRange, harleyGearVoltages[0] + harleyNGearRange}, // N
+	{harleyGearVoltages[1] - harleyGearRange,  harleyGearVoltages[0] - harleyNGearRange}, // 1st
+	{harleyGearVoltages[0] + harleyNGearRange, harleyGearVoltages[2] + harleyGearRange},  // 2nd
+	{harleyGearVoltages[3] - harleyGearRange,  harleyGearVoltages[3] + harleyGearRange},  // 3rd
+	{harleyGearVoltages[4] - harleyGearRange,  harleyGearVoltages[4] + harleyGearRange},  // 4th
+	{harleyGearVoltages[5] - harleyGearRange,  harleyGearVoltages[5] + harleyGearRange},  // 5th
+	{harleyGearVoltages[6] - harleyGearRange,  harleyGearVoltages[6] + harleyGearRange},  // 6th
+};
 
 // void setTwoBytesMsb(CanTxMessage& msg, uint16_t value, size_t offset) {
 // 	msg[offset + 1] = (value >> 8) & 0xFF;
@@ -93,27 +97,49 @@ void setFourBytesMsb(CanTxMessage& msg, uint32_t value, size_t offset) {
 // }
 
 uint8_t calculateHarleyGearIndex() {
-	float sensorValue = Sensor::getOrZero(SensorType::AuxLinear1);
-	float bestMatch = 0.0f;
-	uint8_t bestOffs = 0;
+	float sensorValue = Sensor::getRaw(SensorType::AuxLinear1);
 
-	for (uint8_t i = 0; i < sizeof(harleyGearValues) / sizeof(harleyGearValues[0]); i++) {
-		float i_delta = std::abs(harleyGearValues[i] - sensorValue);
-		float x_delta = std::abs(bestMatch - sensorValue);
-		if (i_delta < x_delta) {
-			bestMatch = harleyGearValues[i];
-			bestOffs = i;
+	for (uint8_t i = 0; i < sizeof(harleyGearRanges) / sizeof(harleyGearRanges[0]); i++) {
+		if (sensorValue >= harleyGearRanges[i].rangeMin && sensorValue <= harleyGearRanges[i].rangeMax) {
+			return i;
 		}
 	}
 
-	return bestOffs;
+	return HARLEY_GEAR_UNKNOWN;
 }
 
-// Dictionary more efficient?
-uint8_t calculateHarleyGearValue() {
-	uint8_t bestOffs = calculateHarleyGearIndex();
+bool hasSensorError(SensorType sensorType) {
+	return Sensor::hasSensor(sensorType) && !Sensor::get(sensorType).Valid;
+}
 
-	switch (bestOffs) {
+bool hasHarleyMilRequestingFault() {
+	const bool hasTpsError = hasSensorError(SensorType::Tps1);
+	const bool hasTps2Error = hasSensorError(SensorType::Tps2);
+	const bool hasPedalError = hasSensorError(SensorType::AcceleratorPedal);
+	const bool hasCltError = hasSensorError(SensorType::Clt);
+	const bool hasIatError = hasSensorError(SensorType::Iat);
+	const bool hasMapError = hasSensorError(SensorType::Map);
+#if EFI_ENGINE_CONTROL && EFI_SHAFT_POSITION_INPUT
+	const bool hasTriggerError = engine->triggerCentral.triggerState.someSortOfTriggerError()
+		|| engine->triggerCentral.isTriggerDecoderError();
+#else
+	const bool hasTriggerError = false;
+#endif
+
+	return hasFirmwareError()
+		|| hasConfigError()
+		|| hasErrorCodes()
+		|| hasTpsError
+		|| hasTps2Error
+		|| hasPedalError
+		|| hasCltError
+		|| hasMapError
+		|| hasIatError
+		|| hasTriggerError;
+}
+
+uint8_t calculateHarleyGearCANValue() {
+	switch (calculateHarleyGearIndex()) {
 		case 0:
 			return 0xA0; // N
 		case 1:
@@ -128,8 +154,9 @@ uint8_t calculateHarleyGearValue() {
 			return 0x50; // 5
 		case 6:
 			return 0x60; // 6
+		case HARLEY_GEAR_UNKNOWN:
 		default:
-			return 0x0; // 0xD0?
+			return 0xD0;
 	}
 }
 
@@ -150,6 +177,20 @@ CruiseGearLimits getCruiseGearLimitsForCurrentGear() {
 		default:
 			return { false, 0.0f, 0.0f };
 	}
+}
+
+uint32_t getFourBytesMsb(const CANRxFrame& frame, size_t offset) {
+	return (static_cast<uint32_t>(frame.data8[offset]) << 24) |
+		(static_cast<uint32_t>(frame.data8[offset + 1]) << 16) |
+		(static_cast<uint32_t>(frame.data8[offset + 2]) << 8) |
+		static_cast<uint32_t>(frame.data8[offset + 3]);
+}
+
+void setFourBytesMsb(CanTxMessage& msg, uint32_t value, size_t offset) {
+	msg[offset] = (value >> 24) & 0xFF;
+	msg[offset + 1] = (value >> 16) & 0xFF;
+	msg[offset + 2] = (value >> 8) & 0xFF;
+	msg[offset + 3] = value & 0xFF;
 }
 
 float clampDesiredCcSpeedForCurrentGear(float requestedKph) {
@@ -259,6 +300,14 @@ void boardPeriodicSlow() {
 	bool jssDown        = engine->engineState.jssState != 0;
 	uint8_t currentGear = calculateHarleyGearIndex();
 	bool isNeutral      = currentGear == 0;
+
+	if (currentGear == HARLEY_GEAR_UNKNOWN) {
+		harleyDetectedGearSensor.invalidate();
+	} else if (currentGear == 0) {
+		harleyDetectedGearSensor.setValidValue(0.5, getTimeNowNt());
+	} else {
+		harleyDetectedGearSensor.setValidValue(currentGear, getTimeNowNt());
+	}
 	bool isEngineActive = engine->rpmCalculator.isRunning() || engine->rpmCalculator.isCranking();
 	
 	float currRPM     = Sensor::getOrZero(SensorType::Rpm);
@@ -310,7 +359,7 @@ void boardHandleCan(CanCycle cycle) {
 		CanTxMessage msg(CanCategory::NBC, 0x142);
 		msg.setShortValueMsb(Sensor::getOrZero(SensorType::Rpm), 0x0);
 		msg.setShortValueMsb(Sensor::getOrZero(SensorType::VehicleSpeed) * 10.f, 0x2);
-		msg[4] = calculateHarleyGearValue();
+		msg[4] = calculateHarleyGearCANValue();
 		msg[6] = frameCounter142;
 		msg[7] = crc8(msg.getFrame()->data8, 7);
 		frameCounter142 = (frameCounter142 + 1) % 64;
@@ -376,11 +425,24 @@ void boardHandleCan(CanCycle cycle) {
 			//              |  |  |  └────────────── 0 (Always off?, observation)
 			//              |  |  └───────────────── 0 (Always off?, observation)
 			//				|  └──────────────────── running
-			//              └─────────────────────── 1 (Always on?,  observation)
-			msg[3] = 0x84;
+			//              └─────────────────────── 1 MIL aka Check Engine Light
+			msg[3] = 0x04;
 
-			if(running) {
+			if (running) {
 				msg[3] |= 0x40;
+			}
+
+			/* MIL aka Check Engine Light
+			| Vehicle state                                      | Expected MIL indication |
+			| -------------------------------------------------- | ----------------------- |
+			| Ignition off                                       | MIL off                 |
+			| Ignition on, engine not running                    | MIL continuously on     |
+			| Engine successfully running, no relevant fault     | MIL off                 |
+			| Engine running with confirmed MIL-requesting fault | MIL continuously on     |
+			| Severe misfire/catalyst-damage condition           | MIL may flash           |
+			*/
+			if (!running || hasHarleyMilRequestingFault()) {
+				msg[3] |= 0x80;
 			}
 
 			msg[4] = 0x00;
