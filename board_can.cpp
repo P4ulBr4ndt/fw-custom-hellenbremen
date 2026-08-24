@@ -564,6 +564,8 @@ void boardHandleCan(CanCycle cycle) {
 			msg[3] = engineConfiguration->vinNumber[3];
 			msg[4] = engineConfiguration->vinNumber[4];
 			msg[5] = engineConfiguration->vinNumber[5];
+			msg[6] = 0x00;
+			msg[7] = 0x00;
 		}
 
 		{
@@ -574,6 +576,8 @@ void boardHandleCan(CanCycle cycle) {
 			msg[3] = engineConfiguration->vinNumber[9];
 			msg[4] = engineConfiguration->vinNumber[10];
 			msg[5] = engineConfiguration->vinNumber[11];
+			msg[6] = 0x00;
+			msg[7] = 0x00;
 		}
 
 		{
@@ -583,7 +587,9 @@ void boardHandleCan(CanCycle cycle) {
 			msg[2] = engineConfiguration->vinNumber[14];
 			msg[3] = engineConfiguration->vinNumber[15];
 			msg[4] = engineConfiguration->vinNumber[16];
-			msg[5] = engineConfiguration->vinNumber[17];
+			msg[5] = 0x00; // VIN is 17 characters (VIN_NUMBER_SIZE); vinNumber[17] doesn't exist, pad the unused 6th byte
+			msg[6] = 0x00;
+			msg[7] = 0x00;
 		}
 
 		{
