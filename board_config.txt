@@ -83,4 +83,16 @@ output_pin_e cfcOutputPin;
 output_pin_e ccfcOutputPin;
 output_pin_e cpcOutputPin;
 output_pin_e prgselOutputPin;
+
+bit autotuneRunning,"Yes","No";
+bit autotuneTuneRan,"Yes","No";
+uint16_t[VE_LOAD_COUNT x VE_RPM_COUNT] autoscale autotuneVeRearTableDelta;;"%", 0.1, 0, 0, 200, 1
+uint16_t[VE_LOAD_COUNT x VE_RPM_COUNT] autoscale autotuneVeRearTableOld;;"%", 0.1, 0, 0, 200, 1
+uint16_t[VE_LOAD_COUNT x VE_RPM_COUNT] autoscale autotuneVeFrontTableDelta;;"%", 0.1, 0, 0, 200, 1
+uint16_t[VE_LOAD_COUNT x VE_RPM_COUNT] autoscale autotuneVeFrontTableOld;;"%", 0.1, 0, 0, 200, 1
+
+uint16_t[VE_LOAD_COUNT x VE_RPM_COUNT] autoscale autotuneVeTableWeight;;"", 0.01, 0, 0, 65535, 1
+
+stft_s oldStft
+
 uint16_t outputPinsAlignFill;

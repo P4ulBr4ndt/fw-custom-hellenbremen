@@ -7,6 +7,8 @@
 
 #include "injection_gpio.h"
 
+#include "board_autotune.h"
+
 #define INSTANT_ACCEL_SHOT_WINDOW_MS 80
 #define INSTANT_ACCEL_SHOT_WINDOW_MAX_MS 200
 #define INSTANT_ACCEL_SHOT_TOPUP_MIN_SPACING_MS 5.0f
@@ -205,4 +207,5 @@ void updateInstantAccelShot() {
 
 void boardInstantAccelFastCallback() {
 	updateInstantAccelShot();
+	autotuneVETables();
 }

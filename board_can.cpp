@@ -11,6 +11,7 @@
 #include "board_etb_control.h"
 #include "board_uds.h"
 #include "board_config.h"
+#include "board_autotune.h"
 #include "cruise_control.h"
 #include "electronic_throttle.h"
 #include "error_handling.h"
@@ -906,6 +907,11 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 	if (CAN_SID(frame) == 0x500) {
 			bool cfcRunning = !cfcUserForceOn && cfcPin.getLogicValue();
 			if(!cfcRunning || config->cfcDisableWhenEngineStopped) {
+				if(frame.data8[0] == 0x00) {
+					autotuneToggleRunning();
+					autotuneBurnToROM();
+				}
+			
 				harleyKeepAlive = frame.data8[0];
 			}
 	}

@@ -2,6 +2,7 @@
 
 #include "board_can.h"
 #include "board_config.h"
+#include "board_autotune.h"
 
 #include <cstring>
 
@@ -325,6 +326,9 @@ void boardCustomInitHardware() {
 	cpcPin.initPin("CPC", config->cpcOutputPin);
 
 	harleyDetectedGearSensor.Register();
+
+	config->autotuneRunning = false;
+	config->autotuneTuneRan = false;
 }
 
 void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {
@@ -352,6 +356,12 @@ void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {
 			break;
 		case 7:
 			setCpcForce(true);
+			break;
+		case 8:
+			autotuneToggleRunning();
+			break;
+		case 9:
+			autotuneBurnToROM();
 			break;
 	}
 }
