@@ -51,44 +51,51 @@ void autotuneVETables() {
 		copyTable(config->autotuneVeRearTableOld, config->veTable);
 	}
 
-	float rpm      = Sensor::getOrZero(SensorType::Rpm);
-	float fuelLoad = getFuelingLoad();
+	const float rpm      = engine->engineState.Rpm;
+	const float fuelLoad = engine->engineState.Load;
 
-	auto rpmBin      = priv::getBin(rpm,      config->veRpmBins);
-	auto fuelLoadBin = priv::getBin(fuelLoad, config->veLoadBins);
+	const auto rpmBin      = priv::getBin(rpm,      config->veRpmBins);
+	const auto fuelLoadBin = priv::getBin(fuelLoad, config->veLoadBins);
 
-	float low_rpmFuelLoad_frac  = (1 - rpmBin.Frac) * (1 - fuelLoadBin.Frac);
-	float high_rpmFrac          = (rpmBin.Frac) * (1 - fuelLoadBin.Frac);
-	float high_fuelLoadFrac     = (fuelLoadBin.Frac) * (1 - rpmBin.Frac);
-	float diag_rpmFuelLoad_frac = rpmBin.Frac * fuelLoadBin.Frac;
+	const float clt = Sensor::getOrZero(SensorType::Clt);
+	const float afr1 = Sensor::getOrZero(SensorType::Lambda1) * 14.7f;
+	const float afr2 = Sensor::getOrZero(SensorType::Lambda2) * 14.7f;
 
-	auto clResult = engine->module<ShortTermFuelTrim>()->getCorrection(rpm, fuelLoad);
+	// TODO: Improve this code by making it configurable
+	if (    rpm < 700 
+		|| (clt < 70.0  && clt > 140.0) 
+		|| (afr1 < 8.0 && afr1 > 20.0) 
+		|| (afr2 < 8.0 && afr2 > 20.0)) {
+		return;
+	}
 
-	config->veTable[fuelLoadBin.Idx][rpmBin.Idx]         *= (clResult.banks[0] - 1) * low_rpmFuelLoad_frac + 1;
-	config->veTable[fuelLoadBin.Idx][rpmBin.Idx + 1]     *= (clResult.banks[0] - 1) * high_rpmFrac + 1;
-	config->veTable[fuelLoadBin.Idx + 1][rpmBin.Idx]     *= (clResult.banks[0] - 1) * high_fuelLoadFrac + 1;
-	config->veTable[fuelLoadBin.Idx + 1][rpmBin.Idx + 1] *= (clResult.banks[0] - 1) * diag_rpmFuelLoad_frac + 1;
+	const auto clResult = engine->engineState.stftCorrection;
 
-	config->veFrontTable[fuelLoadBin.Idx][rpmBin.Idx]         *= (clResult.banks[1] - 1) * low_rpmFuelLoad_frac + 1;
-	config->veFrontTable[fuelLoadBin.Idx][rpmBin.Idx + 1]     *= (clResult.banks[1] - 1) * high_rpmFrac + 1;
-	config->veFrontTable[fuelLoadBin.Idx + 1][rpmBin.Idx]     *= (clResult.banks[1] - 1) * high_fuelLoadFrac + 1;
-	config->veFrontTable[fuelLoadBin.Idx + 1][rpmBin.Idx + 1] *= (clResult.banks[1] - 1) * diag_rpmFuelLoad_frac + 1;
+	// Adapt the 2x2 grid around the (rpm, fuelLoad) point based on the STFT results
+	// This includes updating the veTable and veFrontTable cells, increasing the cell 
+	// weight and the cell differences.
+	for (int dLoad = 0; dLoad < 2; dLoad++) {
+		size_t loadIdx = fuelLoadBin.Idx + dLoad;
+		float loadFrac = dLoad ? fuelLoadBin.Frac : (1 - fuelLoadBin.Frac);
 
-	config->autotuneVeTableWeight[fuelLoadBin.Idx][rpmBin.Idx]         = clampF(0, config->autotuneVeTableWeight[fuelLoadBin.Idx][rpmBin.Idx] + 1, 65535);
-	config->autotuneVeTableWeight[fuelLoadBin.Idx][rpmBin.Idx + 1]     = clampF(0, config->autotuneVeTableWeight[fuelLoadBin.Idx][rpmBin.Idx + 1] + 1, 65535);
-	config->autotuneVeTableWeight[fuelLoadBin.Idx + 1][rpmBin.Idx]     = clampF(0, config->autotuneVeTableWeight[fuelLoadBin.Idx + 1][rpmBin.Idx] + 1, 65535);
-	config->autotuneVeTableWeight[fuelLoadBin.Idx + 1][rpmBin.Idx + 1] = clampF(0, config->autotuneVeTableWeight[fuelLoadBin.Idx + 1][rpmBin.Idx + 1] + 1, 65535);
+		for (int dRpm = 0; dRpm < 2; dRpm++) {
+			size_t rpmIdx = rpmBin.Idx + dRpm;
+			float rpmFrac = dRpm ? rpmBin.Frac : (1 - rpmBin.Frac);
+			float weight = loadFrac * rpmFrac;
 
-	// move to client side?
-	config->autotuneVeFrontTableDelta[fuelLoadBin.Idx][rpmBin.Idx]         = config->autotuneVeFrontTableOld[fuelLoadBin.Idx][rpmBin.Idx] - config->veFrontTable[fuelLoadBin.Idx][rpmBin.Idx];
-	config->autotuneVeFrontTableDelta[fuelLoadBin.Idx][rpmBin.Idx + 1]     = config->autotuneVeFrontTableOld[fuelLoadBin.Idx][rpmBin.Idx + 1] - config->veFrontTable[fuelLoadBin.Idx][rpmBin.Idx + 1];
-	config->autotuneVeFrontTableDelta[fuelLoadBin.Idx + 1][rpmBin.Idx]     = config->autotuneVeFrontTableOld[fuelLoadBin.Idx + 1][rpmBin.Idx] - config->veFrontTable[fuelLoadBin.Idx + 1][rpmBin.Idx];
-	config->autotuneVeFrontTableDelta[fuelLoadBin.Idx + 1][rpmBin.Idx + 1] = config->autotuneVeFrontTableOld[fuelLoadBin.Idx + 1][rpmBin.Idx + 1] - config->veFrontTable[fuelLoadBin.Idx + 1][rpmBin.Idx + 1];
+			config->veTable[loadIdx][rpmIdx]      *= (clResult[0] - 1) * weight + 1;
+			config->veFrontTable[loadIdx][rpmIdx] *= (clResult[1] - 1) * weight + 1;
 
-	config->autotuneVeRearTableDelta[fuelLoadBin.Idx][rpmBin.Idx]         = config->autotuneVeRearTableOld[fuelLoadBin.Idx][rpmBin.Idx] - config->veTable[fuelLoadBin.Idx][rpmBin.Idx];
-	config->autotuneVeRearTableDelta[fuelLoadBin.Idx][rpmBin.Idx + 1]     = config->autotuneVeRearTableOld[fuelLoadBin.Idx][rpmBin.Idx + 1] - config->veTable[fuelLoadBin.Idx][rpmBin.Idx + 1];
-	config->autotuneVeRearTableDelta[fuelLoadBin.Idx + 1][rpmBin.Idx]     = config->autotuneVeRearTableOld[fuelLoadBin.Idx + 1][rpmBin.Idx] - config->veTable[fuelLoadBin.Idx + 1][rpmBin.Idx];
-	config->autotuneVeRearTableDelta[fuelLoadBin.Idx + 1][rpmBin.Idx + 1] = config->autotuneVeRearTableOld[fuelLoadBin.Idx + 1][rpmBin.Idx + 1] - config->veTable[fuelLoadBin.Idx + 1][rpmBin.Idx + 1];
+			config->autotuneVeTableWeight[loadIdx][rpmIdx] =
+				clampF(0, config->autotuneVeTableWeight[loadIdx][rpmIdx] + 1, 65535);
+
+			// move to client side?
+			config->autotuneVeFrontTableDelta[loadIdx][rpmIdx] =
+				config->autotuneVeFrontTableOld[loadIdx][rpmIdx] - config->veFrontTable[loadIdx][rpmIdx];
+			config->autotuneVeRearTableDelta[loadIdx][rpmIdx] =
+				config->autotuneVeRearTableOld[loadIdx][rpmIdx] - config->veTable[loadIdx][rpmIdx];
+		}
+	}
 
 	return;
 }
