@@ -57,7 +57,7 @@ void autotuneVETables() {
 	const auto rpmBin      = priv::getBin(rpm,      config->veRpmBins);
 	const auto fuelLoadBin = priv::getBin(fuelLoad, config->veLoadBins);
 
-	const float clt = Sensor::getOrZero(SensorType::Clt);
+	const float clt  = Sensor::getOrZero(SensorType::Clt);
 	const float afr1 = Sensor::getOrZero(SensorType::Lambda1) * 14.7f;
 	const float afr2 = Sensor::getOrZero(SensorType::Lambda2) * 14.7f;
 
