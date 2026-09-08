@@ -61,8 +61,9 @@ void autotuneVETables() {
 	const float afr1 = Sensor::getOrZero(SensorType::Lambda1) * 14.7f;
 	const float afr2 = Sensor::getOrZero(SensorType::Lambda2) * 14.7f;
 
-	// TODO: Improve this code by making it configurable
-	if (    rpm < 700 
+	// TODO: Improve this code by making it 
+	// Also add Min TPS, Min VBatt (Engine running?), dTPS (?)
+	if (rpm < 700 
 		|| (clt < 70.0  && clt > 140.0) 
 		|| (afr1 < 8.0 && afr1 > 20.0) 
 		|| (afr2 < 8.0 && afr2 > 20.0)) {
@@ -74,6 +75,9 @@ void autotuneVETables() {
 	// Adapt the 2x2 grid around the (rpm, fuelLoad) point based on the STFT results
 	// This includes updating the veTable and veFrontTable cells, increasing the cell 
 	// weight and the cell differences.
+
+	// TODO: Add Max. Cell value change, Max. Cell percentage change guards
+
 	for (int dLoad = 0; dLoad < 2; dLoad++) {
 		size_t loadIdx = fuelLoadBin.Idx + dLoad;
 		float loadFrac = dLoad ? fuelLoadBin.Frac : (1 - fuelLoadBin.Frac);
