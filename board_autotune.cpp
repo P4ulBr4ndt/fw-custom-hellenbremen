@@ -64,9 +64,9 @@ void autotuneVETables() {
 	// TODO: Improve this code by making it 
 	// Also add Min TPS, Min VBatt (Engine running?), dTPS (?)
 	if (rpm < 700 
-		|| (clt < 70.0  && clt > 140.0) 
-		|| (afr1 < 8.0 && afr1 > 20.0) 
-		|| (afr2 < 8.0 && afr2 > 20.0)) {
+		|| (clt < 70.0 || clt > 140.0) 
+		|| (afr1 < 8.0 || afr1 > 20.0) 
+		|| (afr2 < 8.0 || afr2 > 20.0)) {
 		return;
 	}
 
