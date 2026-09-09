@@ -2,10 +2,6 @@
 
 #include "cyclic_buffer.h"
 
-void autotuneToggleRunning();
-void autotuneBurnToROM();
-void autotuneVETables();
-
 struct live_data_autotune_s {
 	float veTable[VE_LOAD_COUNT][VE_RPM_COUNT];
 	float accumulatedWeight[VE_LOAD_COUNT][VE_RPM_COUNT];
@@ -24,6 +20,10 @@ class AutotuneState {
 public:
 	AutotuneState() = default;
 	~AutotuneState() = default;
+
+	void ToggleRunning();
+	void BurnToROM();
+	void VETables();
 
 private:
 	live_data_autotune_s front;

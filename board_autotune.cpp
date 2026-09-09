@@ -1,8 +1,9 @@
 #include "pch.h"
 #include "tunerstudio.h"
 #include "table_helper.h"
+#include "board_autotune.h"
 
-void autotuneToggleRunning() {
+void AutotuneState::ToggleRunning() {
 	if (config->autotuneRunning) {
 		config->autotuneRunning = false;
 		engineConfiguration->stft = config->oldStft;
@@ -30,7 +31,7 @@ void autotuneToggleRunning() {
 	return;
 }
 
-void autotuneBurnToROM() {
+void AutotuneState::BurnToROM() {
 	if(config->autotuneTuneRan && !config->autotuneRunning) {
 		requestBurn();
 		config->autotuneTuneRan = false;
@@ -39,7 +40,7 @@ void autotuneBurnToROM() {
 	return;
 }
 
-void autotuneVETables() {
+void AutotuneState::VETables() {
 	if(!config->autotuneRunning) {
 		return;
 	}
