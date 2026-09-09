@@ -909,8 +909,8 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 			if(!cfcRunning || config->cfcDisableWhenEngineStopped) {
 				if(frame.data8[0] == 0x00) {
 					config->autoTuneEnabled   = false;
-					engineConfiguration->stft = config->oldStft;
-					autotuneBurnToROM();
+					autotuneState.restoreStft();
+					autotuneState.burningROM();
 				}
 			
 				harleyKeepAlive = frame.data8[0];

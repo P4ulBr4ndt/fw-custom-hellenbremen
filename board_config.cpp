@@ -326,9 +326,6 @@ void boardCustomInitHardware() {
 	cpcPin.initPin("CPC", config->cpcOutputPin);
 
 	harleyDetectedGearSensor.Register();
-
-	config->autotuneRunning = false;
-	config->autotuneTuneRan = false;
 }
 
 void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {
@@ -358,16 +355,18 @@ void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {
 			setCpcForce(true);
 			break;
 		case 8:
-			autotuneToggleRunning();
+			autotuneState.toggleRunning();
 			break;
 		case 9:
-			autotuneBurnToROM();
+			autotuneState.burningROM();
 			break;
 	}
 }
 
 void boardCustomOnConfigurationChange(engine_configuration_s* previousConfiguration) {
 	boardSanitizeConfig();
+
+	autotuneState.checkCyclicBufferSize();
 
 	if(!config->prgselActive) {
 		prgselPwm.setFrequency(NAN);

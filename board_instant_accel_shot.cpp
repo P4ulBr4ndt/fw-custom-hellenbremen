@@ -207,5 +207,5 @@ void updateInstantAccelShot() {
 
 void boardInstantAccelFastCallback() {
 	updateInstantAccelShot();
-	autotuneVETables();
+	autotuneState.veTables();
 }
