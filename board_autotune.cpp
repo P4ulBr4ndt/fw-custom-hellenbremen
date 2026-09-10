@@ -168,7 +168,7 @@ void AutotuneState::recordProcessing() {
 	return;
 }
 
-// Pointer for veTable?
+// TODO: (const) Pointer for veTable?
 bilinear_cell_selection_s AutotuneState::bilinearCellSelection(float rpm, float fuelLoad, float veTable[VE_LOAD_COUNT][VE_RPM_COUNT]) {
 	bilinear_cell_selection_s selection;
 
@@ -197,6 +197,7 @@ bilinear_cell_selection_s AutotuneState::bilinearCellSelection(float rpm, float 
 }
 
 autotune_sample_s AutotuneState::getProposedVECellValue(float frontMeasuredAFR, float rearMeasuredAFR, autotune_sample_s& sample) {
+	// Initialize from sample, so every other value is set
 	autotune_sample_s proposedVESelection = sample;
 
 	const float targetAFR = engine->fuelComputer.targetLambda * 14.7f;
@@ -298,6 +299,8 @@ void AutotuneState::checkCyclicBufferSize() {
 void AutotuneState::applyingToRAM() {
 	copyTable(config->veTable,      rear.veTable);
 	copyTable(config->veFrontTable, front.veTable);
+
+	return;
 }
 
 void AutotuneState::burningROM() {

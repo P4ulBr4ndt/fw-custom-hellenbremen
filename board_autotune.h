@@ -97,6 +97,10 @@ private:
 	live_data_autotune_s front;
 	live_data_autotune_s rear;
 
+	// TODO: Originally, it was intended to have a dynamic cyclic_buffert
+	// depending on the choice of values in the Lambda delay table.
+	// Make this dynamic, maybe with a pointer? Requires adquate steps in
+	// AutotuneState, ~AutotuneState and checkCyclicBufferSize
 	cyclic_buffer<autotune_sample_s> autotuneHistory;
 
 };
