@@ -908,8 +908,7 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 			bool cfcRunning = !cfcUserForceOn && cfcPin.getLogicValue();
 			if(!cfcRunning || config->cfcDisableWhenEngineStopped) {
 				if(frame.data8[0] == 0x00) {
-					config->autoTuneEnabled   = false;
-					autotuneState.restoreStft();
+					autotuneState.autotuneEnabled = false;
 					autotuneState.burningROM();
 				}
 			

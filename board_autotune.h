@@ -4,13 +4,16 @@
 #include "cyclic_buffer.h"
 
 struct bilinear_cell_selection_s {
-	size_t loadIdx0;
-	size_t loadIdx1;
-	float  loadFrac;
+	size_t loadIdx0; // Is size_t necessary? I don't need such big types here
+	size_t loadIdx1; // Is size_t necessary? I don't need such big types here
 
-	size_t rpmIdx0;
-	size_t rpmIdx1;
-	float  rpmFrac;
+	size_t rpmIdx0; // Is size_t necessary? I don't need such big types here
+	size_t rpmIdx1; // Is size_t necessary? I don't need such big types here
+
+	float cell00Weight; // Bottom-Left
+	float cell01Weight; // Bottom-Right
+	float cell10Weight; // Top-Left
+	float cell11Weight; // Top-Right
 
 	float  cell00; // Bottom-Left
 	float  cell01; // Bottom-Right
@@ -19,7 +22,10 @@ struct bilinear_cell_selection_s {
 };
 
 struct live_data_autotune_s {
-	float    veTable[VE_LOAD_COUNT][VE_RPM_COUNT];
+	float veTable[VE_LOAD_COUNT][VE_RPM_COUNT];
+	float preTuneVeTable[VE_LOAD_COUNT][VE_RPM_COUNT];
+	float VeTableDelta[VE_LOAD_COUNT][VE_RPM_COUNT];
+
 	float    accumulatedWeight[VE_LOAD_COUNT][VE_RPM_COUNT];
 	uint16_t hitCount[VE_LOAD_COUNT][VE_RPM_COUNT];
 };
@@ -36,8 +42,12 @@ struct autotune_sample_s {
 	bilinear_cell_selection_s frontCellSelection;
 	bilinear_cell_selection_s rearCellSelection;
 
-	uint8_t delayIndex;
+	// Ticks remaining until this sample fires; capped below the buffer's size so it
+	// always fires before the buffer could cycle back around and evict it. See comment
+	// in board_autotune.cpp:AutotuneState::recordProcessing() for more information.
+	size_t delayIndex; // Is size_t necessary? I don't need such big types here
 
+	bool processed = false;
 };
 
 class AutotuneState {
@@ -51,29 +61,34 @@ public:
 	void checkHistory();
 	
 	void toggleRunning();
-	void restoreStft();
+	void applyingToRAM();
 	void burningROM();
 
 	void recordProcessing();
-	bilinear_cell_selection_s proposedVECellValue(float measuredAFR, autotune_sample_s& sample);
-	void averageWeighting();
+	autotune_sample_s getProposedVECellValue(float frontMeasuredAFR, float rearMeasuredAFR, autotune_sample_s& sample);
+	void evaluateNewVECellValue(size_t idx); // Is size_t necessary? I don't need such big types here
+	void averageWeighting(live_data_autotune_s& cylinder, const bilinear_cell_selection_s& proposed);
 	void veTables();
 
 	bilinear_cell_selection_s bilinearCellSelection(float rpm, float fuelLoad, float veTable[VE_LOAD_COUNT][VE_RPM_COUNT]);
 
-private:
-	bool autotuneArmed = false;
-
 	bool autotuneRunning = false;
 	bool autotuneTuneRan = false;
 
-	float VeRearDelta[VE_LOAD_COUNT][VE_RPM_COUNT];
-	float VeRearOld[VE_LOAD_COUNT][VE_RPM_COUNT];
-	float VeFrontDelta[VE_LOAD_COUNT][VE_RPM_COUNT];
-	float VeFrontOld[VE_LOAD_COUNT][VE_RPM_COUNT];
-	float VeTableWeight[VE_LOAD_COUNT][VE_RPM_COUNT];
+private:
+	// TODO: Make this configurable
+	const float initialWeight = 5.0f; 
+	const float weightThreshold = 0.0f;
+	const float deadband = 0.0f;
+	const float maxWeight = 100.0f;
+	const float maxAbsoluteChange = 50.0f;
+	const float maxPercentageChange = 50.0f;
 
-	stft_s oldStft;
+	const uint16_t minRPM = 700.0;
+	const float    minCLT = 70.0f;
+	const float    maxCLT = 140.0f;
+	const float    minAFR = 8.0f;
+	const float    maxAFR = 20.0f;
 
 	bilinear_cell_selection_s frontCellSelection;
 	bilinear_cell_selection_s rearCellSelection;
