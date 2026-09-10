@@ -131,8 +131,8 @@ void AutotuneState::toggleRunning() {
 void AutotuneState::recordProcessing() {
 	autotune_sample_s sample;
 
-	sample.rpm       = engine->engineState.Rpm;
-	sample.fuelLoad  = engine->engineState.Load;
+	sample.rpm       = Sensor::getOrZero(SensorType::Rpm);
+	sample.fuelLoad  = getFuelingLoad();
 
 	sample.correctionRear  = 100.0f * engine->engineState.stftCorrection[0];
 	sample.correctionFront = 100.0f * engine->engineState.stftCorrection[1];
