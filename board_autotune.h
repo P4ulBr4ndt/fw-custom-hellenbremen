@@ -2,6 +2,7 @@
 
 #include "pch.h"
 #include "cyclic_buffer.h"
+#include "timer.h"
 
 struct bilinear_cell_selection_s {
 	size_t loadIdx0; // Is size_t necessary? I don't need such big types here
@@ -89,8 +90,9 @@ private:
 	const float    minAFR = 8.0f;
 	const float    maxAFR = 20.0f;
 
-	bilinear_cell_selection_s frontCellSelection;
-	bilinear_cell_selection_s rearCellSelection;
+	Timer autoApplyTimer;
+	const float autoApplyTimerPeriod = 15.0f;
+	bool autoApplyEnabled = true;
 
 	live_data_autotune_s front;
 	live_data_autotune_s rear;

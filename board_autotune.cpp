@@ -33,25 +33,31 @@ void AutotuneState::initializeLiveDataStructs() {
 }
 
 void AutotuneState::evaluateNewVECellValue(size_t idx) {
-	const float clt      = Sensor::getOrZero(SensorType::Clt); // Also historic data?
-	const float frontAFR = Sensor::getOrZero(SensorType::Lambda1) * 14.7f;
-	const float rearAFR  = Sensor::getOrZero(SensorType::Lambda2) * 14.7f;
+	autotune_sample_s autotuneSample   = autotuneHistory.get(idx);
+	
+	const float clt       = Sensor::getOrZero(SensorType::Clt); // Also historic data?
+	const float frontAFR  = Sensor::getOrZero(SensorType::Lambda1) * 14.7f;
+	const float rearAFR   = Sensor::getOrZero(SensorType::Lambda2) * 14.7f;
+	const float targetLam = engine->fuelComputer.targetLambda
 
-	// TODO: Improve this code by making it 
+	float rpm = autotuneSample.rpm;
+
 	// Also add Min TPS, Min VBatt (Engine running?), dTPS (?)
 	if (    rpm      < minRPM
 		|| (clt      < minCLT || clt      > maxCLT)
 		|| (frontAFR < minAFR || frontAFR > maxAFR)
-		|| (rearAFR  < minAFR || rearAFR  > maxAFR)) {
+		|| (rearAFR  < minAFR || rearAFR  > maxAFR)
+	    || targetLam == 0.0f) {
 		return;
 	}
 
-		autotune_sample_s autotuneSample   = autotuneHistory.get(idx);
 		autotune_sample_s proposedVEValues = getProposedVECellValue(frontAFR, rearAFR, autotuneSample);
 
-		averageWeighting(front, proposedVEValues.frontCellSelection);
-		averageWeighting(rear,  proposedVEValues.rearCellSelection);
-
+		if (!(proposedVEValues == nullptr)) {
+			averageWeighting(front, proposedVEValues.frontCellSelection);
+			averageWeighting(rear,  proposedVEValues.rearCellSelection);
+		}
+		
 	return;
 }
 
@@ -80,7 +86,7 @@ void AutotuneState::averageWeighting(live_data_autotune_s& cylinder, const bilin
 		uint16_t& hitCount          = cylinder.hitCount[vote.loadIdx][vote.rpmIdx];
 		const float originalValue   = cylinder.preTuneVeTable[vote.loadIdx][vote.rpmIdx];
 
-		const float candidateAverage = (runningAverage * (accumulatedWeight * initialWeight) + vote.proposedValue * vote.weight)
+		const float candidateAverage = (runningAverage * (accumulatedWeight + initialWeight) + vote.proposedValue * vote.weight)
 		                                / (accumulatedWeight + vote.weight + initialWeight);
 
 		// Guard rails compare against the frozen original value, not the running average,
@@ -94,12 +100,15 @@ void AutotuneState::averageWeighting(live_data_autotune_s& cylinder, const bilin
 		}
 
 		if (deadband > std::abs(runningAverage - originalValue)) {
+			runningAverage = originalValue;
 			continue;
 		}
 
 		runningAverage    = candidateAverage;
 		accumulatedWeight = clampF(0.0f, accumulatedWeight + vote.weight, maxWeight);
 		hitCount++;
+		
+		autotuneTuneRan = true;
 	}
 
 	return;
@@ -111,6 +120,7 @@ void AutotuneState::toggleRunning() {
 	} else {
 		checkCyclicBufferSize();
 		initializeLiveDataStructs();
+		autoApplyTimer.reset();
 
 		autotuneRunning = true;
 	}
@@ -118,7 +128,6 @@ void AutotuneState::toggleRunning() {
 	return;
 }
 
-// TODO: This is not run yet
 void AutotuneState::recordProcessing() {
 	autotune_sample_s sample;
 
@@ -229,7 +238,7 @@ void AutotuneState::checkHistory() {
 	for (size_t i = 0; i < validCount; i++) {
 		autotune_sample_s& sample = autotuneHistory.elements[i];
 
-		if (sample.alreadyProcessed) {
+		if (sample.processed) {
 			continue;
 		}
 
@@ -242,6 +251,14 @@ void AutotuneState::checkHistory() {
 			evaluateNewVECellValue(i);
 			autotuneHistory.elements[i].processed = true;
 		}
+	}
+
+	if(autoApplyTimer.hasElapsedSec(autoApplyTimerPeriod)) {
+		if(autoApplyEnabled) {
+			applyingToRAM();
+			autotuneTuneRan = false;
+		}
+		autoApplyTimer.reset();
 	}
 
 	return;
@@ -268,6 +285,7 @@ void AutotuneState::checkCyclicBufferSize() {
 		desiredSize = 1;
 	}
 
+	// TODO: cyclic_buffer clamped to 128?
 	// setSize() clears the buffer, so only touch it when the size actually needs to change -
 	// otherwise every unrelated config change would wipe out valid buffered history.
 	if ((size_t)autotuneHistory.getSize() != desiredSize) {

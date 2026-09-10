@@ -207,5 +207,9 @@ void updateInstantAccelShot() {
 
 void boardInstantAccelFastCallback() {
 	updateInstantAccelShot();
-	autotuneState.veTables();
+	
+	if(autotuneState.autotuneRunning) {
+		autotuneState.recordProcessing();
+		autotuneState.checkHistory();
+	}
 }
