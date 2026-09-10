@@ -40,7 +40,7 @@ void AutotuneState::evaluateNewVECellValue(size_t idx) {
 	const float clt       = Sensor::getOrZero(SensorType::Clt); // Also historic data?
 	const float frontAFR  = Sensor::getOrZero(SensorType::Lambda1) * 14.7f;
 	const float rearAFR   = Sensor::getOrZero(SensorType::Lambda2) * 14.7f;
-	const float targetLam = engine->fuelComputer.targetLambda
+	const float targetLam = engine->fuelComputer.targetLambda;
 
 	float rpm = autotuneSample.rpm;
 
