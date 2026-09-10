@@ -144,6 +144,8 @@ void boardDefaultConfiguration() {
 	config->prgselPWMFreq = 32;
 	config->prgselPWMDuty = 30;
 	config->prgselActAfterTime = 180;
+
+	// TODO: Lambda Delay Table and respective bins
 }
 
 static void boardSanitizeConfig() {

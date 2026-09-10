@@ -2,7 +2,7 @@
 
 #include "pch.h"
 #include "cyclic_buffer.h"
-#include "timer.h"
+#include <rusefi/timer.h>
 
 struct bilinear_cell_selection_s {
 	size_t loadIdx0; // Is size_t necessary? I don't need such big types here
