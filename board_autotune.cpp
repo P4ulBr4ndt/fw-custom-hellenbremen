@@ -53,8 +53,11 @@ void AutotuneState::evaluateNewVECellValue(size_t idx) {
 		return;
 	}
 
-		autotune_sample_s proposedVEValues = getProposedVECellValue(frontAFR, rearAFR, autotuneSample);
-		
+	autotune_sample_s proposedVEValues = getProposedVECellValue(frontAFR, rearAFR, autotuneSample);
+
+	averageWeighting(front, proposedVEValues.frontCellSelection);
+	averageWeighting(rear,  proposedVEValues.rearCellSelection);
+	
 	return;
 }
 
