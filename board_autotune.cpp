@@ -44,7 +44,7 @@ void AutotuneState::evaluateNewVECellValue(size_t idx) {
 
 	float rpm = autotuneSample.rpm;
 
-	// Also add Min TPS, Min VBatt (Engine running?), dTPS (?)
+	// TODO: Also add Min TPS, Min VBatt (Engine running?), dTPS (?)
 	if (    rpm      < minRPM
 		|| (clt      < minCLT || clt      > maxCLT)
 		|| (frontAFR < minAFR || frontAFR > maxAFR)
