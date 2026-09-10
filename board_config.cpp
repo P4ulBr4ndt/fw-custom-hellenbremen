@@ -363,7 +363,7 @@ void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {
 			autotuneState.burningROM();
 			break;
 		case 0x0A:
-			AutotuneState.applyToRam();
+			autotuneState.applyToRam();
 			break;
 		case 0x0B: //TODO: Trigger Data fetching for application
 			break;
