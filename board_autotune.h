@@ -99,4 +99,6 @@ private:
 
 	cyclic_buffer<autotune_sample_s> autotuneHistory;
 
-} autotuneState;
+};
+
+extern AutotuneState autotuneState;

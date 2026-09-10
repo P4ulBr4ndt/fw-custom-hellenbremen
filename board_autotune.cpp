@@ -3,6 +3,8 @@
 #include "table_helper.h"
 #include "board_autotune.h"
 
+AutotuneState autotuneState;
+
 AutotuneState::AutotuneState() {
 	checkCyclicBufferSize();
 	initializeLiveDataStructs();
@@ -47,16 +49,11 @@ void AutotuneState::evaluateNewVECellValue(size_t idx) {
 		|| (clt      < minCLT || clt      > maxCLT)
 		|| (frontAFR < minAFR || frontAFR > maxAFR)
 		|| (rearAFR  < minAFR || rearAFR  > maxAFR)
-	    || targetLam == 0.0f) {
+	    || targetLam == 0.0f  || std::isnan(targetLam)) {
 		return;
 	}
 
 		autotune_sample_s proposedVEValues = getProposedVECellValue(frontAFR, rearAFR, autotuneSample);
-
-		if (!(proposedVEValues == nullptr)) {
-			averageWeighting(front, proposedVEValues.frontCellSelection);
-			averageWeighting(rear,  proposedVEValues.rearCellSelection);
-		}
 		
 	return;
 }
@@ -99,7 +96,7 @@ void AutotuneState::averageWeighting(live_data_autotune_s& cylinder, const bilin
 			continue;
 		}
 
-		if (deadband > std::abs(runningAverage - originalValue)) {
+		if (deadband > std::abs(candidateAverage - originalValue)) {
 			runningAverage = originalValue;
 			continue;
 		}

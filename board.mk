@@ -8,7 +8,8 @@ else
                 $(BOARD_DIR)/board_etb_control.cpp \
                 $(BOARD_DIR)/board_etb_maps.cpp \
                 $(BOARD_DIR)/board_instant_accel_shot.cpp \
-                $(BOARD_DIR)/board_uds.cpp
+                $(BOARD_DIR)/board_uds.cpp \
+				$(BOARD_DIR)/board_autotune.cpp 
 endif
 
 BOARDINC += $(BOARD_DIR)/generated/controllers/generated
