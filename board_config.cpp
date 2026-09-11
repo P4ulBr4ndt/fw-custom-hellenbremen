@@ -2,6 +2,7 @@
 
 #include "board_can.h"
 #include "board_config.h"
+#include "board_autotune.h"
 
 #include <cstring>
 
@@ -143,6 +144,8 @@ void boardDefaultConfiguration() {
 	config->prgselPWMFreq = 32;
 	config->prgselPWMDuty = 30;
 	config->prgselActAfterTime = 180;
+
+	// TODO: Lambda Delay Table and respective bins
 }
 
 static void boardSanitizeConfig() {
@@ -325,39 +328,61 @@ void boardCustomInitHardware() {
 	cpcPin.initPin("CPC", config->cpcOutputPin);
 
 	harleyDetectedGearSensor.Register();
+
+	// Not strictly hardware, but does not fit for boardConfigOverrides()
+	autotuneState.initializeStates();
 }
 
 void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {
 	switch(index) {
-		case 0:
+		case 0x00:
 			setCfcForce(false);
 			break;
-		case 1:
+		case 0x01:
 			setCfcForce(true);
 			break;
-		case 2:
+		case 0x02:
 			setPrgselForce(false);
 			break;
-		case 3:
+		case 0x03:
 			setPrgselForce(true);
 			break;
-		case 4:
+		case 0x04:
 			setCcfcForce(false);
 			break;
-		case 5:
+		case 0x05:
 			setCcfcForce(true);
 			break;
-		case 6:
+		case 0x06:
 			setCpcForce(false);
 			break;
-		case 7:
+		case 0x07:
 			setCpcForce(true);
+			break;
+		case 0x08:
+			autotuneState.toggleRunning();
+			break;
+		case 0x09:
+			autotuneState.burningROM();
+			break;
+		case 0x0A:
+			autotuneState.applyingToRAM();
+			break;
+		case 0x0B:
+			autotuneState.prepareFetchData();
+			break;
+		case 0x0C:
+			config->autotuneFetchDataDone = false;
+			break;
+		default:
 			break;
 	}
 }
 
 void boardCustomOnConfigurationChange(engine_configuration_s* previousConfiguration) {
 	boardSanitizeConfig();
+
+	autotuneState.checkCyclicBufferSize();
 
 	if(!config->prgselActive) {
 		prgselPwm.setFrequency(NAN);
