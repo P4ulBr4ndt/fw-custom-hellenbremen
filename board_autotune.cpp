@@ -19,7 +19,7 @@ AutotuneState::~AutotuneState() {
 }
 
 void AutotuneState::initializeStates() {
-	engine->fuelClosedLoopCorrectionEnabled = true; // Not super nice
+	engineConfiguration->fuelClosedLoopCorrectionEnabled = true; // Not super nice
 
 	config->autotuneRunning = autotuneRunning;
 	config->autotuneFetchDataDone = autotuneFetchDataDone;
