@@ -91,7 +91,7 @@ int16_t[VE_LOAD_COUNT x VE_RPM_COUNT] autoscale veFrontTableDelta;;"%", 0.1, 0, 
 uint16_t[VE_LOAD_COUNT x VE_RPM_COUNT] autoscale veFrontTableHits;;"", 1, 0, 0, 65535, 1
 int16_t[VE_LOAD_COUNT x VE_RPM_COUNT] autoscale veRearTableDelta;;"%", 0.1, 0, -200, 200, 1
 uint16_t[VE_LOAD_COUNT x VE_RPM_COUNT] autoscale veRearTableHits;;"", 1, 0, 0, 65535, 1
-bit autotuneFetchDataDone,,;
+bit autotuneFetchDataDone,"Yes","No";
 
 uint16_t[LAMBDA_DELAY_LOAD_COUNT x LAMBDA_DELAY_RPM_COUNT] lambdaDelayTable;;"ms", 1, 0, 0, 640, 0
 uint16_t[LAMBDA_DELAY_RPM_COUNT] lambdaDelayRpmBins;;"RPM", 1, 0, 0, 18000, 0
