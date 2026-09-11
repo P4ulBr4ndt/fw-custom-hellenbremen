@@ -25,7 +25,7 @@ struct bilinear_cell_selection_s {
 struct live_data_autotune_s {
 	float veTable[VE_LOAD_COUNT][VE_RPM_COUNT];
 	float preTuneVeTable[VE_LOAD_COUNT][VE_RPM_COUNT];
-	float VeTableDelta[VE_LOAD_COUNT][VE_RPM_COUNT];
+	float veTableDelta[VE_LOAD_COUNT][VE_RPM_COUNT];
 
 	float    accumulatedWeight[VE_LOAD_COUNT][VE_RPM_COUNT];
 	uint16_t hitCount[VE_LOAD_COUNT][VE_RPM_COUNT];
@@ -56,6 +56,8 @@ public:
 	AutotuneState();
 	~AutotuneState();
 
+	void initializeStates();
+
 	void initializeLiveDataStructs();
 	void checkCyclicBufferSize();
 	
@@ -64,16 +66,18 @@ public:
 	void toggleRunning();
 	void applyingToRAM();
 	void burningROM();
+	void prepareFetchData();
 
 	void recordProcessing();
 	autotune_sample_s getProposedVECellValue(float frontMeasuredAFR, float rearMeasuredAFR, autotune_sample_s& sample);
 	void evaluateNewVECellValue(size_t idx); // Is size_t necessary? I don't need such big types here
 	void averageWeighting(live_data_autotune_s& cylinder, const bilinear_cell_selection_s& proposed);
 
-	bilinear_cell_selection_s bilinearCellSelection(float rpm, float fuelLoad, float veTable[VE_LOAD_COUNT][VE_RPM_COUNT]);
+	bilinear_cell_selection_s bilinearCellSelection(float rpm, float fuelLoad, float (&veTable)[VE_LOAD_COUNT][VE_RPM_COUNT]);
 
-	bool autotuneRunning = false;
-	bool autotuneTuneRan = false;
+	bool autotuneTuneRan       = false;
+	bool autotuneRunning       = false;
+	bool autotuneFetchDataDone = false;
 
 private:
 	// TODO: Make this configurable
@@ -101,6 +105,8 @@ private:
 	// depending on the choice of values in the Lambda delay table.
 	// Make this dynamic, maybe with a pointer? Requires adquate steps in
 	// AutotuneState, ~AutotuneState and checkCyclicBufferSize
+
+	// Currently, default size is 128 records, covering 128 * 5ms = 640 ms
 	cyclic_buffer<autotune_sample_s> autotuneHistory;
 
 };

@@ -18,6 +18,13 @@ AutotuneState::~AutotuneState() {
 	return;
 }
 
+void AutotuneState::initializeStates() {
+	engine->fuelClosedLoopCorrectionEnabled = true; // Not super nice
+
+	config->autotuneRunning = autotuneRunning;
+	config->autotuneFetchDataDone = autotuneFetchDataDone;
+}
+
 void AutotuneState::initializeLiveDataStructs() {
 	copyTable(rear.veTable,  config->veTable);
 	copyTable(front.veTable, config->veFrontTable);
@@ -27,6 +34,9 @@ void AutotuneState::initializeLiveDataStructs() {
 
 	setTable(rear.accumulatedWeight,  initialWeight);
 	setTable(front.accumulatedWeight, initialWeight);
+
+	setTable(rear.veTableDelta, 0.0f);
+	setTable(front.veTableDelta, 0.0f);
 
 	setTable(rear.hitCount,  (uint16_t)0);
 	setTable(front.hitCount, (uint16_t)0);
@@ -38,8 +48,8 @@ void AutotuneState::evaluateNewVECellValue(size_t idx) {
 	autotune_sample_s autotuneSample   = autotuneHistory.get(idx);
 	
 	const float clt       = Sensor::getOrZero(SensorType::Clt); // Also historic data?
-	const float frontAFR  = Sensor::getOrZero(SensorType::Lambda1) * 14.7f;
-	const float rearAFR   = Sensor::getOrZero(SensorType::Lambda2) * 14.7f;
+	const float rearAFR   = Sensor::getOrZero(SensorType::Lambda1) * 14.7f;
+	const float frontAFR  = Sensor::getOrZero(SensorType::Lambda2) * 14.7f;
 	const float targetLam = engine->fuelComputer.targetLambda;
 
 	float rpm = autotuneSample.rpm;
@@ -84,7 +94,9 @@ void AutotuneState::averageWeighting(live_data_autotune_s& cylinder, const bilin
 		float&    runningAverage    = cylinder.veTable[vote.loadIdx][vote.rpmIdx];
 		float&    accumulatedWeight = cylinder.accumulatedWeight[vote.loadIdx][vote.rpmIdx];
 		uint16_t& hitCount          = cylinder.hitCount[vote.loadIdx][vote.rpmIdx];
+		float&    tableDelta        = cylinder.veTableDelta[vote.loadIdx][vote.rpmIdx];
 		const float originalValue   = cylinder.preTuneVeTable[vote.loadIdx][vote.rpmIdx];
+
 
 		const float candidateAverage = (runningAverage * (accumulatedWeight + initialWeight) + vote.proposedValue * vote.weight)
 		                                / (accumulatedWeight + vote.weight + initialWeight);
@@ -105,6 +117,7 @@ void AutotuneState::averageWeighting(live_data_autotune_s& cylinder, const bilin
 		}
 
 		runningAverage    = candidateAverage;
+		tableDelta        = runningAverage - originalValue;
 		accumulatedWeight = clampF(0.0f, accumulatedWeight + vote.weight, maxWeight);
 		hitCount++;
 		
@@ -117,13 +130,18 @@ void AutotuneState::averageWeighting(live_data_autotune_s& cylinder, const bilin
 void AutotuneState::toggleRunning() {
 	if (autotuneRunning) {
 		autotuneRunning = false;
+		engineConfiguration->fuelClosedLoopCorrectionEnabled = true;
 	} else {
+		config->autotuneFetchDataDone = false;
 		checkCyclicBufferSize();
 		initializeLiveDataStructs();
 		autoApplyTimer.reset();
 
+		engineConfiguration->fuelClosedLoopCorrectionEnabled = false;
 		autotuneRunning = true;
 	}
+
+	config->autotuneRunning = autotuneRunning;
 
 	return;
 }
@@ -168,8 +186,7 @@ void AutotuneState::recordProcessing() {
 	return;
 }
 
-// TODO: (const) Pointer for veTable?
-bilinear_cell_selection_s AutotuneState::bilinearCellSelection(float rpm, float fuelLoad, float veTable[VE_LOAD_COUNT][VE_RPM_COUNT]) {
+bilinear_cell_selection_s AutotuneState::bilinearCellSelection(float rpm, float fuelLoad, float (&veTable)[VE_LOAD_COUNT][VE_RPM_COUNT]) {
 	bilinear_cell_selection_s selection;
 
 	const auto rpmBin      = priv::getBin(rpm,      config->veRpmBins);
@@ -243,7 +260,7 @@ void AutotuneState::checkHistory() {
 			continue;
 		}
 
-		// Negative elements cannot appear by design
+		// Negative elements cannot appear by design. If-Case obsolete?
 		if (sample.delayIndex > 0) {
 			sample.delayIndex--;
 		}
@@ -255,7 +272,7 @@ void AutotuneState::checkHistory() {
 	}
 
 	if(autoApplyTimer.hasElapsedSec(autoApplyTimerPeriod)) {
-		if(autoApplyEnabled) {
+		if(autoApplyEnabled && autotuneTuneRan) {
 			applyingToRAM();
 			autotuneTuneRan = false;
 		}
@@ -286,7 +303,6 @@ void AutotuneState::checkCyclicBufferSize() {
 		desiredSize = 1;
 	}
 
-	// TODO: cyclic_buffer clamped to 128?
 	// setSize() clears the buffer, so only touch it when the size actually needs to change -
 	// otherwise every unrelated config change would wipe out valid buffered history.
 	if ((size_t)autotuneHistory.getSize() != desiredSize) {
@@ -305,9 +321,23 @@ void AutotuneState::applyingToRAM() {
 
 void AutotuneState::burningROM() {
 	if(autotuneTuneRan && !autotuneRunning) {
+		applyingToRAM(); // Otherwise the tune doesn't land in config->veTable/veFrontTable
 		requestBurn();
 		autotuneTuneRan = false;
 	}
+
+	return;
+}
+
+void AutotuneState::prepareFetchData() {
+	copyTable(config->veFrontTableDelta, front.veTableDelta);
+	copyTable(config->veFrontTableHits,  front.hitCount);
+
+	copyTable(config->veRearTableDelta, rear.veTableDelta);
+	copyTable(config->veRearTableHits,  rear.hitCount);
+
+	
+	config->autotuneFetchDataDone = true;
 
 	return;
 }

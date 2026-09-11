@@ -328,6 +328,9 @@ void boardCustomInitHardware() {
 	cpcPin.initPin("CPC", config->cpcOutputPin);
 
 	harleyDetectedGearSensor.Register();
+
+	// Not strictly hardware, but does not fit for boardConfigOverrides()
+	autotuneState.initializeStates();
 }
 
 void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {
@@ -363,9 +366,15 @@ void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {
 			autotuneState.burningROM();
 			break;
 		case 0x0A:
-			autotuneState.applyToRam();
+			autotuneState.applyingToRAM();
 			break;
-		case 0x0B: //TODO: Trigger Data fetching for application
+		case 0x0B:
+			autotuneState.prepareFetchData();
+			break;
+		case 0x0C:
+			config->autotuneFetchDataDone = false;
+			break;
+		default:
 			break;
 	}
 }
