@@ -175,6 +175,7 @@ void boardDefaultConfiguration() {
 	config->autotuneMaxAFR = 20.0f;
 
 	config->autotuneAutoApply = false;
+	config->autotuneAutoBurn = false;
 	config->autotuneApplyPeriod = 15;
 }
 
