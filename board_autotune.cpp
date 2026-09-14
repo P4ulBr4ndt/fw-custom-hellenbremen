@@ -348,5 +348,11 @@ void AutotuneState::prepareFetchData() {
 }
 
 void AutotuneState::toggleAutoApply() {
+	if(autoApplyEnabled) {
+		autoApplyEnabled = false;
+	} else {
+		autoApplyEnabled = true;
+	}
 
+	config->autotuneAutoApply = autoApplyEnabled;
 }
