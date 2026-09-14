@@ -24,8 +24,6 @@ void AutotuneState::initializeStates() {
 
 	config->autotuneRunning = autotuneRunning;
 	config->autotuneFetchDataDone = autotuneFetchDataDone;
-	
-	autoApplyEnabled = config->autotuneAutoApply;
 }
 
 void AutotuneState::initializeLiveDataStructs() {
@@ -58,10 +56,10 @@ void AutotuneState::evaluateNewVECellValue(size_t idx) {
 	float rpm = autotuneSample.rpm;
 
 	// TODO: Also add Min TPS, Min VBatt (Engine running?), dTPS (?)
-	if (    rpm      < minRPM
-		|| (clt      < minCLT || clt      > maxCLT)
-		|| (frontAFR < minAFR || frontAFR > maxAFR)
-		|| (rearAFR  < minAFR || rearAFR  > maxAFR)
+	if (    rpm      < config->autotuneMinRPM
+		|| (clt      < config->autotuneMinETS || clt      > config->autotuneMaxETS)
+		|| (frontAFR < config->autotuneMinAFR || frontAFR > config->autotuneMaxAFR)
+		|| (rearAFR  < config->autotuneMinAFR || rearAFR  > config->autotuneMaxAFR)
 	    || targetLam == 0.0f  || std::isnan(targetLam)) {
 		return;
 	}
@@ -274,8 +272,8 @@ void AutotuneState::checkHistory() {
 		}
 	}
 
-	if(autoApplyTimer.hasElapsedSec(autoApplyTimerPeriod)) {
-		if(autoApplyEnabled && autotuneTuneRan) {
+	if(autoApplyTimer.hasElapsedSec(config->autotuneApplyPeriod)) {
+		if(config->autotuneAutoApply && autotuneTuneRan) {
 			applyingToRAM();
 			autotuneTuneRan = false;
 		}
@@ -348,11 +346,5 @@ void AutotuneState::prepareFetchData() {
 }
 
 void AutotuneState::toggleAutoApply() {
-	if(autoApplyEnabled) {
-		autoApplyEnabled = false;
-	} else {
-		autoApplyEnabled = true;
-	}
-
-	config->autotuneAutoApply = autoApplyEnabled;
+	config->autotuneAutoApply = !config->autotuneAutoApply;
 }

@@ -89,15 +89,7 @@ private:
 	const float maxAbsoluteChange = 50.0f;
 	const float maxPercentageChange = 50.0f;
 
-	const uint16_t minRPM = 700.0;
-	const float    minCLT = 70.0f;
-	const float    maxCLT = 140.0f;
-	const float    minAFR = 8.0f;
-	const float    maxAFR = 20.0f;
-
 	Timer autoApplyTimer;
-	const float autoApplyTimerPeriod = 15.0f;
-	bool autoApplyEnabled = true;
 
 	live_data_autotune_s front;
 	live_data_autotune_s rear;

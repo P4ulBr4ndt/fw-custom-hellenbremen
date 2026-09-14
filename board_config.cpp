@@ -167,7 +167,15 @@ void boardDefaultConfiguration() {
 	config->lambdaDelayTable[2][1] = 70;  // load=100, rpm=2190
 	config->lambdaDelayTable[2][2] = 40;  // load=100, rpm=6500
 
+	// Autotune conditions
+	config->autotuneMinRPM = 700;
+	config->autotuneMinETS = 70;
+	config->autotuneMaxETS = 140;
+	config->autotuneMinAFR = 8.0f;
+	config->autotuneMaxAFR = 20.0f;
+
 	config->autotuneAutoApply = false;
+	config->autotuneApplyPeriod = 15;
 }
 
 static void boardSanitizeConfig() {

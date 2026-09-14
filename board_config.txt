@@ -101,4 +101,11 @@ uint16_t[LAMBDA_DELAY_LOAD_COUNT x LAMBDA_DELAY_RPM_COUNT] lambdaDelayTable;;"ms
 uint16_t[LAMBDA_DELAY_RPM_COUNT] lambdaDelayRpmBins;;"RPM", 1, 0, 0, 18000, 0
 uint16_t[LAMBDA_DELAY_LOAD_COUNT] lambdaDelayLoadBins;;"%", 1, 0, 0, 100, 0
 
+uint16_t autotuneMinRPM;;"RPM", 1, 0, 0, 18000, 0
+int16_t  autotuneMinETS;;"C", 1, 0, -40, 250, 0
+int16_t  autotuneMaxETS;;"C", 1, 0, -40, 250, 0
+uint16_t autoscale autotuneMinAFR;;"AFR", 0.1, 0, 0, 25, 1
+uint16_t autoscale autotuneMaxAFR;;"AFR", 0.1, 0, 0, 25, 1
+uint16_t autotuneApplyPeriod;;"sec", 1, 0, 1, 300, 0
+
 uint16_t outputPinsAlignFill;
