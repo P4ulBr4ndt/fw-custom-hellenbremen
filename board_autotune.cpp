@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "tunerstudio.h"
 #include "table_helper.h"
+#include "airmass.h"
 #include "board_autotune.h"
 
 AutotuneState autotuneState;
@@ -150,7 +151,7 @@ void AutotuneState::recordProcessing() {
 	autotune_sample_s sample;
 
 	sample.rpm       = Sensor::getOrZero(SensorType::Rpm);
-	sample.fuelLoad  = getFuelingLoad();
+	sample.fuelLoad  = getVeLoadAxis(engineConfiguration->veOverrideMode, getFuelingLoad());
 
 	sample.correctionRear  = 100.0f * engine->engineState.stftCorrection[0];
 	sample.correctionFront = 100.0f * engine->engineState.stftCorrection[1];
