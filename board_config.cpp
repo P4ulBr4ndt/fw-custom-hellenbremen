@@ -146,7 +146,27 @@ void boardDefaultConfiguration() {
 	config->prgselActAfterTime = 180;
 
 	// Autotune
-	// TODO: Lambda Delay Table and respective bins
+	// RPM bins
+	config->lambdaDelayRpmBins[0] = 800;
+	config->lambdaDelayRpmBins[1] = 2190;
+	config->lambdaDelayRpmBins[2] = 6500;
+
+	// Load bins - TPS%, matching this engine's VE table load override (veOverrideMode = VE_TPS)
+	config->lambdaDelayLoadBins[0] = 2;
+	config->lambdaDelayLoadBins[1] = 35;
+	config->lambdaDelayLoadBins[2] = 100;
+
+	// [load][rpm], ms
+	config->lambdaDelayTable[0][0] = 350; // load=2,   rpm=800
+	config->lambdaDelayTable[0][1] = 300; // load=2,   rpm=2190
+	config->lambdaDelayTable[0][2] = 20;  // load=2,   rpm=6500
+	config->lambdaDelayTable[1][0] = 250; // load=35,  rpm=800
+	config->lambdaDelayTable[1][1] = 150; // load=35,  rpm=2190
+	config->lambdaDelayTable[1][2] = 100; // load=35,  rpm=6500
+	config->lambdaDelayTable[2][0] = 200; // load=100, rpm=800
+	config->lambdaDelayTable[2][1] = 70;  // load=100, rpm=2190
+	config->lambdaDelayTable[2][2] = 40;  // load=100, rpm=6500
+
 	config->autotuneAutoApply = false;
 }
 
