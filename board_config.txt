@@ -87,6 +87,7 @@ output_pin_e cpcOutputPin;
 output_pin_e prgselOutputPin;
 
 bit autotuneRunning,"Yes","No";
+bit autotuneAutoApply,"Yes","No";
 
 uint16_t[VE_LOAD_COUNT x VE_RPM_COUNT] autoscale veFrontTableTmp;;"%", 0.1, 0, 0, 200, 1
 int16_t[VE_LOAD_COUNT x VE_RPM_COUNT] autoscale veFrontTableDelta;;"%", 0.1, 0, -200, 200, 1

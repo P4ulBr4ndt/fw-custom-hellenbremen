@@ -145,7 +145,9 @@ void boardDefaultConfiguration() {
 	config->prgselPWMDuty = 30;
 	config->prgselActAfterTime = 180;
 
+	// Autotune
 	// TODO: Lambda Delay Table and respective bins
+	config->autotuneAutoApply = false;
 }
 
 static void boardSanitizeConfig() {
@@ -373,6 +375,9 @@ void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {
 			break;
 		case 0x0C:
 			config->autotuneFetchDataDone = false;
+			break;
+		case 0x0D:
+			autotuneState.toggleAutoApply();
 			break;
 		default:
 			break;

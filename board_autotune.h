@@ -64,6 +64,7 @@ public:
 	void checkHistory();
 	
 	void toggleRunning();
+	void toggleAutoApply();
 	void applyingToRAM();
 	void burningROM();
 	void prepareFetchData();

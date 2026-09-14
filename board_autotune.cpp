@@ -24,6 +24,8 @@ void AutotuneState::initializeStates() {
 
 	config->autotuneRunning = autotuneRunning;
 	config->autotuneFetchDataDone = autotuneFetchDataDone;
+	
+	autoApplyEnabled = config->autotuneAutoApply;
 }
 
 void AutotuneState::initializeLiveDataStructs() {
@@ -343,4 +345,8 @@ void AutotuneState::prepareFetchData() {
 	config->autotuneFetchDataDone = true;
 
 	return;
+}
+
+void AutotuneState::toggleAutoApply() {
+
 }
