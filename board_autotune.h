@@ -83,9 +83,6 @@ public:
 	bool autotuneFetchDataDone = false;
 
 private:
-	const float maxAbsoluteChange = 50.0f;
-	const float maxPercentageChange = 50.0f;
-
 	Timer autoApplyTimer;
 
 	live_data_autotune_s front;

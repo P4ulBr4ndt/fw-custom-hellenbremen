@@ -210,6 +210,9 @@ void boardDefaultConfiguration() {
 	config->autotuneActiveWeightThreshold = config->autotuneNormalWeightThreshold;
 	config->autotuneActiveDeadband = config->autotuneNormalDeadband;
 	config->autotuneActiveMaxWeight = config->autotuneNormalMaxWeight;
+
+	config->autotuneMaxAbsoluteChange = 50.0f;
+	config->autotuneMaxPercentageChange = 50.0f;
 }
 
 static void boardSanitizeConfig() {

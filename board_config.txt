@@ -138,6 +138,9 @@ custom autotuneLearningRate_e 1 bits, U08, @OFFSET@, [0:2], "Very Slow", "Slow",
 
 autotuneLearningRate_e autotuneLearningRate;Learning rate preset applied to the active parameters below, refreshed after every burn;
 
+float autotuneMaxAbsoluteChange;;"", 1, 0, 0, 300, 1
+float autotuneMaxPercentageChange;;"%", 1, 0, 0, 100, 1
+
 float autotuneActiveInitialWeight;;"", 1, 0, 0, 1000, 2
 float autotuneActiveWeightThreshold;;"", 1, 0, 0, 10, 2
 float autotuneActiveDeadband;;"", 1, 0, 0, 100, 2

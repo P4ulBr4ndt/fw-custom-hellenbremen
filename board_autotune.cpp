@@ -105,11 +105,11 @@ void AutotuneState::averageWeighting(live_data_autotune_s& cylinder, const bilin
 
 		// Guard rails compare against the frozen original value, not the running average,
 		// so a cell can never drift further than these bounds from where the session started.
-		if (std::abs(candidateAverage - originalValue) > maxAbsoluteChange) {
+		if (std::abs(candidateAverage - originalValue) > config->autotuneMaxAbsoluteChange) {
 			continue;
 		}
 		if (originalValue != 0.0f
-			&& std::abs(candidateAverage - originalValue) / originalValue * 100.0f > maxPercentageChange) {
+			&& std::abs(candidateAverage - originalValue) / originalValue * 100.0f > config->autotuneMaxPercentageChange) {
 			continue;
 		}
 
