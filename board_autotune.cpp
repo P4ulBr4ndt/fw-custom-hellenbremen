@@ -53,7 +53,7 @@ void AutotuneState::evaluateNewVECellValue(size_t idx) {
 	const float frontAFR  = Sensor::getOrZero(SensorType::Lambda2) * 14.7f;
 	const float targetLam = engine->fuelComputer.targetLambda;
 
-	float rpm = autotuneSample.rpm;
+	const float rpm = autotuneSample.rpm;
 
 	// TODO: Also add Min TPS, Min VBatt (Engine running?), dTPS (?)
 	if (    rpm      < config->autotuneMinRPM
