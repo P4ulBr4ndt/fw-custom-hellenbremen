@@ -59,7 +59,8 @@ void AutotuneState::evaluateNewVECellValue(size_t idx) {
 		|| (clt      < config->autotuneMinETS || clt      > config->autotuneMaxETS)
 		|| (frontAFR < config->autotuneMinAFR || frontAFR > config->autotuneMaxAFR)
 		|| (rearAFR  < config->autotuneMinAFR || rearAFR  > config->autotuneMaxAFR)
-	    || autotuneSample.targetAFR == 0.0f  || std::isnan(autotuneSample.targetAFR)) {
+	    || autotuneSample.targetAFR == 0.0f  || std::isnan(autotuneSample.targetAFR)
+	    || engine->module<TpsAccelEnrichment>()->isAboveAccelThreshold) {
 		return;
 	}
 
