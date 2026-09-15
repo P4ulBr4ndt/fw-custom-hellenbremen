@@ -167,8 +167,8 @@ void AutotuneState::recordProcessing() {
 	sample.correctionRear  = 100.0f * engine->engineState.stftCorrection[0];
 	sample.correctionFront = 100.0f * engine->engineState.stftCorrection[1];
 
-	sample.frontCellSelection = bilinearCellSelection(sample.rpm, sample.fuelLoad, front.veTable);
-	sample.rearCellSelection  = bilinearCellSelection(sample.rpm, sample.fuelLoad, rear.veTable);
+	sample.frontCellSelection = bilinearCellSelection(sample.rpm, sample.fuelLoad, config->veFrontTable);
+	sample.rearCellSelection  = bilinearCellSelection(sample.rpm, sample.fuelLoad, config->veTable);
 
 	// x - load, y - rpm, matching the same row/column convention as veTable itself
 	float delayMs = interpolate3d(
@@ -198,7 +198,7 @@ void AutotuneState::recordProcessing() {
 	return;
 }
 
-bilinear_cell_selection_s AutotuneState::bilinearCellSelection(float rpm, float fuelLoad, float (&veTable)[VE_LOAD_COUNT][VE_RPM_COUNT]) {
+bilinear_cell_selection_s AutotuneState::bilinearCellSelection(float rpm, float fuelLoad, scaled_channel<uint16_t, 10, 1> (&veTable)[VE_LOAD_COUNT][VE_RPM_COUNT]) {
 	bilinear_cell_selection_s selection;
 
 	const auto rpmBin      = priv::getBin(rpm,      config->veRpmBins);

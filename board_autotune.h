@@ -74,7 +74,7 @@ public:
 	void evaluateNewVECellValue(size_t idx); // Is size_t necessary? I don't need such big types here
 	void averageWeighting(live_data_autotune_s& cylinder, const bilinear_cell_selection_s& proposed);
 
-	bilinear_cell_selection_s bilinearCellSelection(float rpm, float fuelLoad, float (&veTable)[VE_LOAD_COUNT][VE_RPM_COUNT]);
+	bilinear_cell_selection_s bilinearCellSelection(float rpm, float fuelLoad, scaled_channel<uint16_t, 10, 1> (&veTable)[VE_LOAD_COUNT][VE_RPM_COUNT]);
 
 	bool autotuneTuneRan       = false;
 	bool autotuneRunning       = false;
