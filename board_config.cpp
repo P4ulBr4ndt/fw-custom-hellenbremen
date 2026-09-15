@@ -3,6 +3,7 @@
 #include "board_can.h"
 #include "board_config.h"
 #include "board_autotune.h"
+#include "board_types.h"
 
 #include <cstring>
 
@@ -177,6 +178,38 @@ void boardDefaultConfiguration() {
 	config->autotuneAutoApply = false;
 	config->autotuneAutoBurn = false;
 	config->autotuneApplyPeriod = 15;
+
+	// Autotune learning rate presets
+	config->autotuneVerySlowInitialWeight = 100.0f;
+	config->autotuneVerySlowWeightThreshold = 0.25f;
+	config->autotuneVerySlowDeadband = 1.0f;
+	config->autotuneVerySlowMaxWeight = 100000.0f;
+
+	config->autotuneSlowInitialWeight = 20.0f;
+	config->autotuneSlowWeightThreshold = 0.1f;
+	config->autotuneSlowDeadband = 1.0f;
+	config->autotuneSlowMaxWeight = 1000.0f;
+
+	config->autotuneNormalInitialWeight = 5.0f;
+	config->autotuneNormalWeightThreshold = 0.0f;
+	config->autotuneNormalDeadband = 0.0f;
+	config->autotuneNormalMaxWeight = 300.0f;
+
+	config->autotuneFastInitialWeight = 3.0f;
+	config->autotuneFastWeightThreshold = 0.0f;
+	config->autotuneFastDeadband = 0.0f;
+	config->autotuneFastMaxWeight = 100.0f;
+
+	config->autotuneVeryFastInitialWeight = 0.5f;
+	config->autotuneVeryFastWeightThreshold = 0.0f;
+	config->autotuneVeryFastDeadband = 0.0f;
+	config->autotuneVeryFastMaxWeight = 5.0f;
+
+	config->autotuneLearningRate = autotuneLearningRate_e::Normal;
+	config->autotuneActiveInitialWeight = config->autotuneNormalInitialWeight;
+	config->autotuneActiveWeightThreshold = config->autotuneNormalWeightThreshold;
+	config->autotuneActiveDeadband = config->autotuneNormalDeadband;
+	config->autotuneActiveMaxWeight = config->autotuneNormalMaxWeight;
 }
 
 static void boardSanitizeConfig() {
@@ -417,6 +450,7 @@ void boardCustomOnConfigurationChange(engine_configuration_s* previousConfigurat
 	boardSanitizeConfig();
 
 	autotuneState.checkCyclicBufferSize();
+	autotuneState.applyLearningRatePreset();
 
 	if(!config->prgselActive) {
 		prgselPwm.setFrequency(NAN);

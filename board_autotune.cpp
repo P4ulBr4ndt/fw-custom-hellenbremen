@@ -2,6 +2,7 @@
 #include "tunerstudio.h"
 #include "table_helper.h"
 #include "airmass.h"
+#include "board_types.h"
 #include "board_autotune.h"
 
 AutotuneState autotuneState;
@@ -33,8 +34,8 @@ void AutotuneState::initializeLiveDataStructs() {
 	copyTable(rear.preTuneVeTable,  config->veTable);
 	copyTable(front.preTuneVeTable, config->veFrontTable);
 
-	setTable(rear.accumulatedWeight,  initialWeight);
-	setTable(front.accumulatedWeight, initialWeight);
+	setTable(rear.accumulatedWeight,  config->autotuneActiveInitialWeight);
+	setTable(front.accumulatedWeight, config->autotuneActiveInitialWeight);
 
 	setTable(rear.veTableDelta, 0.0f);
 	setTable(front.veTableDelta, 0.0f);
@@ -88,7 +89,7 @@ void AutotuneState::averageWeighting(live_data_autotune_s& cylinder, const bilin
 	};
 
 	for (const auto& vote : votes) {
-		if (vote.weight <= weightThreshold) {
+		if (vote.weight <= config->autotuneActiveWeightThreshold) {
 			continue;
 		}
 
@@ -99,8 +100,8 @@ void AutotuneState::averageWeighting(live_data_autotune_s& cylinder, const bilin
 		const float originalValue   = cylinder.preTuneVeTable[vote.loadIdx][vote.rpmIdx];
 
 
-		const float candidateAverage = (runningAverage * (accumulatedWeight + initialWeight) + vote.proposedValue * vote.weight)
-		                                / (accumulatedWeight + vote.weight + initialWeight);
+		const float candidateAverage = (runningAverage * (accumulatedWeight + config->autotuneActiveInitialWeight) + vote.proposedValue * vote.weight)
+		                                / (accumulatedWeight + vote.weight + config->autotuneActiveInitialWeight);
 
 		// Guard rails compare against the frozen original value, not the running average,
 		// so a cell can never drift further than these bounds from where the session started.
@@ -112,14 +113,14 @@ void AutotuneState::averageWeighting(live_data_autotune_s& cylinder, const bilin
 			continue;
 		}
 
-		if (deadband > std::abs(candidateAverage - originalValue)) {
+		if (config->autotuneActiveDeadband > std::abs(candidateAverage - originalValue)) {
 			runningAverage = originalValue;
 			continue;
 		}
 
 		runningAverage    = candidateAverage;
 		tableDelta        = runningAverage - originalValue;
-		accumulatedWeight = clampF(0.0f, accumulatedWeight + vote.weight, maxWeight);
+		accumulatedWeight = clampF(0.0f, accumulatedWeight + vote.weight, config->autotuneActiveMaxWeight);
 		hitCount++;
 		
 		autotuneTuneRan = true;
@@ -346,4 +347,41 @@ void AutotuneState::prepareFetchData() {
 
 void AutotuneState::toggleAutoApply() {
 	config->autotuneAutoApply = !config->autotuneAutoApply;
+}
+
+void AutotuneState::applyLearningRatePreset() {
+	switch (config->autotuneLearningRate) {
+	case autotuneLearningRate_e::VerySlow:
+		config->autotuneActiveInitialWeight   = config->autotuneVerySlowInitialWeight;
+		config->autotuneActiveWeightThreshold = config->autotuneVerySlowWeightThreshold;
+		config->autotuneActiveDeadband        = config->autotuneVerySlowDeadband;
+		config->autotuneActiveMaxWeight       = config->autotuneVerySlowMaxWeight;
+		break;
+	case autotuneLearningRate_e::Slow:
+		config->autotuneActiveInitialWeight   = config->autotuneSlowInitialWeight;
+		config->autotuneActiveWeightThreshold = config->autotuneSlowWeightThreshold;
+		config->autotuneActiveDeadband        = config->autotuneSlowDeadband;
+		config->autotuneActiveMaxWeight       = config->autotuneSlowMaxWeight;
+		break;
+	case autotuneLearningRate_e::Normal:
+		config->autotuneActiveInitialWeight   = config->autotuneNormalInitialWeight;
+		config->autotuneActiveWeightThreshold = config->autotuneNormalWeightThreshold;
+		config->autotuneActiveDeadband        = config->autotuneNormalDeadband;
+		config->autotuneActiveMaxWeight       = config->autotuneNormalMaxWeight;
+		break;
+	case autotuneLearningRate_e::Fast:
+		config->autotuneActiveInitialWeight   = config->autotuneFastInitialWeight;
+		config->autotuneActiveWeightThreshold = config->autotuneFastWeightThreshold;
+		config->autotuneActiveDeadband        = config->autotuneFastDeadband;
+		config->autotuneActiveMaxWeight       = config->autotuneFastMaxWeight;
+		break;
+	case autotuneLearningRate_e::VeryFast:
+		config->autotuneActiveInitialWeight   = config->autotuneVeryFastInitialWeight;
+		config->autotuneActiveWeightThreshold = config->autotuneVeryFastWeightThreshold;
+		config->autotuneActiveDeadband        = config->autotuneVeryFastDeadband;
+		config->autotuneActiveMaxWeight       = config->autotuneVeryFastMaxWeight;
+		break;
+	default:
+		break;
+	}
 }

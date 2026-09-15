@@ -74,6 +74,7 @@ public:
 	autotune_sample_s getProposedVECellValue(float frontMeasuredAFR, float rearMeasuredAFR, autotune_sample_s& sample);
 	void evaluateNewVECellValue(size_t idx); // Is size_t necessary? I don't need such big types here
 	void averageWeighting(live_data_autotune_s& cylinder, const bilinear_cell_selection_s& proposed);
+	void applyLearningRatePreset();
 
 	bilinear_cell_selection_s bilinearCellSelection(float rpm, float fuelLoad, scaled_channel<uint16_t, 10, 1> (&veTable)[VE_LOAD_COUNT][VE_RPM_COUNT]);
 
@@ -82,11 +83,9 @@ public:
 	bool autotuneFetchDataDone = false;
 
 private:
-	// TODO: Make this configurable
-	const float initialWeight = 5.0f; 
-	const float weightThreshold = 0.0f;
-	const float deadband = 0.0f;
-	const float maxWeight = 100.0f;
+	// Initial weight, weightThreshold, deadband and maxWeight live in config-> as
+	// autotuneActive*, refreshed from the selected Learning Rate preset by
+	// applyLearningRatePreset() - see board_config.cpp:boardCustomOnConfigurationChange().
 	const float maxAbsoluteChange = 50.0f;
 	const float maxPercentageChange = 50.0f;
 

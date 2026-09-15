@@ -109,4 +109,36 @@ uint16_t autoscale autotuneMinAFR;;"AFR", 0.1, 0, 0, 25, 1
 uint16_t autoscale autotuneMaxAFR;;"AFR", 0.1, 0, 0, 25, 1
 uint16_t autotuneApplyPeriod;;"sec", 1, 0, 1, 300, 0
 
+float autotuneVerySlowInitialWeight;;"", 1, 0, 0, 1000, 2
+float autotuneVerySlowWeightThreshold;;"", 1, 0, 0, 10, 2
+float autotuneVerySlowDeadband;;"", 1, 0, 0, 100, 2
+float autotuneVerySlowMaxWeight;;"", 1, 0, 0, 1000000, 1
+
+float autotuneSlowInitialWeight;;"", 1, 0, 0, 1000, 2
+float autotuneSlowWeightThreshold;;"", 1, 0, 0, 10, 2
+float autotuneSlowDeadband;;"", 1, 0, 0, 100, 2
+float autotuneSlowMaxWeight;;"", 1, 0, 0, 1000000, 1
+
+float autotuneNormalInitialWeight;;"", 1, 0, 0, 1000, 2
+float autotuneNormalWeightThreshold;;"", 1, 0, 0, 10, 2
+float autotuneNormalDeadband;;"", 1, 0, 0, 100, 2
+float autotuneNormalMaxWeight;;"", 1, 0, 0, 1000000, 1
+
+float autotuneFastInitialWeight;;"", 1, 0, 0, 1000, 2
+float autotuneFastWeightThreshold;;"", 1, 0, 0, 10, 2
+float autotuneFastDeadband;;"", 1, 0, 0, 100, 2
+float autotuneFastMaxWeight;;"", 1, 0, 0, 1000000, 1
+
+float autotuneVeryFastInitialWeight;;"", 1, 0, 0, 1000, 2
+float autotuneVeryFastWeightThreshold;;"", 1, 0, 0, 10, 2
+float autotuneVeryFastDeadband;;"", 1, 0, 0, 100, 2
+float autotuneVeryFastMaxWeight;;"", 1, 0, 0, 1000000, 1
+
+autotuneLearningRate_e autotuneLearningRate;Learning rate preset applied to the active parameters below, refreshed after every burn;
+
+float autotuneActiveInitialWeight;;"", 1, 0, 0, 1000, 2
+float autotuneActiveWeightThreshold;;"", 1, 0, 0, 10, 2
+float autotuneActiveDeadband;;"", 1, 0, 0, 100, 2
+float autotuneActiveMaxWeight;;"", 1, 0, 0, 1000000, 1
+
 uint16_t outputPinsAlignFill;
