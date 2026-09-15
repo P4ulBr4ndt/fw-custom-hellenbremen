@@ -83,9 +83,6 @@ public:
 	bool autotuneFetchDataDone = false;
 
 private:
-	// Initial weight, weightThreshold, deadband and maxWeight live in config-> as
-	// autotuneActive*, refreshed from the selected Learning Rate preset by
-	// applyLearningRatePreset() - see board_config.cpp:boardCustomOnConfigurationChange().
 	const float maxAbsoluteChange = 50.0f;
 	const float maxPercentageChange = 50.0f;
 
