@@ -51,7 +51,6 @@ void AutotuneState::evaluateNewVECellValue(size_t idx) {
 	const float clt       = Sensor::getOrZero(SensorType::Clt); // Also historic data?
 	const float rearAFR   = Sensor::getOrZero(SensorType::Lambda1) * 14.7f;
 	const float frontAFR  = Sensor::getOrZero(SensorType::Lambda2) * 14.7f;
-	const float targetLam = engine->fuelComputer.targetLambda;
 
 	const float rpm = autotuneSample.rpm;
 
@@ -60,7 +59,7 @@ void AutotuneState::evaluateNewVECellValue(size_t idx) {
 		|| (clt      < config->autotuneMinETS || clt      > config->autotuneMaxETS)
 		|| (frontAFR < config->autotuneMinAFR || frontAFR > config->autotuneMaxAFR)
 		|| (rearAFR  < config->autotuneMinAFR || rearAFR  > config->autotuneMaxAFR)
-	    || targetLam == 0.0f  || std::isnan(targetLam)) {
+	    || autotuneSample.targetAFR == 0.0f  || std::isnan(autotuneSample.targetAFR)) {
 		return;
 	}
 
