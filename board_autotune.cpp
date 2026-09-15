@@ -163,6 +163,7 @@ void AutotuneState::recordProcessing() {
 
 	sample.rpm       = Sensor::getOrZero(SensorType::Rpm);
 	sample.fuelLoad  = getVeLoadAxis(engineConfiguration->veOverrideMode, getFuelingLoad());
+	sample.targetAFR = engine->fuelComputer.targetLambda * 14.7f;
 
 	sample.correctionRear  = 100.0f * engine->engineState.stftCorrection[0];
 	sample.correctionFront = 100.0f * engine->engineState.stftCorrection[1];
@@ -229,10 +230,8 @@ autotune_sample_s AutotuneState::getProposedVECellValue(float frontMeasuredAFR, 
 	// Initialize from sample, so every other value is set
 	autotune_sample_s proposedVESelection = sample;
 
-	const float targetAFR = engine->fuelComputer.targetLambda * 14.7f;
-
-	const float frontCorrectionFactor = (sample.correctionFront / 100.0f) * (frontMeasuredAFR / targetAFR);
-	const float rearCorrectionFactor  = (sample.correctionRear  / 100.0f) * (rearMeasuredAFR / targetAFR);
+	const float frontCorrectionFactor = (sample.correctionFront / 100.0f) * (frontMeasuredAFR / sample.targetAFR);
+	const float rearCorrectionFactor  = (sample.correctionRear  / 100.0f) * (rearMeasuredAFR / sample.targetAFR);
 
 	const float frontCellInterpolated =
 		sample.frontCellSelection.cell00 * sample.frontCellSelection.cell00Weight +

@@ -36,6 +36,7 @@ struct live_data_autotune_s {
 struct autotune_sample_s {
 	float   rpm;
 	float   fuelLoad;
+	float   targetAFR;
 	
 	float   correctionFront;
 	float   correctionRear;
