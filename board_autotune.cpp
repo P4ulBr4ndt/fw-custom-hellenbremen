@@ -66,6 +66,17 @@ void AutotuneState::evaluateNewVECellValue(size_t idx) {
 
 	autotune_sample_s proposedVEValues = getProposedVECellValue(frontAFR, rearAFR, autotuneSample);
 
+	efiPrintf("Autotune proposal front: load[%d,%d] rpm[%d,%d] cells=%.2f/%.2f/%.2f/%.2f",
+		(int)proposedVEValues.frontCellSelection.loadIdx0, (int)proposedVEValues.frontCellSelection.loadIdx1,
+		(int)proposedVEValues.frontCellSelection.rpmIdx0,  (int)proposedVEValues.frontCellSelection.rpmIdx1,
+		proposedVEValues.frontCellSelection.cell00, proposedVEValues.frontCellSelection.cell01,
+		proposedVEValues.frontCellSelection.cell10, proposedVEValues.frontCellSelection.cell11);
+	efiPrintf("Autotune proposal rear:  load[%d,%d] rpm[%d,%d] cells=%.2f/%.2f/%.2f/%.2f",
+		(int)proposedVEValues.rearCellSelection.loadIdx0, (int)proposedVEValues.rearCellSelection.loadIdx1,
+		(int)proposedVEValues.rearCellSelection.rpmIdx0,  (int)proposedVEValues.rearCellSelection.rpmIdx1,
+		proposedVEValues.rearCellSelection.cell00, proposedVEValues.rearCellSelection.cell01,
+		proposedVEValues.rearCellSelection.cell10, proposedVEValues.rearCellSelection.cell11);
+
 	averageWeighting(front, proposedVEValues.frontCellSelection);
 	averageWeighting(rear,  proposedVEValues.rearCellSelection);
 	
