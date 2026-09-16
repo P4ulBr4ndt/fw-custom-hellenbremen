@@ -352,37 +352,37 @@ void AutotuneState::toggleAutoApply() {
 	config->autotuneAutoApply = !config->autotuneAutoApply;
 }
 
-void AutotuneState::applyLearningRatePreset() {
-	switch (config->autotuneLearningRate) {
-	case autotuneLearningRate_e::VerySlow:
-		config->autotuneActiveInitialWeight   = config->autotuneVerySlowInitialWeight;
-		config->autotuneActiveWeightThreshold = config->autotuneVerySlowWeightThreshold;
-		config->autotuneActiveDeadband        = config->autotuneVerySlowDeadband;
-		config->autotuneActiveMaxWeight       = config->autotuneVerySlowMaxWeight;
+void AutotuneState::applyCellChangeResistancePreset() {
+	switch (config->autotuneCellChangeResistance) {
+	case autotuneCellChangeResistance_e::VeryHigh:
+		config->autotuneActiveInitialWeight   = config->autotuneVeryHighInitialWeight;
+		config->autotuneActiveWeightThreshold = config->autotuneVeryHighWeightThreshold;
+		config->autotuneActiveDeadband        = config->autotuneVeryHighDeadband;
+		config->autotuneActiveMaxWeight       = config->autotuneVeryHighMaxWeight;
 		break;
-	case autotuneLearningRate_e::Slow:
-		config->autotuneActiveInitialWeight   = config->autotuneSlowInitialWeight;
-		config->autotuneActiveWeightThreshold = config->autotuneSlowWeightThreshold;
-		config->autotuneActiveDeadband        = config->autotuneSlowDeadband;
-		config->autotuneActiveMaxWeight       = config->autotuneSlowMaxWeight;
+	case autotuneCellChangeResistance_e::High:
+		config->autotuneActiveInitialWeight   = config->autotuneHighInitialWeight;
+		config->autotuneActiveWeightThreshold = config->autotuneHighWeightThreshold;
+		config->autotuneActiveDeadband        = config->autotuneHighDeadband;
+		config->autotuneActiveMaxWeight       = config->autotuneHighMaxWeight;
 		break;
-	case autotuneLearningRate_e::Normal:
+	case autotuneCellChangeResistance_e::Normal:
 		config->autotuneActiveInitialWeight   = config->autotuneNormalInitialWeight;
 		config->autotuneActiveWeightThreshold = config->autotuneNormalWeightThreshold;
 		config->autotuneActiveDeadband        = config->autotuneNormalDeadband;
 		config->autotuneActiveMaxWeight       = config->autotuneNormalMaxWeight;
 		break;
-	case autotuneLearningRate_e::Fast:
-		config->autotuneActiveInitialWeight   = config->autotuneFastInitialWeight;
-		config->autotuneActiveWeightThreshold = config->autotuneFastWeightThreshold;
-		config->autotuneActiveDeadband        = config->autotuneFastDeadband;
-		config->autotuneActiveMaxWeight       = config->autotuneFastMaxWeight;
+	case autotuneCellChangeResistance_e::Low:
+		config->autotuneActiveInitialWeight   = config->autotuneLowInitialWeight;
+		config->autotuneActiveWeightThreshold = config->autotuneLowWeightThreshold;
+		config->autotuneActiveDeadband        = config->autotuneLowDeadband;
+		config->autotuneActiveMaxWeight       = config->autotuneLowMaxWeight;
 		break;
-	case autotuneLearningRate_e::VeryFast:
-		config->autotuneActiveInitialWeight   = config->autotuneVeryFastInitialWeight;
-		config->autotuneActiveWeightThreshold = config->autotuneVeryFastWeightThreshold;
-		config->autotuneActiveDeadband        = config->autotuneVeryFastDeadband;
-		config->autotuneActiveMaxWeight       = config->autotuneVeryFastMaxWeight;
+	case autotuneCellChangeResistance_e::VeryLow:
+		config->autotuneActiveInitialWeight   = config->autotuneVeryLowInitialWeight;
+		config->autotuneActiveWeightThreshold = config->autotuneVeryLowWeightThreshold;
+		config->autotuneActiveDeadband        = config->autotuneVeryLowDeadband;
+		config->autotuneActiveMaxWeight       = config->autotuneVeryLowMaxWeight;
 		break;
 	default:
 		break;

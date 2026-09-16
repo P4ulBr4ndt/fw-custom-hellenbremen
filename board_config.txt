@@ -110,34 +110,34 @@ uint16_t autoscale autotuneMinAFR;;"AFR", 0.1, 0, 0, 25, 1
 uint16_t autoscale autotuneMaxAFR;;"AFR", 0.1, 0, 0, 25, 1
 uint16_t autotuneApplyPeriod;;"sec", 1, 0, 1, 300, 0
 
-float autotuneVerySlowInitialWeight;;"", 1, 0, 0, 1000, 2
-float autotuneVerySlowWeightThreshold;;"", 1, 0, 0, 10, 2
-float autotuneVerySlowDeadband;;"", 1, 0, 0, 100, 2
-float autotuneVerySlowMaxWeight;;"", 1, 0, 0, 1000000, 1
+float autotuneVeryHighInitialWeight;;"", 1, 0, 0, 1000, 2
+float autotuneVeryHighWeightThreshold;;"", 1, 0, 0, 10, 2
+float autotuneVeryHighDeadband;;"", 1, 0, 0, 100, 2
+float autotuneVeryHighMaxWeight;;"", 1, 0, 0, 1000000, 1
 
-float autotuneSlowInitialWeight;;"", 1, 0, 0, 1000, 2
-float autotuneSlowWeightThreshold;;"", 1, 0, 0, 10, 2
-float autotuneSlowDeadband;;"", 1, 0, 0, 100, 2
-float autotuneSlowMaxWeight;;"", 1, 0, 0, 1000000, 1
+float autotuneHighInitialWeight;;"", 1, 0, 0, 1000, 2
+float autotuneHighWeightThreshold;;"", 1, 0, 0, 10, 2
+float autotuneHighDeadband;;"", 1, 0, 0, 100, 2
+float autotuneHighMaxWeight;;"", 1, 0, 0, 1000000, 1
 
 float autotuneNormalInitialWeight;;"", 1, 0, 0, 1000, 2
 float autotuneNormalWeightThreshold;;"", 1, 0, 0, 10, 2
 float autotuneNormalDeadband;;"", 1, 0, 0, 100, 2
 float autotuneNormalMaxWeight;;"", 1, 0, 0, 1000000, 1
 
-float autotuneFastInitialWeight;;"", 1, 0, 0, 1000, 2
-float autotuneFastWeightThreshold;;"", 1, 0, 0, 10, 2
-float autotuneFastDeadband;;"", 1, 0, 0, 100, 2
-float autotuneFastMaxWeight;;"", 1, 0, 0, 1000000, 1
+float autotuneLowInitialWeight;;"", 1, 0, 0, 1000, 2
+float autotuneLowWeightThreshold;;"", 1, 0, 0, 10, 2
+float autotuneLowDeadband;;"", 1, 0, 0, 100, 2
+float autotuneLowMaxWeight;;"", 1, 0, 0, 1000000, 1
 
-float autotuneVeryFastInitialWeight;;"", 1, 0, 0, 1000, 2
-float autotuneVeryFastWeightThreshold;;"", 1, 0, 0, 10, 2
-float autotuneVeryFastDeadband;;"", 1, 0, 0, 100, 2
-float autotuneVeryFastMaxWeight;;"", 1, 0, 0, 1000000, 1
+float autotuneVeryLowInitialWeight;;"", 1, 0, 0, 1000, 2
+float autotuneVeryLowWeightThreshold;;"", 1, 0, 0, 10, 2
+float autotuneVeryLowDeadband;;"", 1, 0, 0, 100, 2
+float autotuneVeryLowMaxWeight;;"", 1, 0, 0, 1000000, 1
 
-custom autotuneLearningRate_e 1 bits, U08, @OFFSET@, [0:2], "Very Slow", "Slow", "Normal", "Fast", "Very Fast"
+custom autotuneCellChangeResistance_e 1 bits, U08, @OFFSET@, [0:2], "Very High", "High", "Normal", "Low", "Very Low"
 
-autotuneLearningRate_e autotuneLearningRate;Learning rate preset applied to the active parameters below, refreshed after every burn;
+autotuneCellChangeResistance_e autotuneCellChangeResistance;Cell change resistance preset applied to the active parameters below, refreshed after every burn;
 
 float autotuneMaxAbsoluteChange;;"", 1, 0, 0, 300, 1
 float autotuneMaxPercentageChange;;"%", 1, 0, 0, 100, 1

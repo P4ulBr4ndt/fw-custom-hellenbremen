@@ -179,33 +179,33 @@ void boardDefaultConfiguration() {
 	config->autotuneAutoBurn = false;
 	config->autotuneApplyPeriod = 15;
 
-	// Autotune learning rate presets
-	config->autotuneVerySlowInitialWeight = 100.0f;
-	config->autotuneVerySlowWeightThreshold = 0.25f;
-	config->autotuneVerySlowDeadband = 1.0f;
-	config->autotuneVerySlowMaxWeight = 100000.0f;
+	// Autotune cell change resistance presets
+	config->autotuneVeryHighInitialWeight = 100.0f;
+	config->autotuneVeryHighWeightThreshold = 0.25f;
+	config->autotuneVeryHighDeadband = 1.0f;
+	config->autotuneVeryHighMaxWeight = 100000.0f;
 
-	config->autotuneSlowInitialWeight = 20.0f;
-	config->autotuneSlowWeightThreshold = 0.1f;
-	config->autotuneSlowDeadband = 1.0f;
-	config->autotuneSlowMaxWeight = 1000.0f;
+	config->autotuneHighInitialWeight = 20.0f;
+	config->autotuneHighWeightThreshold = 0.1f;
+	config->autotuneHighDeadband = 1.0f;
+	config->autotuneHighMaxWeight = 1000.0f;
 
 	config->autotuneNormalInitialWeight = 5.0f;
 	config->autotuneNormalWeightThreshold = 0.0f;
 	config->autotuneNormalDeadband = 0.0f;
 	config->autotuneNormalMaxWeight = 300.0f;
 
-	config->autotuneFastInitialWeight = 3.0f;
-	config->autotuneFastWeightThreshold = 0.0f;
-	config->autotuneFastDeadband = 0.0f;
-	config->autotuneFastMaxWeight = 100.0f;
+	config->autotuneLowInitialWeight = 3.0f;
+	config->autotuneLowWeightThreshold = 0.0f;
+	config->autotuneLowDeadband = 0.0f;
+	config->autotuneLowMaxWeight = 100.0f;
 
-	config->autotuneVeryFastInitialWeight = 0.5f;
-	config->autotuneVeryFastWeightThreshold = 0.0f;
-	config->autotuneVeryFastDeadband = 0.0f;
-	config->autotuneVeryFastMaxWeight = 5.0f;
+	config->autotuneVeryLowInitialWeight = 0.5f;
+	config->autotuneVeryLowWeightThreshold = 0.0f;
+	config->autotuneVeryLowDeadband = 0.0f;
+	config->autotuneVeryLowMaxWeight = 5.0f;
 
-	config->autotuneLearningRate = autotuneLearningRate_e::Normal;
+	config->autotuneCellChangeResistance = autotuneCellChangeResistance_e::Normal;
 	config->autotuneActiveInitialWeight = config->autotuneNormalInitialWeight;
 	config->autotuneActiveWeightThreshold = config->autotuneNormalWeightThreshold;
 	config->autotuneActiveDeadband = config->autotuneNormalDeadband;
@@ -456,7 +456,7 @@ void boardCustomOnConfigurationChange(engine_configuration_s* previousConfigurat
 	boardSanitizeConfig();
 
 	autotuneState.checkCyclicBufferSize();
-	autotuneState.applyLearningRatePreset();
+	autotuneState.applyCellChangeResistancePreset();
 
 	if(!config->prgselActive) {
 		prgselPwm.setFrequency(NAN);

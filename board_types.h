@@ -8,10 +8,10 @@ enum class ccfcModes_e : uint8_t {
     Off  = 2,
 };
 
-enum class autotuneLearningRate_e : uint8_t {
-    VerySlow = 0,
-    Slow     = 1,
+enum class autotuneCellChangeResistance_e : uint8_t {
+    VeryHigh = 0,
+    High     = 1,
     Normal   = 2,
-    Fast     = 3,
-    VeryFast = 4,
+    Low      = 3,
+    VeryLow  = 4,
 };
