@@ -717,8 +717,18 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 		harleyKeepAlive = frame.data8[0];
 	}
 
+	// RHCM
 	if (CAN_SID(frame) == 0x15A) {
-		// msg[0] = 0x10;
+		//  msg[0] = 0x00; means "Right-Hand braked pressed slightly", or rather inbetween pressed and not pressed
+		// 	msg[0]:  bit 7  6  5  4  3  2  1  0
+		//               |  |  │  |  │  │  │  └── Right-Hand braked pressed
+		//               |  |  │  |  │  │  └───── 0 (Always off?, observation)
+		//               |  |  │  |  │  └──────── 0 (Always off?, observation)
+		// 				 |  |  |  |  └─────────── 0 (Always off?, observation)	
+		//               |  |  |  └────────────── Right-Hand brake not pressed
+		//               |  |  └───────────────── 0 (Always off?, observation)
+		//				 |  └──────────────────── 0 (Always off?, observation)
+		//               └─────────────────────── 0 (Always off?, observation)
 
 		// 	msg[1]:  bit 7  6  5  4  3  2  1  0
 		//               |  |  │  |  │  │  │  └── !Ign On
@@ -745,7 +755,7 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 		//               |  |  │  |  │  │  └───── 0 (Always off?, observation)
 		//               |  |  │  |  │  └──────── 0 (Always off?, observation)
 		// 				 |  |  |  |  └─────────── 0 (Always off?, observation)
-		//               |  |  |  └────────────── 0 (Always off?, observation)
+		//               |  |  |  └────────────── Engine starting switch
 		//               |  |  └───────────────── 0 (Always off?, observation)
 		//				 |  └──────────────────── 0 (Always off?, observation)
 		//               └─────────────────────── 0 (Always off?, observation)	
@@ -768,7 +778,8 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 		}
 	}
 
-		if (CAN_SID(frame) == 0x154) {
+	// LHCM
+	if (CAN_SID(frame) == 0x154) {
 		// msg[0] = 0x00;
 
 		// 	msg[1]:  bit 7  6  5  4  3  2  1  0
@@ -888,7 +899,36 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 		cruiseIncPressedPrev = cruiseIncPressed;
 	}
 
+	// LHCM, Gear Clutch related
 	if (CAN_SID(frame) == 0x152) {
+		//  msg[0] = 0x00; means "Clutch pressed slightly"
+		// 	msg[0]:  bit 7  6  5  4  3  2  1  0
+		//               |  |  │  |  │  │  │  └── 0 (Always off?, observation)
+		//               |  |  │  |  │  │  └───── 0 (Always off?, observation)
+		//               |  |  │  |  │  └──────── Clutch not pressed
+		// 				 |  |  |  |  └─────────── 0 (Always off?, observation)	
+		//               |  |  |  └────────────── 0 (Always off?, observation)	
+		//               |  |  └───────────────── 0 (Always off?, observation)
+		//				 |  └──────────────────── Clutch pressed strongly
+		//               └─────────────────────── 0 (Always off?, observation)
+
+		//  msg[1] = 0x00;
+		//  msg[2] = 0x00;
+
+		// 	msg[3]:  bit 7  6  5  4  3  2  1  0
+		//               |  |  │  |  │  │  │  └── 0 (Always off?, observation)
+		//               |  |  │  |  │  │  └───── 0 (Always off?, observation)
+		//               |  |  │  |  │  └──────── 0 (Always off?, observation)
+		// 				 |  |  |  |  └─────────── 0 (Always off?, observation)	
+		//               |  |  |  └────────────── Clutch not pressed	
+		//               |  |  └───────────────── Clutch pressed slightly
+		//				 |  └──────────────────── Clutch pressed strongly
+		//               └─────────────────────── 0 (Always off?, observation)
+
+		//  msg[4] = 0x00;
+		//  msg[5] = 0x00;
+
+		
 		uint8_t clutchState = frame.data8[3] & 0x30;
 		bool clutchEngagedLight = clutchState == 0x20;
 		bool clutchEngagedStrong = clutchState == 0x30;
@@ -924,4 +964,17 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 			engine->module<TripOdometer>()->setDistanceMeters(newOdometer);
 		}
 	}
+
+	// LHCM
+	// if (CAN_SID(frame) == 0x354) {
+		// 	msg[0]:  bit 7  6  5  4  3  2  1  0
+		//               |  |  │  |  │  │  │  └── Menu display switch 
+		//               |  |  │  |  │  │  └───── 0 (Always off?, observation)
+		//               |  |  │  |  │  └──────── 0 (Always off?, observation)
+		// 				 |  |  |  |  └─────────── 0 (Always off?, observation)	
+		//               |  |  |  └────────────── 0 (Always off?, observation)	
+		//               |  |  └───────────────── 0 (Always off?, observation)
+		//				 |  └──────────────────── 0 (Always off?, observation)
+		//               └─────────────────────── 0 (Always off?, observation)
+	//}
 }
