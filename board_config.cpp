@@ -397,6 +397,7 @@ void boardCustomInitHardware() {
 	harleyDetectedGearSensor.Register();
 
 	// Not strictly hardware, but does not fit for boardConfigOverrides()
+	// or anywhere else.
 	autotuneState.initializeStates();
 }
 

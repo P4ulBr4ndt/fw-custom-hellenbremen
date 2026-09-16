@@ -82,6 +82,7 @@ public:
 	bool autotuneTuneRan       = false;
 	bool autotuneRunning       = false;
 	bool autotuneFetchDataDone = false;
+	bool autotuneSTFTBefore;
 
 private:
 	Timer autoApplyTimer;

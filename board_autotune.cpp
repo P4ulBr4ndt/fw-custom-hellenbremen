@@ -21,8 +21,6 @@ AutotuneState::~AutotuneState() {
 }
 
 void AutotuneState::initializeStates() {
-	engineConfiguration->fuelClosedLoopCorrectionEnabled = true; // Not super nice
-
 	config->autotuneRunning = autotuneRunning;
 	config->autotuneFetchDataDone = autotuneFetchDataDone;
 	config->autotuneApplyToRamInd = false;
@@ -133,13 +131,14 @@ void AutotuneState::averageWeighting(live_data_autotune_s& cylinder, const bilin
 void AutotuneState::toggleRunning() {
 	if (autotuneRunning) {
 		autotuneRunning = false;
-		engineConfiguration->fuelClosedLoopCorrectionEnabled = true;
+		engineConfiguration->fuelClosedLoopCorrectionEnabled = autotuneSTFTBefore;
 	} else {
 		config->autotuneFetchDataDone = false;
 		checkCyclicBufferSize();
 		initializeLiveDataStructs();
 		autoApplyTimer.reset();
 
+		autotuneSTFTBefore = engineConfiguration->fuelClosedLoopCorrectionEnabled;
 		engineConfiguration->fuelClosedLoopCorrectionEnabled = false;
 		autotuneRunning = true;
 	}

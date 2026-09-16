@@ -909,7 +909,8 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 			if(!cfcRunning || config->cfcDisableWhenEngineStopped) {
 				if(frame.data8[0] == 0x00) {
 					autotuneState.autotuneRunning = false;
-					engineConfiguration->fuelClosedLoopCorrectionEnabled = true;
+					engineConfiguration->fuelClosedLoopCorrectionEnabled = autotuneState.autotuneSTFTBefore;
+					requestBurn();
 
 					if (config->autotuneAutoBurn) {
 						autotuneState.burningROM();
