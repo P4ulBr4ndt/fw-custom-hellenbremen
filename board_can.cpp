@@ -715,19 +715,16 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 	//}
 
 	if (CAN_SID(frame) == 0x500) {
-			bool cfcRunning = !cfcUserForceOn && cfcPin.getLogicValue();
-			if(!cfcRunning || config->cfcDisableWhenEngineStopped) {
-				if(frame.data8[0] == 0x00) {
-					autotuneState.autotuneRunning = false;
-					engineConfiguration->fuelClosedLoopCorrectionEnabled = true;
+		if(frame.data8[0] == 0x00) {
+			autotuneState.autotuneRunning = false;
+			engineConfiguration->fuelClosedLoopCorrectionEnabled = true;
 
-					if (config->autotuneAutoBurn) {
-						autotuneState.burningROM();
-					}
-				}
-			
-				harleyKeepAlive = frame.data8[0];
+			if (config->autotuneAutoBurn) {
+				autotuneState.burningROM();
 			}
+		}
+	
+		harleyKeepAlive = frame.data8[0];
 	}
 
 	// RHCM
