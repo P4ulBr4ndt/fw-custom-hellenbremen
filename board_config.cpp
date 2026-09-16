@@ -444,6 +444,9 @@ void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {
 		case 0x0D:
 			autotuneState.toggleAutoApply();
 			break;
+		case 0x0E:
+			autotuneState.resetApplyToRAMIndicator();
+			break;
 		default:
 			break;
 	}

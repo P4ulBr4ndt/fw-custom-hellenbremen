@@ -317,6 +317,8 @@ void AutotuneState::applyingToRAM() {
 	copyTable(config->veTable,      rear.veTable);
 	copyTable(config->veFrontTable, front.veTable);
 
+	config->autotuneApplyToRamInd = true;
+
 	return;
 }
 
@@ -384,4 +386,8 @@ void AutotuneState::applyLearningRatePreset() {
 	default:
 		break;
 	}
+}
+
+void AutotuneState::resetApplyToRAMIndicator() {
+	config->autotuneApplyToRamInd = false;
 }
