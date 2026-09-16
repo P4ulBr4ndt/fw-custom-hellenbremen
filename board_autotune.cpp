@@ -25,6 +25,7 @@ void AutotuneState::initializeStates() {
 
 	config->autotuneRunning = autotuneRunning;
 	config->autotuneFetchDataDone = autotuneFetchDataDone;
+	config->autotuneApplyToRamInd = false;
 }
 
 void AutotuneState::initializeLiveDataStructs() {
