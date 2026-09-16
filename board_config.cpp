@@ -2,6 +2,8 @@
 
 #include "board_can.h"
 #include "board_config.h"
+#include "board_autotune.h"
+#include "board_types.h"
 
 #include <cstring>
 
@@ -112,6 +114,74 @@ void boardDefaultConfiguration() {
 	config->prgselPWMFreq = 32;
 	config->prgselPWMDuty = 30;
 	config->prgselActAfterTime = 180;
+
+	// Autotune
+	// RPM bins
+	config->lambdaDelayRpmBins[0] = 800;
+	config->lambdaDelayRpmBins[1] = 2190;
+	config->lambdaDelayRpmBins[2] = 6500;
+
+	// Load bins - TPS%, matching this engine's VE table load override (veOverrideMode = VE_TPS)
+	config->lambdaDelayLoadBins[0] = 2;
+	config->lambdaDelayLoadBins[1] = 35;
+	config->lambdaDelayLoadBins[2] = 100;
+
+	// [load][rpm], ms
+	config->lambdaDelayTable[0][0] = 350; // load=2,   rpm=800
+	config->lambdaDelayTable[0][1] = 300; // load=2,   rpm=2190
+	config->lambdaDelayTable[0][2] = 20;  // load=2,   rpm=6500
+	config->lambdaDelayTable[1][0] = 250; // load=35,  rpm=800
+	config->lambdaDelayTable[1][1] = 150; // load=35,  rpm=2190
+	config->lambdaDelayTable[1][2] = 100; // load=35,  rpm=6500
+	config->lambdaDelayTable[2][0] = 200; // load=100, rpm=800
+	config->lambdaDelayTable[2][1] = 70;  // load=100, rpm=2190
+	config->lambdaDelayTable[2][2] = 40;  // load=100, rpm=6500
+
+	// Autotune conditions
+	config->autotuneMinRPM = 700;
+	config->autotuneMinETS = 70;
+	config->autotuneMaxETS = 140;
+	config->autotuneMinAFR = 8.0f;
+	config->autotuneMaxAFR = 20.0f;
+
+	config->autotuneAutoApply = false;
+	config->autotuneAutoBurn = false;
+	config->autotuneApplyPeriod = 15;
+
+	// Autotune learning rate presets
+	config->autotuneVerySlowInitialWeight = 100.0f;
+	config->autotuneVerySlowWeightThreshold = 0.25f;
+	config->autotuneVerySlowDeadband = 1.0f;
+	config->autotuneVerySlowMaxWeight = 100000.0f;
+
+	config->autotuneSlowInitialWeight = 20.0f;
+	config->autotuneSlowWeightThreshold = 0.1f;
+	config->autotuneSlowDeadband = 1.0f;
+	config->autotuneSlowMaxWeight = 1000.0f;
+
+	config->autotuneNormalInitialWeight = 5.0f;
+	config->autotuneNormalWeightThreshold = 0.0f;
+	config->autotuneNormalDeadband = 0.0f;
+	config->autotuneNormalMaxWeight = 300.0f;
+
+	config->autotuneFastInitialWeight = 3.0f;
+	config->autotuneFastWeightThreshold = 0.0f;
+	config->autotuneFastDeadband = 0.0f;
+	config->autotuneFastMaxWeight = 100.0f;
+
+	config->autotuneVeryFastInitialWeight = 0.5f;
+	config->autotuneVeryFastWeightThreshold = 0.0f;
+	config->autotuneVeryFastDeadband = 0.0f;
+	config->autotuneVeryFastMaxWeight = 5.0f;
+
+	config->autotuneLearningRate = autotuneLearningRate_e::Normal;
+	config->autotuneActiveInitialWeight = config->autotuneNormalInitialWeight;
+	config->autotuneActiveWeightThreshold = config->autotuneNormalWeightThreshold;
+	config->autotuneActiveDeadband = config->autotuneNormalDeadband;
+	config->autotuneActiveMaxWeight = config->autotuneNormalMaxWeight;
+
+	config->autotuneMaxAbsoluteChange = 50.0f;
+	config->autotuneMaxPercentageChange = 50.0f;
 }
 
 static void boardSanitizeConfig() {
@@ -225,21 +295,47 @@ void boardCustomInitHardware() {
 	);
 
 	harleyDetectedGearSensor.Register();
+
+	// Not strictly hardware, but does not fit for boardConfigOverrides()
+	autotuneState.initializeStates();
 }
 
 void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {
 	switch(index) {
-		case 2:
+		case 0x02:
 			setPrgselForce(false);
 			break;
-		case 3:
+		case 0x03:
 			setPrgselForce(true);
+			break;
+		case 0x08:
+			autotuneState.toggleRunning();
+			break;
+		case 0x09:
+			autotuneState.burningROM();
+			break;
+		case 0x0A:
+			autotuneState.applyingToRAM();
+			break;
+		case 0x0B:
+			autotuneState.prepareFetchData();
+			break;
+		case 0x0C:
+			config->autotuneFetchDataDone = false;
+			break;
+		case 0x0D:
+			autotuneState.toggleAutoApply();
+			break;
+		default:
 			break;
 	}
 }
 
 void boardCustomOnConfigurationChange(engine_configuration_s* previousConfiguration) {
 	boardSanitizeConfig();
+
+	autotuneState.checkCyclicBufferSize();
+	autotuneState.applyLearningRatePreset();
 
 	if(!config->prgselActive) {
 		prgselPwm.setFrequency(NAN);

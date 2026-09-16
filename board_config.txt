@@ -13,6 +13,8 @@ uint8_t[PEDAL_TO_TPS_SIZE] estimatedEngineTorqueTpsBins;;"%", 1, 0, 0, 100, 0
 #define INSTANT_ACCEL_SHOT_TPS_COUNT 6
 #define INSTANT_ACCEL_SHOT_CLT_CORR_COUNT 10
 #define ETB_TARGET_SLEW_BINS_COUNT 12
+#define LAMBDA_DELAY_RPM_COUNT 3
+#define LAMBDA_DELAY_LOAD_COUNT 3
 
 float instantAccelShotWindowMs;Instant accel window length;"ms", 1, 0, 0, 500, 0
 float instantAccelShotTopupMinSpacingMs;Instant accel top-up min spacing;"ms", 1, 0, 0, 100, 2
@@ -54,6 +56,67 @@ float fuelLevelTankVolume;;"L", 1, 0, 0, 50, 1
 float fuelLevelAvgConsumption;;"L / 100 km", 1, 0, 0.1, 20, 1
 
 output_pin_e prgselOutputPin;
+
+bit autotuneRunning,"Yes","No";
+bit autotuneAutoApply,"Yes","No";
+bit autotuneAutoBurn,"Yes","No";
+
+uint16_t[VE_LOAD_COUNT x VE_RPM_COUNT] autoscale veFrontTableTmp;;"%", 0.1, 0, 0, 200, 1
+int16_t[VE_LOAD_COUNT x VE_RPM_COUNT] autoscale veFrontTableDelta;;"%", 0.1, 0, -200, 200, 1
+uint16_t[VE_LOAD_COUNT x VE_RPM_COUNT] autoscale veFrontTableHits;;"", 1, 0, 0, 65535, 1
+uint16_t[VE_LOAD_COUNT x VE_RPM_COUNT] autoscale veRearTableTmp;;"%", 0.1, 0, 0, 200, 1
+int16_t[VE_LOAD_COUNT x VE_RPM_COUNT] autoscale veRearTableDelta;;"%", 0.1, 0, -200, 200, 1
+uint16_t[VE_LOAD_COUNT x VE_RPM_COUNT] autoscale veRearTableHits;;"", 1, 0, 0, 65535, 1
+bit autotuneFetchDataDone,"Yes","No";
+
+uint16_t[LAMBDA_DELAY_LOAD_COUNT x LAMBDA_DELAY_RPM_COUNT] lambdaDelayTable;;"ms", 1, 0, 0, 640, 0
+uint16_t[LAMBDA_DELAY_RPM_COUNT] lambdaDelayRpmBins;;"RPM", 1, 0, 0, 18000, 0
+uint16_t[LAMBDA_DELAY_LOAD_COUNT] lambdaDelayLoadBins;;"%", 1, 0, 0, 100, 0
+
+uint16_t autotuneMinRPM;;"RPM", 1, 0, 0, 18000, 0
+int16_t  autotuneMinETS;;"C", 1, 0, -40, 250, 0
+int16_t  autotuneMaxETS;;"C", 1, 0, -40, 250, 0
+uint16_t autoscale autotuneMinAFR;;"AFR", 0.1, 0, 0, 25, 1
+uint16_t autoscale autotuneMaxAFR;;"AFR", 0.1, 0, 0, 25, 1
+uint16_t autotuneApplyPeriod;;"sec", 1, 0, 1, 300, 0
+
+float autotuneVerySlowInitialWeight;;"", 1, 0, 0, 1000, 2
+float autotuneVerySlowWeightThreshold;;"", 1, 0, 0, 10, 2
+float autotuneVerySlowDeadband;;"", 1, 0, 0, 100, 2
+float autotuneVerySlowMaxWeight;;"", 1, 0, 0, 1000000, 1
+
+float autotuneSlowInitialWeight;;"", 1, 0, 0, 1000, 2
+float autotuneSlowWeightThreshold;;"", 1, 0, 0, 10, 2
+float autotuneSlowDeadband;;"", 1, 0, 0, 100, 2
+float autotuneSlowMaxWeight;;"", 1, 0, 0, 1000000, 1
+
+float autotuneNormalInitialWeight;;"", 1, 0, 0, 1000, 2
+float autotuneNormalWeightThreshold;;"", 1, 0, 0, 10, 2
+float autotuneNormalDeadband;;"", 1, 0, 0, 100, 2
+float autotuneNormalMaxWeight;;"", 1, 0, 0, 1000000, 1
+
+float autotuneFastInitialWeight;;"", 1, 0, 0, 1000, 2
+float autotuneFastWeightThreshold;;"", 1, 0, 0, 10, 2
+float autotuneFastDeadband;;"", 1, 0, 0, 100, 2
+float autotuneFastMaxWeight;;"", 1, 0, 0, 1000000, 1
+
+float autotuneVeryFastInitialWeight;;"", 1, 0, 0, 1000, 2
+float autotuneVeryFastWeightThreshold;;"", 1, 0, 0, 10, 2
+float autotuneVeryFastDeadband;;"", 1, 0, 0, 100, 2
+float autotuneVeryFastMaxWeight;;"", 1, 0, 0, 1000000, 1
+
+custom autotuneLearningRate_e 1 bits, U08, @OFFSET@, [0:2], "Very Slow", "Slow", "Normal", "Fast", "Very Fast"
+
+autotuneLearningRate_e autotuneLearningRate;Learning rate preset applied to the active parameters below, refreshed after every burn;
+
+float autotuneMaxAbsoluteChange;;"", 1, 0, 0, 300, 1
+float autotuneMaxPercentageChange;;"%", 1, 0, 0, 100, 1
+
+float autotuneActiveInitialWeight;;"", 1, 0, 0, 1000, 2
+float autotuneActiveWeightThreshold;;"", 1, 0, 0, 10, 2
+float autotuneActiveDeadband;;"", 1, 0, 0, 100, 2
+float autotuneActiveMaxWeight;;"", 1, 0, 0, 1000000, 1
+
 uint16_t outputPinsAlignFill;
 
 ! Check if current configuration will align with the desired size of memory
