@@ -18,6 +18,7 @@
 #include "malfunction_central.h"
 #include "shutdown_controller.h"
 #include "trigger_central.h"
+#include "tunerstudio.h"
 
 static uint8_t frameCounter142 = 0x0;
 static uint8_t frameCounter144 = 0x0;
