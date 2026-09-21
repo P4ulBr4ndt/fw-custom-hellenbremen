@@ -908,9 +908,15 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 			bool cfcRunning = !cfcUserForceOn && cfcPin.getLogicValue();
 			if(!cfcRunning || config->cfcDisableWhenEngineStopped) {
 				if(frame.data8[0] == 0x00) {
-					autotuneState.autotuneRunning = false;
-					engineConfiguration->fuelClosedLoopCorrectionEnabled = autotuneState.autotuneSTFTBefore;
-					requestBurn();
+					if(autotuneState.autotuneRunning) {
+						autotuneState.autotuneRunning = false;
+						engineConfiguration->fuelClosedLoopCorrectionEnabled = autotuneState.autotuneSTFTBefore;
+						
+						// Is here a problem that requestBurn is not succesfully written
+						// until the shutdown of the ECM? requestBurn is an asyncronous,
+						// non-blocking function queueing burning in the ChibiOS mailbox.
+						requestBurn();
+					}
 
 					if (config->autotuneAutoBurn) {
 						autotuneState.burningROM();
