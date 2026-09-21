@@ -72,6 +72,7 @@ void AutotuneState::evaluateNewVECellValue(size_t idx) {
 	return;
 }
 
+// Robinson-Monro stochastic approximation 
 void AutotuneState::averageWeighting(live_data_autotune_s& cylinder, const bilinear_cell_selection_s& proposed) {
 	struct WeightedVote {
 		size_t loadIdx;
@@ -130,9 +131,17 @@ void AutotuneState::averageWeighting(live_data_autotune_s& cylinder, const bilin
 
 void AutotuneState::toggleRunning() {
 	if (autotuneRunning) {
+		if(config->autotuneNarrowbandTuning) {
+			endNarrowBandTuning();
+		}
+
 		autotuneRunning = false;
 		engineConfiguration->fuelClosedLoopCorrectionEnabled = autotuneSTFTBefore;
 	} else {
+		if(config->autotuneNarrowbandTuning) {
+			prepareNarrowBandTuning();
+		}
+
 		config->autotuneFetchDataDone = false;
 		checkCyclicBufferSize();
 		initializeLiveDataStructs();
@@ -390,4 +399,39 @@ void AutotuneState::applyCellChangeResistancePreset() {
 
 void AutotuneState::resetApplyToRAMIndicator() {
 	config->autotuneApplyToRamInd = false;
+}
+
+void AutotuneState::prepareNarrowBandTuning() {
+	copyTable(config->lambdaTableBefore, config->lambdaTable);
+	setTable(config->lambdaTable, 14.6f);
+
+	
+	for (size_t n = 0; n < IGN_LOAD_COUNT; n++) {
+		for (size_t m = 0; m < IGN_RPM_COUNT; m++) {
+			config->ignitionFrontTable[n][m] = config->ignitionFrontTable[n][m] - 4;
+			config->ignitionTable[n][m]      = config->ignitionTable[n][m] - 4;
+		}
+	}
+
+	// Without the condition, copyTable(dest, source, mult) would simplify
+	// this step here.
+	for (size_t n = 0; n < VE_LOAD_COUNT; n++) {
+		for (size_t m = 0; m < VE_RPM_COUNT; m++) {
+			if (config->veRpmBins[m] <= 5000.0) {
+				config->veFrontTable[n][m] = config->veFrontTable[n][m] * 1.2;
+				config->veTable[n][m]      = config->veTable[n][m] * 1.2;
+			}
+		}
+	}
+}
+
+void AutotuneState::endNarrowBandTuning() {
+	copyTable(config->lambdaTable, config->lambdaTableBefore);
+
+	for (size_t n = 0; n < IGN_LOAD_COUNT; n++) {
+		for (size_t m = 0; m < IGN_RPM_COUNT; m++) {
+			config->ignitionFrontTable[n][m] = config->ignitionFrontTable[n][m] + 4;
+			config->ignitionTable[n][m]      = config->ignitionTable[n][m] + 4;
+		}
+	}
 }

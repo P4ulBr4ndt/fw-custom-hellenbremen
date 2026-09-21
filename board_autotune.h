@@ -70,6 +70,8 @@ public:
 	void burningROM();
 	void prepareFetchData();
 	void resetApplyToRAMIndicator();
+	void prepareNarrowBandTuning();
+	void endNarrowBandTuning();
 
 	void recordProcessing();
 	autotune_sample_s getProposedVECellValue(float frontMeasuredAFR, float rearMeasuredAFR, autotune_sample_s& sample);
