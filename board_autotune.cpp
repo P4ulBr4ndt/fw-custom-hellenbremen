@@ -413,13 +413,17 @@ void AutotuneState::prepareNarrowBandTuning() {
 		}
 	}
 
-	// Without the condition, copyTable(dest, source, mult) would simplify
-	// this step here.
-	for (size_t n = 0; n < VE_LOAD_COUNT; n++) {
-		for (size_t m = 0; m < VE_RPM_COUNT; m++) {
-			if (config->veRpmBins[m] <= 5000.0) {
-				config->veFrontTable[n][m] = config->veFrontTable[n][m] * 1.2;
-				config->veTable[n][m]      = config->veTable[n][m] * 1.2;
+	// Without the condition RPM <= 5000, copyTable(dest, source, mult) 
+	// would simplify this step here.
+	if(!autotuneNarrowbandPrepRan) { // Prevent multiple leaning by accidentally clicking more than once
+		autotuneNarrowbandPrepRan = true;
+
+		for (size_t n = 0; n < VE_LOAD_COUNT; n++) {
+			for (size_t m = 0; m < VE_RPM_COUNT; m++) {
+				if (config->veRpmBins[m] <= 5000.0) {
+					config->veFrontTable[n][m] = config->veFrontTable[n][m] * 1.2;
+					config->veTable[n][m]      = config->veTable[n][m] * 1.2;
+				}
 			}
 		}
 	}

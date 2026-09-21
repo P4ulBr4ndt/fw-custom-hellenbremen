@@ -81,9 +81,10 @@ public:
 
 	bilinear_cell_selection_s bilinearCellSelection(float rpm, float fuelLoad, scaled_channel<uint16_t, 10, 1> (&veTable)[VE_LOAD_COUNT][VE_RPM_COUNT]);
 
-	bool autotuneTuneRan       = false;
-	bool autotuneRunning       = false;
-	bool autotuneFetchDataDone = false;
+	bool autotuneTuneRan           = false;
+	bool autotuneRunning           = false;
+	bool autotuneFetchDataDone     = false;
+	bool autotuneNarrowbandPrepRan = false;
 	bool autotuneSTFTBefore;
 
 private:
