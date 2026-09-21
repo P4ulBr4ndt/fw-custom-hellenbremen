@@ -912,6 +912,10 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 					if(autotuneState.autotuneRunning) {
 						autotuneState.autotuneRunning = false;
 						engineConfiguration->fuelClosedLoopCorrectionEnabled = autotuneState.autotuneSTFTBefore;
+
+						if(autotuneState.autotuneNarrowbandTuning) {
+							autotuneState.endNarrowBandTuning();
+						}
 						
 						// Is here a problem that requestBurn is not succesfully written
 						// until the shutdown of the ECM? requestBurn is an asyncronous,
