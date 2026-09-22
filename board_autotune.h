@@ -85,8 +85,9 @@ public:
 	bool running           = false;
 	bool fetchDataDone     = false;
 	// bool narrowbandPrepRan = false; // Currently Dead
-	bool narrowbandTuning  = false;
-	bool stftBefore;
+	
+	bool narrowbandTuning  = !engineConfiguration->enableAemXSeries;
+	bool stftBefore        = engineConfiguration->fuelClosedLoopCorrectionEnabled;
 
 private:
 	Timer m_autoApplyTimer;

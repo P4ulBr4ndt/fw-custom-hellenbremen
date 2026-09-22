@@ -344,11 +344,11 @@ void AutotuneState::burningROM() {
 }
 
 void AutotuneState::prepareFetchData() {
-	copyTable(config->veFrontTableTmp, m_front.veTable);
+	copyTable(config->veFrontTableTmp,   m_front.veTable);
 	copyTable(config->veFrontTableDelta, m_front.veTableDelta);
 	copyTable(config->veFrontTableHits,  m_front.hitCount);
 
-	copyTable(config->veRearTableTmp, m_rear.veTable);
+	copyTable(config->veRearTableTmp,   m_rear.veTable);
 	copyTable(config->veRearTableDelta, m_rear.veTableDelta);
 	copyTable(config->veRearTableHits,  m_rear.hitCount);
 
