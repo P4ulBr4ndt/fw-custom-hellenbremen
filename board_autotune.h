@@ -85,6 +85,7 @@ public:
 	bool autotuneRunning           = false;
 	bool autotuneFetchDataDone     = false;
 	bool autotuneNarrowbandPrepRan = false;
+	bool autotuneNarrowbandTuning;
 	bool autotuneSTFTBefore;
 
 private:

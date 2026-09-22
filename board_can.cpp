@@ -913,7 +913,7 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 						autotuneState.autotuneRunning = false;
 						engineConfiguration->fuelClosedLoopCorrectionEnabled = autotuneState.autotuneSTFTBefore;
 
-						if(config->autotuneNarrowbandTuning) {
+						if(autotuneState.autotuneNarrowbandTuning) {
 							autotuneState.endNarrowBandTuning();
 						}
 						

@@ -131,14 +131,16 @@ void AutotuneState::averageWeighting(live_data_autotune_s& cylinder, const bilin
 
 void AutotuneState::toggleRunning() {
 	if (autotuneRunning) {
-		if(config->autotuneNarrowbandTuning) {
+		if(autotuneNarrowbandTuning) {
 			endNarrowBandTuning();
 		}
 
 		autotuneRunning = false;
 		engineConfiguration->fuelClosedLoopCorrectionEnabled = autotuneSTFTBefore;
 	} else {
-		if(config->autotuneNarrowbandTuning) {
+		autotuneNarrowbandTuning = !engineConfiguration->enableAemXSeries;
+
+		if(autotuneNarrowbandTuning) {
 			prepareNarrowBandTuning();
 		}
 

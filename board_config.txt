@@ -149,7 +149,4 @@ float autotuneActiveMaxWeight;;"", 1, 0, 0, 1000000, 1
 
 uint8_t[FUEL_LOAD_COUNT x FUEL_RPM_COUNT] autoscale lambdaTableBefore;;{useLambdaOnInterface ? "lambda" : "afr"}, { useLambdaOnInterface ? 1/147 : 1/10 }, 0, {useLambdaOnInterface ? 0.6 : 9}, {useLambdaOnInterface ? 1.5 : 16}, {useLambdaOnInterface ? 2 : 1}
 
-! TODO: This is obsolete when using engineConfiguration->enableAemXSeries
-bit autotuneNarrowbandTuning,"Yes","No";
-
 uint16_t outputPinsAlignFill;
