@@ -81,18 +81,18 @@ public:
 
 	bilinear_cell_selection_s bilinearCellSelection(float rpm, float fuelLoad, scaled_channel<uint16_t, 10, 1> (&veTable)[VE_LOAD_COUNT][VE_RPM_COUNT]);
 
-	bool autotuneTuneRan           = false;
-	bool autotuneRunning           = false;
-	bool autotuneFetchDataDone     = false;
-	bool autotuneNarrowbandPrepRan = false;
-	bool autotuneNarrowbandTuning;
-	bool autotuneSTFTBefore;
+	bool tuneRan           = false;
+	bool running           = false;
+	bool fetchDataDone     = false;
+	// bool narrowbandPrepRan = false; // Currently Dead
+	bool narrowbandTuning  = false;
+	bool stftBefore;
 
 private:
-	Timer autoApplyTimer;
+	Timer m_autoApplyTimer;
 
-	live_data_autotune_s front;
-	live_data_autotune_s rear;
+	live_data_autotune_s m_front;
+	live_data_autotune_s m_rear;
 
 	// TODO: Originally, it was intended to have a dynamic cyclic_buffert
 	// depending on the choice of values in the Lambda delay table.
@@ -100,7 +100,7 @@ private:
 	// AutotuneState, ~AutotuneState and checkCyclicBufferSize
 
 	// Currently, default size is 128 records, covering 128 * 5ms = 640 ms
-	cyclic_buffer<autotune_sample_s> autotuneHistory;
+	cyclic_buffer<autotune_sample_s> m_autotuneHistory;
 
 };
 

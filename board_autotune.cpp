@@ -15,38 +15,38 @@ AutotuneState::AutotuneState() {
 }
 
 AutotuneState::~AutotuneState() {
-	autotuneHistory.clear();
+	m_autotuneHistory.clear();
 
 	return;
 }
 
 void AutotuneState::initializeStates() {
-	config->autotuneRunning = autotuneRunning;
-	config->autotuneFetchDataDone = autotuneFetchDataDone;
+	config->autotuneRunning = running;
+	config->autotuneFetchDataDone = fetchDataDone;
 	config->autotuneApplyToRamInd = false;
 }
 
 void AutotuneState::initializeLiveDataStructs() {
-	copyTable(rear.veTable,  config->veTable);
-	copyTable(front.veTable, config->veFrontTable);
-	
-	copyTable(rear.preTuneVeTable,  config->veTable);
-	copyTable(front.preTuneVeTable, config->veFrontTable);
+	copyTable(m_rear.veTable,  config->veTable);
+	copyTable(m_front.veTable, config->veFrontTable);
 
-	setTable(rear.accumulatedWeight,  config->autotuneActiveInitialWeight);
-	setTable(front.accumulatedWeight, config->autotuneActiveInitialWeight);
+	copyTable(m_rear.preTuneVeTable,  config->veTable);
+	copyTable(m_front.preTuneVeTable, config->veFrontTable);
 
-	setTable(rear.veTableDelta, 0.0f);
-	setTable(front.veTableDelta, 0.0f);
+	setTable(m_rear.accumulatedWeight,  config->autotuneActiveInitialWeight);
+	setTable(m_front.accumulatedWeight, config->autotuneActiveInitialWeight);
 
-	setTable(rear.hitCount,  (uint16_t)0);
-	setTable(front.hitCount, (uint16_t)0);
+	setTable(m_rear.veTableDelta, 0.0f);
+	setTable(m_front.veTableDelta, 0.0f);
+
+	setTable(m_rear.hitCount,  (uint16_t)0);
+	setTable(m_front.hitCount, (uint16_t)0);
 
 	return;
 }
 
 void AutotuneState::evaluateNewVECellValue(size_t idx) {
-	autotune_sample_s autotuneSample   = autotuneHistory.get(idx);
+	autotune_sample_s autotuneSample   = m_autotuneHistory.get(idx);
 	
 	const float clt       = Sensor::getOrZero(SensorType::Clt); // Also historic data?
 	const float rearAFR   = Sensor::getOrZero(SensorType::Lambda1) * 14.7f;
@@ -66,8 +66,8 @@ void AutotuneState::evaluateNewVECellValue(size_t idx) {
 
 	autotune_sample_s proposedVEValues = getProposedVECellValue(frontAFR, rearAFR, autotuneSample);
 
-	averageWeighting(front, proposedVEValues.frontCellSelection);
-	averageWeighting(rear,  proposedVEValues.rearCellSelection);
+	averageWeighting(m_front, proposedVEValues.frontCellSelection);
+	averageWeighting(m_rear,  proposedVEValues.rearCellSelection);
 	
 	return;
 }
@@ -123,38 +123,38 @@ void AutotuneState::averageWeighting(live_data_autotune_s& cylinder, const bilin
 		accumulatedWeight = clampF(0.0f, accumulatedWeight + vote.weight, config->autotuneActiveMaxWeight);
 		hitCount++;
 		
-		autotuneTuneRan = true;
+		tuneRan = true;
 	}
 
 	return;
 }
 
 void AutotuneState::toggleRunning() {
-	if (autotuneRunning) {
-		if(autotuneNarrowbandTuning) {
+	if (running) {
+		if(narrowbandTuning) {
 			endNarrowBandTuning();
 		}
 
-		autotuneRunning = false;
-		engineConfiguration->fuelClosedLoopCorrectionEnabled = autotuneSTFTBefore;
+		running = false;
+		engineConfiguration->fuelClosedLoopCorrectionEnabled = stftBefore;
 	} else {
-		autotuneNarrowbandTuning = !engineConfiguration->enableAemXSeries;
+		narrowbandTuning = !engineConfiguration->enableAemXSeries;
 
-		if(autotuneNarrowbandTuning) {
+		if(narrowbandTuning) {
 			prepareNarrowBandTuning();
 		}
 
 		config->autotuneFetchDataDone = false;
 		checkCyclicBufferSize();
 		initializeLiveDataStructs();
-		autoApplyTimer.reset();
+		m_autoApplyTimer.reset();
 
-		autotuneSTFTBefore = engineConfiguration->fuelClosedLoopCorrectionEnabled;
+		stftBefore = engineConfiguration->fuelClosedLoopCorrectionEnabled;
 		engineConfiguration->fuelClosedLoopCorrectionEnabled = false;
-		autotuneRunning = true;
+		running = true;
 	}
 
-	config->autotuneRunning = autotuneRunning;
+	config->autotuneRunning = running;
 
 	return;
 }
@@ -188,14 +188,14 @@ void AutotuneState::recordProcessing() {
 	// this specific entry will never be overwritten before it was once evaluated in
 	// AutotuneState::evaluateNewVECellValue.
 	// Example: max table delay 350ms -> getSize() = round(350/5) = 70 -> max delayIndex = 69.
-	int maxIndex = autotuneHistory.getSize() > 0 ? autotuneHistory.getSize() - 1 : 0;
+	int maxIndex = m_autotuneHistory.getSize() > 0 ? m_autotuneHistory.getSize() - 1 : 0;
 	if (rawIndex > maxIndex) {
 		rawIndex = maxIndex;
 	}
 
 	sample.delayIndex = (uint8_t)rawIndex;
 
-	autotuneHistory.add(sample);
+	m_autotuneHistory.add(sample);
 
 	return;
 }
@@ -260,13 +260,13 @@ autotune_sample_s AutotuneState::getProposedVECellValue(float frontMeasuredAFR, 
 }
 
 void AutotuneState::checkHistory() {
-	size_t validCount = (size_t)autotuneHistory.getCount();
-	if (validCount > (size_t)autotuneHistory.getSize()) {
-		validCount = (size_t)autotuneHistory.getSize();
+	size_t validCount = (size_t)m_autotuneHistory.getCount();
+	if (validCount > (size_t)m_autotuneHistory.getSize()) {
+		validCount = (size_t)m_autotuneHistory.getSize();
 	}
 
 	for (size_t i = 0; i < validCount; i++) {
-		autotune_sample_s& sample = autotuneHistory.elements[i];
+		autotune_sample_s& sample = m_autotuneHistory.elements[i];
 
 		if (sample.processed) {
 			continue;
@@ -279,23 +279,23 @@ void AutotuneState::checkHistory() {
 
 		if (sample.delayIndex == 0) {
 			evaluateNewVECellValue(i);
-			autotuneHistory.elements[i].processed = true;
+			m_autotuneHistory.elements[i].processed = true;
 		}
 	}
 
-	if(autoApplyTimer.hasElapsedSec(config->autotuneApplyPeriod)) {
-		if(config->autotuneAutoApply && autotuneTuneRan) {
+	if(m_autoApplyTimer.hasElapsedSec(config->autotuneApplyPeriod)) {
+		if(config->autotuneAutoApply && tuneRan) {
 			applyingToRAM();
-			autotuneTuneRan = false;
+			tuneRan = false;
 		}
-		autoApplyTimer.reset();
+		m_autoApplyTimer.reset();
 	}
 
 	return;
 }
 
 void AutotuneState::checkCyclicBufferSize() {
-	if(autotuneRunning) {
+	if(running) {
 		return;
 	}
 
@@ -317,16 +317,16 @@ void AutotuneState::checkCyclicBufferSize() {
 
 	// setSize() clears the buffer, so only touch it when the size actually needs to change -
 	// otherwise every unrelated config change would wipe out valid buffered history.
-	if ((size_t)autotuneHistory.getSize() != desiredSize) {
-		autotuneHistory.setSize(desiredSize);
+	if ((size_t)m_autotuneHistory.getSize() != desiredSize) {
+		m_autotuneHistory.setSize(desiredSize);
 	}
 
 	return;
 }
 
 void AutotuneState::applyingToRAM() {
-	copyTable(config->veTable,      rear.veTable);
-	copyTable(config->veFrontTable, front.veTable);
+	copyTable(config->veTable,      m_rear.veTable);
+	copyTable(config->veFrontTable, m_front.veTable);
 
 	config->autotuneApplyToRamInd = true;
 
@@ -334,23 +334,23 @@ void AutotuneState::applyingToRAM() {
 }
 
 void AutotuneState::burningROM() {
-	if(autotuneTuneRan && !autotuneRunning) {
+	if(tuneRan && !running) {
 		applyingToRAM(); // Otherwise the tune doesn't land in config->veTable/veFrontTable
 		requestBurn();
-		autotuneTuneRan = false;
+		tuneRan = false;
 	}
 
 	return;
 }
 
 void AutotuneState::prepareFetchData() {
-	copyTable(config->veFrontTableTmp, front.veTable);
-	copyTable(config->veFrontTableDelta, front.veTableDelta);
-	copyTable(config->veFrontTableHits,  front.hitCount);
+	copyTable(config->veFrontTableTmp, m_front.veTable);
+	copyTable(config->veFrontTableDelta, m_front.veTableDelta);
+	copyTable(config->veFrontTableHits,  m_front.hitCount);
 
-	copyTable(config->veRearTableTmp, rear.veTable);
-	copyTable(config->veRearTableDelta, rear.veTableDelta);
-	copyTable(config->veRearTableHits,  rear.hitCount);
+	copyTable(config->veRearTableTmp, m_rear.veTable);
+	copyTable(config->veRearTableDelta, m_rear.veTableDelta);
+	copyTable(config->veRearTableHits,  m_rear.hitCount);
 
 	
 	config->autotuneFetchDataDone = true;
@@ -420,8 +420,8 @@ void AutotuneState::prepareNarrowBandTuning() {
 	// Without the condition RPM <= 5000, copyTable(dest, source, mult) 
 	// would simplify this step here.
 
-	// if(!autotuneNarrowbandPrepRan) { // Prevent multiple leaning by accidentally clicking more than once
-	// 	autotuneNarrowbandPrepRan = true;
+	// if(!narrowbandPrepRan) { // Prevent multiple leaning by accidentally clicking more than once
+	// 	narrowbandPrepRan = true;
 
 	// 	for (size_t n = 0; n < VE_LOAD_COUNT; n++) {
 	// 		for (size_t m = 0; m < VE_RPM_COUNT; m++) {

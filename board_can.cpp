@@ -909,11 +909,11 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 			bool cfcRunning = !cfcUserForceOn && cfcPin.getLogicValue();
 			if(!cfcRunning || config->cfcDisableWhenEngineStopped) {
 				if(frame.data8[0] == 0x00) {
-					if(autotuneState.autotuneRunning) {
-						autotuneState.autotuneRunning = false;
-						engineConfiguration->fuelClosedLoopCorrectionEnabled = autotuneState.autotuneSTFTBefore;
+					if(autotuneState.running) {
+						autotuneState.running = false;
+						engineConfiguration->fuelClosedLoopCorrectionEnabled = autotuneState.stftBefore;
 
-						if(autotuneState.autotuneNarrowbandTuning) {
+						if(autotuneState.narrowbandTuning) {
 							autotuneState.endNarrowBandTuning();
 						}
 						
