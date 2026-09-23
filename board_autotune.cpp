@@ -24,7 +24,12 @@ void AutotuneState::initializeStates() {
 	config->autotuneFetchDataDone = fetchDataDone;
 	config->autotuneApplyToRamInd = false;
 
-	// This is almost duplicate to the content of prepareFetchData
+	narrowbandTuning  = !engineConfiguration->enableAemXSeries;
+	stftBefore        = engineConfiguration->fuelClosedLoopCorrectionEnabled;
+
+	initializeLiveDataStructs();
+
+	// This is almost duplicate to the content of prepareFetchData.
 	// Refactoring?
 	copyTable(config->veFrontTableTmp,   m_front.veTable);
 	copyTable(config->veFrontTableDelta, m_front.veTableDelta);
@@ -33,11 +38,6 @@ void AutotuneState::initializeStates() {
 	copyTable(config->veRearTableTmp,   m_rear.veTable);
 	copyTable(config->veRearTableDelta, m_rear.veTableDelta);
 	copyTable(config->veRearTableHits,  m_rear.hitCount);
-
-	narrowbandTuning  = !engineConfiguration->enableAemXSeries;
-	stftBefore        = engineConfiguration->fuelClosedLoopCorrectionEnabled;
-
-	initializeLiveDataStructs();
 }
 
 void AutotuneState::initializeLiveDataStructs() {
