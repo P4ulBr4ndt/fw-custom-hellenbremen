@@ -9,7 +9,6 @@ AutotuneState autotuneState;
 
 AutotuneState::AutotuneState() {
 	checkCyclicBufferSize();
-	initializeLiveDataStructs();
 
 	return;
 }
@@ -24,6 +23,11 @@ void AutotuneState::initializeStates() {
 	config->autotuneRunning = running;
 	config->autotuneFetchDataDone = fetchDataDone;
 	config->autotuneApplyToRamInd = false;
+
+	narrowbandTuning  = !engineConfiguration->enableAemXSeries;
+	stftBefore        = engineConfiguration->fuelClosedLoopCorrectionEnabled;
+
+	initializeLiveDataStructs();
 }
 
 void AutotuneState::initializeLiveDataStructs() {
