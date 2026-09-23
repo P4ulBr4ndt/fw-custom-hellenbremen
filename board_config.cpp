@@ -438,6 +438,7 @@ void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {
 			break;
 		case 0x0B:
 			autotuneState.prepareFetchData();
+			config->autotuneFetchDataDone = true;
 			break;
 		case 0x0C:
 			config->autotuneFetchDataDone = false;

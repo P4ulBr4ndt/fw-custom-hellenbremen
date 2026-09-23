@@ -28,15 +28,7 @@ void AutotuneState::initializeStates() {
 	checkCyclicBufferSize();
 	initializeLiveDataStructs();
 
-	// This is almost duplicate to the content of prepareFetchData.
-	// Refactoring?
-	copyTable(config->veFrontTableTmp,   m_front.veTable);
-	copyTable(config->veFrontTableDelta, m_front.veTableDelta);
-	copyTable(config->veFrontTableHits,  m_front.hitCount);
-
-	copyTable(config->veRearTableTmp,   m_rear.veTable);
-	copyTable(config->veRearTableDelta, m_rear.veTableDelta);
-	copyTable(config->veRearTableHits,  m_rear.hitCount);
+	prepareFetchData();
 }
 
 void AutotuneState::initializeLiveDataStructs() {
@@ -366,9 +358,6 @@ void AutotuneState::prepareFetchData() {
 	copyTable(config->veRearTableTmp,   m_rear.veTable);
 	copyTable(config->veRearTableDelta, m_rear.veTableDelta);
 	copyTable(config->veRearTableHits,  m_rear.hitCount);
-
-	
-	config->autotuneFetchDataDone = true;
 
 	return;
 }
