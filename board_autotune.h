@@ -37,7 +37,7 @@ struct autotune_sample_s {
 	float   rpm;
 	float   fuelLoad;
 	float   targetAFR;
-	
+
 	float   correctionFront;
 	float   correctionRear;
 
@@ -61,13 +61,14 @@ public:
 
 	void initializeLiveDataStructs();
 	void checkCyclicBufferSize();
-	
+
 	void checkHistory();
-	
+
 	void toggleRunning();
 	void toggleAutoApply();
 	void applyingToRAM();
 	void burningROM();
+	void onShutdown();
 	void prepareFetchData();
 	void resetApplyToRAMIndicator();
 	void prepareNarrowBandTuning();
@@ -85,12 +86,14 @@ public:
 	bool running           = false;
 	bool fetchDataDone     = false;
 	// bool narrowbandPrepRan = false; // Currently Dead
-	
+
 	bool narrowbandTuning;
 	bool stftBefore;
 
 private:
 	Timer m_autoApplyTimer;
+	// Applying to RAM and persisting to flash are separate operations.
+	bool m_pendingBurn = false;
 
 	live_data_autotune_s m_front;
 	live_data_autotune_s m_rear;

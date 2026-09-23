@@ -207,7 +207,7 @@ void updateInstantAccelShot() {
 
 void boardInstantAccelFastCallback() {
 	updateInstantAccelShot();
-	
+
 	if(autotuneState.running) {
 		autotuneState.recordProcessing();
 		autotuneState.checkHistory();

@@ -52,11 +52,11 @@ void AutotuneState::initializeLiveDataStructs() {
 
 void AutotuneState::evaluateNewVECellValue(size_t idx) {
 	autotune_sample_s autotuneSample   = m_autotuneHistory.get(idx);
-	
+
 	// Also historic data?
-	// Consider this: Some records could contain a Clt, which would then 
+	// Consider this: Some records could contain a Clt, which would then
 	// dismiss these records since they do not fulfill the following guards.
-	const float clt       = Sensor::getOrZero(SensorType::Clt); 
+	const float clt       = Sensor::getOrZero(SensorType::Clt);
 	const float rearAFR   = Sensor::getOrZero(SensorType::Lambda1) * 14.7f;
 	const float frontAFR  = Sensor::getOrZero(SensorType::Lambda2) * 14.7f;
 
@@ -76,7 +76,7 @@ void AutotuneState::evaluateNewVECellValue(size_t idx) {
 
 	averageWeighting(m_front, proposedVEValues.frontCellSelection);
 	averageWeighting(m_rear,  proposedVEValues.rearCellSelection);
-	
+
 	return;
 }
 
@@ -106,7 +106,7 @@ void AutotuneState::averageWeighting(live_data_autotune_s& cylinder, const bilin
 		float&    tableDelta        = cylinder.veTableDelta[vote.loadIdx][vote.rpmIdx];
 		const float originalValue   = cylinder.preTuneVeTable[vote.loadIdx][vote.rpmIdx];
 
-		// Robinson-Monro stochastic approximation 
+		// Robinson-Monro stochastic approximation
 		const float candidateAverage = (runningAverage * (accumulatedWeight + config->autotuneActiveInitialWeight) + vote.proposedValue * vote.weight)
 		                                / (accumulatedWeight + vote.weight + config->autotuneActiveInitialWeight);
 
@@ -129,7 +129,7 @@ void AutotuneState::averageWeighting(live_data_autotune_s& cylinder, const bilin
 		tableDelta        = runningAverage - originalValue;
 		accumulatedWeight = clampF(0.0f, accumulatedWeight + vote.weight, config->autotuneActiveMaxWeight);
 		hitCount++;
-		
+
 		tuneRan = true;
 	}
 
@@ -138,11 +138,11 @@ void AutotuneState::averageWeighting(live_data_autotune_s& cylinder, const bilin
 
 void AutotuneState::toggleRunning() {
 	if (running) {
+		running = false;
 		if(narrowbandTuning) {
 			endNarrowBandTuning();
 		}
 
-		running = false;
 		engineConfiguration->fuelClosedLoopCorrectionEnabled = stftBefore;
 	} else {
 		narrowbandTuning = !engineConfiguration->enableAemXSeries;
@@ -153,6 +153,10 @@ void AutotuneState::toggleRunning() {
 
 		config->autotuneFetchDataDone = false;
 		checkCyclicBufferSize();
+		// A new session must not evaluate delayed samples from the previous one,
+		// even if the configured buffer size has not changed.
+		m_autotuneHistory.clear();
+		tuneRan = false;
 		initializeLiveDataStructs();
 		m_autoApplyTimer.reset();
 
@@ -257,7 +261,7 @@ autotune_sample_s AutotuneState::getProposedVECellValue(float frontMeasuredAFR, 
 	proposedVESelection.frontCellSelection.cell01 = frontCorrectionFactor * (sample.frontCellSelection.cell01 + frontCellInterpolated) / 2.0f;
 	proposedVESelection.frontCellSelection.cell10 = frontCorrectionFactor * (sample.frontCellSelection.cell10 + frontCellInterpolated) / 2.0f;
 	proposedVESelection.frontCellSelection.cell11 = frontCorrectionFactor * (sample.frontCellSelection.cell11 + frontCellInterpolated) / 2.0f;
-	
+
 	proposedVESelection.rearCellSelection.cell00  = rearCorrectionFactor * (sample.rearCellSelection.cell00 + rearCellInterpolated) / 2.0f;
 	proposedVESelection.rearCellSelection.cell01  = rearCorrectionFactor * (sample.rearCellSelection.cell01 + rearCellInterpolated) / 2.0f;
 	proposedVESelection.rearCellSelection.cell10  = rearCorrectionFactor * (sample.rearCellSelection.cell10 + rearCellInterpolated) / 2.0f;
@@ -293,7 +297,6 @@ void AutotuneState::checkHistory() {
 	if(m_autoApplyTimer.hasElapsedSec(config->autotuneApplyPeriod)) {
 		if(config->autotuneAutoApply && tuneRan) {
 			applyingToRAM();
-			tuneRan = false;
 		}
 		m_autoApplyTimer.reset();
 	}
@@ -332,22 +335,39 @@ void AutotuneState::checkCyclicBufferSize() {
 }
 
 void AutotuneState::applyingToRAM() {
+	if (!tuneRan) {
+		return;
+	}
+
 	copyTable(config->veTable,      m_rear.veTable);
 	copyTable(config->veFrontTable, m_front.veTable);
 
 	config->autotuneApplyToRamInd = true;
+	m_pendingBurn = true;
+	tuneRan = false;
 
 	return;
 }
 
 void AutotuneState::burningROM() {
-	if(tuneRan && !running) {
+	if (!running && (tuneRan || m_pendingBurn)) {
 		applyingToRAM(); // Otherwise the tune doesn't land in config->veTable/veFrontTable
 		requestBurn();
-		tuneRan = false;
+		m_pendingBurn = false;
 	}
 
 	return;
+}
+
+void AutotuneState::onShutdown() {
+	// Restore temporary tuning settings and publish the stopped state first.
+	if (running) {
+		toggleRunning();
+	}
+
+	if (config->autotuneAutoBurn) {
+		burningROM();
+	}
 }
 
 void AutotuneState::prepareFetchData() {
@@ -411,7 +431,7 @@ void AutotuneState::prepareNarrowBandTuning() {
 	copyTable(config->lambdaTableBefore, config->lambdaTable);
 	setTable(config->lambdaTable, 14.6f / 14.7f);
 
-	
+
 	for (size_t n = 0; n < IGN_LOAD_COUNT; n++) {
 		for (size_t m = 0; m < IGN_RPM_COUNT; m++) {
 			config->ignitionFrontTable[n][m] = config->ignitionFrontTable[n][m] - 4;
@@ -421,7 +441,7 @@ void AutotuneState::prepareNarrowBandTuning() {
 
 	// VE Table modification. In consideration, will probably be removed.
 
-	// Without the condition RPM <= 5000, copyTable(dest, source, mult) 
+	// Without the condition RPM <= 5000, copyTable(dest, source, mult)
 	// would simplify this step here.
 
 	// if(!narrowbandPrepRan) { // Prevent multiple leaning by accidentally clicking more than once

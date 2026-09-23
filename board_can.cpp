@@ -18,7 +18,6 @@
 #include "malfunction_central.h"
 #include "shutdown_controller.h"
 #include "trigger_central.h"
-#include "tunerstudio.h"
 
 static uint8_t frameCounter142 = 0x0;
 static uint8_t frameCounter144 = 0x0;
@@ -909,25 +908,9 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 			bool cfcRunning = !cfcUserForceOn && cfcPin.getLogicValue();
 			if(!cfcRunning || config->cfcDisableWhenEngineStopped) {
 				if(frame.data8[0] == 0x00) {
-					if(autotuneState.running) {
-						autotuneState.running = false;
-						engineConfiguration->fuelClosedLoopCorrectionEnabled = autotuneState.stftBefore;
-
-						if(autotuneState.narrowbandTuning) {
-							autotuneState.endNarrowBandTuning();
-						}
-						
-						// Is here a problem that requestBurn is not succesfully written
-						// until the shutdown of the ECM? requestBurn is an asyncronous,
-						// non-blocking function queueing burning in the ChibiOS mailbox.
-						requestBurn();
-					}
-
-					if (config->autotuneAutoBurn) {
-						autotuneState.burningROM();
-					}
+					autotuneState.onShutdown();
 				}
-			
+
 				harleyKeepAlive = frame.data8[0];
 			}
 	}
