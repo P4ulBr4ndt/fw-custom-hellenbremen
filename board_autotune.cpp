@@ -52,7 +52,10 @@ void AutotuneState::initializeLiveDataStructs() {
 void AutotuneState::evaluateNewVECellValue(size_t idx) {
 	autotune_sample_s autotuneSample   = m_autotuneHistory.get(idx);
 	
-	const float clt       = Sensor::getOrZero(SensorType::Clt); // Also historic data?
+	// Also historic data?
+	// Consider this: Some records could contain a Clt, which would then 
+	// dismiss these records since they do not fulfill the following guards.
+	const float clt       = Sensor::getOrZero(SensorType::Clt); 
 	const float rearAFR   = Sensor::getOrZero(SensorType::Lambda1) * 14.7f;
 	const float frontAFR  = Sensor::getOrZero(SensorType::Lambda2) * 14.7f;
 
