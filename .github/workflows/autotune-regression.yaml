@@ -12,6 +12,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: true
+      - name: Initialize the firmware utility headers
+        run: git -C ext/rusefi submodule update --init firmware/libfirmware
       - name: Compile board autotune with the host test environment
         run: |
           g++ -std=c++17 -Wall -Wextra -g -fsanitize=address,undefined \
