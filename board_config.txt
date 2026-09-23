@@ -13,6 +13,8 @@ uint8_t[PEDAL_TO_TPS_SIZE] estimatedEngineTorqueTpsBins;;"%", 1, 0, 0, 100, 0
 #define INSTANT_ACCEL_SHOT_TPS_COUNT 6
 #define INSTANT_ACCEL_SHOT_CLT_CORR_COUNT 10
 #define ETB_TARGET_SLEW_BINS_COUNT 12
+#define LAMBDA_DELAY_RPM_COUNT 3
+#define LAMBDA_DELAY_LOAD_COUNT 3
 
 float instantAccelShotWindowMs;Instant accel window length;"ms", 1, 0, 0, 500, 0
 float instantAccelShotTopupMinSpacingMs;Instant accel top-up min spacing;"ms", 1, 0, 0, 100, 2
@@ -83,4 +85,68 @@ output_pin_e cfcOutputPin;
 output_pin_e ccfcOutputPin;
 output_pin_e cpcOutputPin;
 output_pin_e prgselOutputPin;
+
+bit autotuneRunning,"Yes","No";
+bit autotuneAutoApply,"Yes","No";
+bit autotuneAutoBurn,"Yes","No";
+
+uint16_t[VE_LOAD_COUNT x VE_RPM_COUNT] autoscale veFrontTableTmp;;"%", 0.1, 0, 0, 200, 1
+int16_t[VE_LOAD_COUNT x VE_RPM_COUNT] autoscale veFrontTableDelta;;"%", 0.1, 0, -200, 200, 1
+uint16_t[VE_LOAD_COUNT x VE_RPM_COUNT] autoscale veFrontTableHits;;"", 1, 0, 0, 65535, 1
+uint16_t[VE_LOAD_COUNT x VE_RPM_COUNT] autoscale veRearTableTmp;;"%", 0.1, 0, 0, 200, 1
+int16_t[VE_LOAD_COUNT x VE_RPM_COUNT] autoscale veRearTableDelta;;"%", 0.1, 0, -200, 200, 1
+uint16_t[VE_LOAD_COUNT x VE_RPM_COUNT] autoscale veRearTableHits;;"", 1, 0, 0, 65535, 1
+bit autotuneFetchDataDone,"Yes","No";
+bit autotuneApplyToRamInd,"Yes","No";
+
+uint16_t[LAMBDA_DELAY_LOAD_COUNT x LAMBDA_DELAY_RPM_COUNT] lambdaDelayTable;;"ms", 1, 0, 0, 640, 0
+uint16_t[LAMBDA_DELAY_RPM_COUNT] lambdaDelayRpmBins;;"RPM", 1, 0, 0, 18000, 0
+uint16_t[LAMBDA_DELAY_LOAD_COUNT] lambdaDelayLoadBins;;"%", 1, 0, 0, 100, 0
+
+uint16_t autotuneMinRPM;;"RPM", 1, 0, 0, 18000, 0
+int16_t  autotuneMinETS;;"C", 1, 0, -40, 250, 0
+int16_t  autotuneMaxETS;;"C", 1, 0, -40, 250, 0
+uint16_t autoscale autotuneMinAFR;;"AFR", 0.1, 0, 0, 25, 1
+uint16_t autoscale autotuneMaxAFR;;"AFR", 0.1, 0, 0, 25, 1
+uint16_t autotuneApplyPeriod;;"sec", 1, 0, 1, 300, 0
+
+float autotuneVeryHighInitialWeight;;"", 1, 0, 0, 1000, 2
+float autotuneVeryHighWeightThreshold;;"", 1, 0, 0, 10, 2
+float autotuneVeryHighDeadband;;"", 1, 0, 0, 100, 2
+float autotuneVeryHighMaxWeight;;"", 1, 0, 0, 1000000, 1
+
+float autotuneHighInitialWeight;;"", 1, 0, 0, 1000, 2
+float autotuneHighWeightThreshold;;"", 1, 0, 0, 10, 2
+float autotuneHighDeadband;;"", 1, 0, 0, 100, 2
+float autotuneHighMaxWeight;;"", 1, 0, 0, 1000000, 1
+
+float autotuneNormalInitialWeight;;"", 1, 0, 0, 1000, 2
+float autotuneNormalWeightThreshold;;"", 1, 0, 0, 10, 2
+float autotuneNormalDeadband;;"", 1, 0, 0, 100, 2
+float autotuneNormalMaxWeight;;"", 1, 0, 0, 1000000, 1
+
+float autotuneLowInitialWeight;;"", 1, 0, 0, 1000, 2
+float autotuneLowWeightThreshold;;"", 1, 0, 0, 10, 2
+float autotuneLowDeadband;;"", 1, 0, 0, 100, 2
+float autotuneLowMaxWeight;;"", 1, 0, 0, 1000000, 1
+
+float autotuneVeryLowInitialWeight;;"", 1, 0, 0, 1000, 2
+float autotuneVeryLowWeightThreshold;;"", 1, 0, 0, 10, 2
+float autotuneVeryLowDeadband;;"", 1, 0, 0, 100, 2
+float autotuneVeryLowMaxWeight;;"", 1, 0, 0, 1000000, 1
+
+custom autotuneCellChangeResistance_e 1 bits, U08, @OFFSET@, [0:2], "Very High", "High", "Normal", "Low", "Very Low"
+
+autotuneCellChangeResistance_e autotuneCellChangeResistance;Cell change resistance preset applied to the active parameters below, refreshed after every burn;
+
+float autotuneMaxAbsoluteChange;;"", 1, 0, 0, 300, 1
+float autotuneMaxPercentageChange;;"%", 1, 0, 0, 100, 1
+
+float autotuneActiveInitialWeight;;"", 1, 0, 0, 1000, 2
+float autotuneActiveWeightThreshold;;"", 1, 0, 0, 10, 2
+float autotuneActiveDeadband;;"", 1, 0, 0, 100, 2
+float autotuneActiveMaxWeight;;"", 1, 0, 0, 1000000, 1
+
+uint8_t[FUEL_LOAD_COUNT x FUEL_RPM_COUNT] autoscale lambdaTableBefore;;{useLambdaOnInterface ? "lambda" : "afr"}, { useLambdaOnInterface ? 1/147 : 1/10 }, 0, {useLambdaOnInterface ? 0.6 : 9}, {useLambdaOnInterface ? 1.5 : 16}, {useLambdaOnInterface ? 2 : 1}
+
 uint16_t outputPinsAlignFill;
