@@ -47,7 +47,9 @@ DDEFS += -DEFI_HD_DP=TRUE
 # Store LTFT in internal flash (not SD storage backend)
 DDEFS += -DEFI_STORAGE_SD=FALSE
 
-# USB product string shown by host OS
+# USB manufacturer and product strings shown by host OS
+# Manufacturer: Don Performance GmbH
+DDEFS += -DUSB_MANUFACTURER_STRING_CONTENT="'D', 0, 'o', 0, 'n', 0, ' ', 0, 'P', 0, 'e', 0, 'r', 0, 'f', 0, 'o', 0, 'r', 0, 'm', 0, 'a', 0, 'n', 0, 'c', 0, 'e', 0, ' ', 0, 'G', 0, 'm', 0, 'b', 0, 'H', 0"
 DDEFS += -DUSB_DESCRIPTOR_STRING_CONTENT="'B', 0, 'r', 0, 'e', 0, 'm', 0, 'e', 0, 'r', 0, 'E', 0, 'C', 0, 'U', 0"
 
 # OpenBLT CAN IDs (standard 11-bit)

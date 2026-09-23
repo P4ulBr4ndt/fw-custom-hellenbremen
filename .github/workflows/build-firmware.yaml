@@ -1,8 +1,8 @@
 name: Create Board Firmware
 
 on:
-  schedule:
-    - cron: '35 16 * * *' # build fresh every 4:35 PM UTC which is often 12:35 EST
+  #schedule:
+  #  - cron: '35 16 * * *' # build fresh every 4:35 PM UTC which is often 12:35 EST
   push:
   #  pull_request:
   workflow_dispatch:
@@ -18,9 +18,9 @@ jobs:
       - name: Set run variables
         id: set-variables
         run: |
-          if [ "${{github.event_name}}" = "schedule" ]; then
-            echo "release_date=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
-          fi
+          #if [ "${{github.event_name}}" = "schedule" ]; then
+          #  echo "release_date=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+          #fi
           if [ "${{github.event_name}}" == "push" -o "${{github.event_name}}" == "schedule" -o "${{github.event_name}}" == "workflow_dispatch" ] && [ "${{github.ref}}" == "refs/heads/master" -o "${{github.ref}}" == "refs/heads/main" ]; then
             echo 'push=true' >> $GITHUB_OUTPUT
             echo 'sim=true' >> $GITHUB_OUTPUT
@@ -43,19 +43,21 @@ jobs:
         run: |
           set -euo pipefail
 
-          mapfile -t bundle_zips < <(find ext/rusefi/artifacts -maxdepth 1 -type f -name '*_bundle_hellen-bremen.zip' ! -name '*_autoupdate.zip' | sort)
+          : "${SHORT_BOARD_NAME:?SHORT_BOARD_NAME not exported by custom-board-build}"
+
+          mapfile -t bundle_zips < <(find ext/rusefi/artifacts -maxdepth 1 -type f -name "*_bundle_${SHORT_BOARD_NAME}.zip" ! -name '*_autoupdate.zip' | sort)
           if [ "${#bundle_zips[@]}" -ne 1 ]; then
-            printf 'Expected exactly one hellen-bremen bundle, found %s:\n' "${#bundle_zips[@]}"
+            printf 'Expected exactly one %s bundle, found %s:\n' "${SHORT_BOARD_NAME}" "${#bundle_zips[@]}"
             printf '  %s\n' "${bundle_zips[@]:-}"
             exit 1
           fi
 
           bundle_zip="${bundle_zips[0]}"
-          ini_entry="$(zipinfo -1 "${bundle_zip}" | awk '/\/rusefi_hellen-bremen\.ini$/ { print; exit }')"
+          ini_entry="$(zipinfo -1 "${bundle_zip}" | awk -v ini="rusefi_${SHORT_BOARD_NAME}.ini" '{ n = split($0, p, "/") } p[n] == ini { print; exit }')"
           bin_entry="$(zipinfo -1 "${bundle_zip}" | awk '/\/rusefi\.bin$/ { print; exit }')"
 
           if [ -z "${ini_entry}" ]; then
-            echo "Could not find rusefi_hellen-bremen.ini in ${bundle_zip}"
+            echo "Could not find rusefi_${SHORT_BOARD_NAME}.ini in ${bundle_zip}"
             exit 1
           fi
           if [ -z "${bin_entry}" ]; then
@@ -63,18 +65,18 @@ jobs:
             exit 1
           fi
 
-          unzip -p "${bundle_zip}" "${ini_entry}" > rusefi_hellen-bremen.ini
-          unzip -p "${bundle_zip}" "${bin_entry}" > rusefi_hellen-bremen.bin
+          unzip -p "${bundle_zip}" "${ini_entry}" > rusefi_${SHORT_BOARD_NAME}.ini
+          unzip -p "${bundle_zip}" "${bin_entry}" > rusefi_${SHORT_BOARD_NAME}.bin
 
-          test -s rusefi_hellen-bremen.ini
-          test -s rusefi_hellen-bremen.bin
-          sha256sum rusefi_hellen-bremen.ini rusefi_hellen-bremen.bin
+          test -s rusefi_${SHORT_BOARD_NAME}.ini
+          test -s rusefi_${SHORT_BOARD_NAME}.bin
+          sha256sum rusefi_${SHORT_BOARD_NAME}.ini rusefi_${SHORT_BOARD_NAME}.bin
 
       - name: Upload INI to TS definitions API
         env:
           TS_DEFINITION_UPLOAD_URL: ${{ secrets.TS_DEFINITION_UPLOAD_URL }}
           TS_DEFINITION_UPLOAD_SECRET: ${{ secrets.TS_DEFINITION_UPLOAD_SECRET }}
-          TS_DEFINITION_PATH: rusefi_hellen-bremen.ini
+          TS_DEFINITION_PATH: rusefi_${{ env.SHORT_BOARD_NAME }}.ini
         run: |
           set -euo pipefail
 
@@ -92,11 +94,11 @@ jobs:
       - name: Upload INI as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: rusefi_hellen-bremen.ini
-          path: rusefi_hellen-bremen.ini
+          name: rusefi_${{ env.SHORT_BOARD_NAME }}.ini
+          path: rusefi_${{ env.SHORT_BOARD_NAME }}.ini
 
       - name: Upload BIN as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: rusefi_hellen-bremen.bin
-          path: rusefi_hellen-bremen.bin
+          name: rusefi_${{ env.SHORT_BOARD_NAME }}.bin
+          path: rusefi_${{ env.SHORT_BOARD_NAME }}.bin
