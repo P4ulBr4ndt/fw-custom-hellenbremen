@@ -8,8 +8,6 @@
 AutotuneState autotuneState;
 
 AutotuneState::AutotuneState() {
-	checkCyclicBufferSize();
-
 	return;
 }
 
@@ -27,6 +25,7 @@ void AutotuneState::initializeStates() {
 	narrowbandTuning  = !engineConfiguration->enableAemXSeries;
 	stftBefore        = engineConfiguration->fuelClosedLoopCorrectionEnabled;
 
+	checkCyclicBufferSize();
 	initializeLiveDataStructs();
 
 	// This is almost duplicate to the content of prepareFetchData.
