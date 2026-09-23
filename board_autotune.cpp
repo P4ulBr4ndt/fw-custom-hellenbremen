@@ -40,7 +40,7 @@ void AutotuneState::initializeLiveDataStructs() {
 	setTable(m_rear.accumulatedWeight,  config->autotuneActiveInitialWeight);
 	setTable(m_front.accumulatedWeight, config->autotuneActiveInitialWeight);
 
-	setTable(m_rear.veTableDelta, 0.0f);
+	setTable(m_rear.veTableDelta,  0.0f);
 	setTable(m_front.veTableDelta, 0.0f);
 
 	setTable(m_rear.hitCount,  (uint16_t)0);
@@ -66,7 +66,7 @@ void AutotuneState::evaluateNewVECellValue(size_t idx) {
 		|| (clt      < config->autotuneMinETS || clt      > config->autotuneMaxETS)
 		|| (frontAFR < config->autotuneMinAFR || frontAFR > config->autotuneMaxAFR)
 		|| (rearAFR  < config->autotuneMinAFR || rearAFR  > config->autotuneMaxAFR)
-	    || autotuneSample.targetAFR == 0.0f  || std::isnan(autotuneSample.targetAFR)
+	    || autotuneSample.targetAFR == 0.0f   || std::isnan(autotuneSample.targetAFR)
 	    || engine->module<TpsAccelEnrichment>()->isAboveAccelThreshold) {
 		return;
 	}
@@ -79,7 +79,6 @@ void AutotuneState::evaluateNewVECellValue(size_t idx) {
 	return;
 }
 
-// Robinson-Monro stochastic approximation 
 void AutotuneState::averageWeighting(live_data_autotune_s& cylinder, const bilinear_cell_selection_s& proposed) {
 	struct WeightedVote {
 		size_t loadIdx;
@@ -106,7 +105,7 @@ void AutotuneState::averageWeighting(live_data_autotune_s& cylinder, const bilin
 		float&    tableDelta        = cylinder.veTableDelta[vote.loadIdx][vote.rpmIdx];
 		const float originalValue   = cylinder.preTuneVeTable[vote.loadIdx][vote.rpmIdx];
 
-
+		// Robinson-Monro stochastic approximation 
 		const float candidateAverage = (runningAverage * (accumulatedWeight + config->autotuneActiveInitialWeight) + vote.proposedValue * vote.weight)
 		                                / (accumulatedWeight + vote.weight + config->autotuneActiveInitialWeight);
 
