@@ -205,6 +205,7 @@ void boardDefaultConfiguration() {
 	config->autotuneVeryLowDeadband = 0.0f;
 	config->autotuneVeryLowMaxWeight = 5.0f;
 
+	config->autotuneAutomaticCellChangeResistance = true;
 	config->autotuneCellChangeResistance = autotuneCellChangeResistance_e::Normal;
 	config->autotuneActiveInitialWeight = config->autotuneNormalInitialWeight;
 	config->autotuneActiveWeightThreshold = config->autotuneNormalWeightThreshold;
