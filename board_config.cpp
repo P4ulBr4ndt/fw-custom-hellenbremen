@@ -175,19 +175,19 @@ void boardDefaultConfiguration() {
 	config->autotuneMinAFR = 8.0f;
 	config->autotuneMaxAFR = 20.0f;
 
-	config->autotuneAutoApply = false;
-	config->autotuneAutoBurn = false;
-	config->autotuneApplyPeriod = 15;
+	config->autotuneAutoApply = true;
+	config->autotuneAutoBurn = true;
+	config->autotuneApplyPeriod = 5;
 
 	// Autotune cell change resistance presets
 	config->autotuneVeryHighInitialWeight = 100.0f;
 	config->autotuneVeryHighWeightThreshold = 0.25f;
-	config->autotuneVeryHighDeadband = 1.0f;
+	config->autotuneVeryHighDeadband = 0.5f;
 	config->autotuneVeryHighMaxWeight = 100000.0f;
 
 	config->autotuneHighInitialWeight = 20.0f;
 	config->autotuneHighWeightThreshold = 0.1f;
-	config->autotuneHighDeadband = 1.0f;
+	config->autotuneHighDeadband = 0.0f;
 	config->autotuneHighMaxWeight = 1000.0f;
 
 	config->autotuneNormalInitialWeight = 5.0f;

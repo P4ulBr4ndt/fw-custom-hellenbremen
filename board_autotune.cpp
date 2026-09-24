@@ -149,7 +149,16 @@ void AutotuneState::toggleRunning() {
 
 		if(narrowbandTuning) {
 			prepareNarrowBandTuning();
+			if(config->autotuneAutomaticCellChangeResistance) {
+				config->autotuneCellChangeResistance = autotuneCellChangeResistance_e::High;
+			}
+		} else {
+			if(config->autotuneAutomaticCellChangeResistance) {
+				config->autotuneCellChangeResistance = autotuneCellChangeResistance_e::Normal;
+			}
 		}
+
+		applyCellChangeResistancePreset();
 
 		config->autotuneFetchDataDone = false;
 		checkCyclicBufferSize();
