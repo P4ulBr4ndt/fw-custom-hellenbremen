@@ -439,23 +439,7 @@ void AutotuneState::prepareNarrowBandTuning() {
 		}
 	}
 
-	// VE Table modification. In consideration, will probably be removed.
-
-	// Without the condition RPM <= 5000, copyTable(dest, source, mult)
-	// would simplify this step here.
-
-	// if(!narrowbandPrepRan) { // Prevent multiple leaning by accidentally clicking more than once
-	// 	narrowbandPrepRan = true;
-
-	// 	for (size_t n = 0; n < VE_LOAD_COUNT; n++) {
-	// 		for (size_t m = 0; m < VE_RPM_COUNT; m++) {
-	// 			if (config->veRpmBins[m] <= 5000.0) {
-	// 				config->veFrontTable[n][m] = config->veFrontTable[n][m] * 1.1;
-	// 				config->veTable[n][m]      = config->veTable[n][m] * 1.1;
-	// 			}
-	// 		}
-	// 	}
-	// }
+	// TODO: VE Table modification. For Narrowband, a leaner VE table might be more favourable
 }
 
 void AutotuneState::endNarrowBandTuning() {
