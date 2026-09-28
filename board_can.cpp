@@ -716,12 +716,7 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 
 	if (CAN_SID(frame) == 0x500) {
 		if(frame.data8[0] == 0x00) {
-			autotuneState.autotuneRunning = false;
-			engineConfiguration->fuelClosedLoopCorrectionEnabled = true;
-
-			if (config->autotuneAutoBurn) {
-				autotuneState.burningROM();
-			}
+			autotuneState.onShutdown();
 		}
 	
 		harleyKeepAlive = frame.data8[0];
