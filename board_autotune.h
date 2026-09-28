@@ -37,7 +37,7 @@ struct autotune_sample_s {
 	float   rpm;
 	float   fuelLoad;
 	float   targetAFR;
-	
+
 	float   correctionFront;
 	float   correctionRear;
 
@@ -61,33 +61,41 @@ public:
 
 	void initializeLiveDataStructs();
 	void checkCyclicBufferSize();
-	
+
 	void checkHistory();
-	
+
 	void toggleRunning();
 	void toggleAutoApply();
 	void applyingToRAM();
 	void burningROM();
+	void onShutdown();
 	void prepareFetchData();
 	void resetApplyToRAMIndicator();
+	void prepareNarrowBandTuning();
+	void endNarrowBandTuning();
 
 	void recordProcessing();
 	autotune_sample_s getProposedVECellValue(float frontMeasuredAFR, float rearMeasuredAFR, autotune_sample_s& sample);
 	void evaluateNewVECellValue(size_t idx); // Is size_t necessary? I don't need such big types here
 	void averageWeighting(live_data_autotune_s& cylinder, const bilinear_cell_selection_s& proposed);
-	void applyLearningRatePreset();
+	void applyCellChangeResistancePreset();
 
 	bilinear_cell_selection_s bilinearCellSelection(float rpm, float fuelLoad, scaled_channel<uint16_t, 10, 1> (&veTable)[VE_LOAD_COUNT][VE_RPM_COUNT]);
 
-	bool autotuneTuneRan       = false;
-	bool autotuneRunning       = false;
-	bool autotuneFetchDataDone = false;
+	bool tuneRan           = false;
+	bool running           = false;
+	bool fetchDataDone     = false;
+
+	bool narrowbandTuning;
+	bool stftBefore;
 
 private:
-	Timer autoApplyTimer;
+	Timer m_autoApplyTimer;
+	// Applying to RAM and persisting to flash are separate operations.
+	bool m_pendingBurn = false;
 
-	live_data_autotune_s front;
-	live_data_autotune_s rear;
+	live_data_autotune_s m_front;
+	live_data_autotune_s m_rear;
 
 	// TODO: Originally, it was intended to have a dynamic cyclic_buffert
 	// depending on the choice of values in the Lambda delay table.
@@ -95,7 +103,7 @@ private:
 	// AutotuneState, ~AutotuneState and checkCyclicBufferSize
 
 	// Currently, default size is 128 records, covering 128 * 5ms = 640 ms
-	cyclic_buffer<autotune_sample_s> autotuneHistory;
+	cyclic_buffer<autotune_sample_s> m_autotuneHistory;
 
 };
 
