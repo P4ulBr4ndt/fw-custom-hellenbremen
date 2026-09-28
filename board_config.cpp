@@ -32,6 +32,16 @@ void boardDefaultConfiguration() {
 	engineConfiguration->vvtOutputFrequency = 110;
 	engineConfiguration->mapCamDetectionAnglePosition = 50;
 
+	// Widened cam gaps for VVT_BOSCH_QUICK_START (unused with MAP cam sync): V-twin cranking speed
+	// ripple pushes the sync ratios (nominal 0.645 / 1.556) to ~0.47 / ~1.10, just outside the stock +-25%
+	// Note: override applies to whichever decoder cam 1 uses - review when selecting a different cam wheel
+	engineConfiguration->overrideVvtTriggerGaps = true;
+	engineConfiguration->gapVvtTrackingLengthOverride = 2;
+	engineConfiguration->triggerVVTGapOverrideFrom[0] = 0.35;
+	engineConfiguration->triggerVVTGapOverrideTo[0] = 0.85;
+	engineConfiguration->triggerVVTGapOverrideFrom[1] = 0.95;
+	engineConfiguration->triggerVVTGapOverrideTo[1] = 2.0;
+
 	// Aux Outputs
 	engineConfiguration->fanPin = Gpio::Unassigned;
 	engineConfiguration->fanOnTemperature = 0.f;
