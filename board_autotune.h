@@ -85,7 +85,6 @@ public:
 	bool tuneRan           = false;
 	bool running           = false;
 	bool fetchDataDone     = false;
-	// bool narrowbandPrepRan = false; // Currently Dead
 
 	bool narrowbandTuning;
 	bool stftBefore;
