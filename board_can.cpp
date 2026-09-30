@@ -29,7 +29,8 @@ static bool harleyIgnitionOffRequested = false;
 static bool harleyIgnitionOffRequestedPrev = false;
 static bool harleyIgnitionOnRequested = false;
 static bool harleyIgnitionOnRequestedPrev = false;
-static bool cruiseEnablePressedPrev = false;
+// Starts as "pressed" so a switch already reporting pressed at power-up is not taken as a press
+static bool cruiseEnablePressedPrev = true;
 static bool cruiseDecPressedPrev = false;
 static bool cruiseIncPressedPrev = false;
 static efitick_t cruiseDecPressStartNt = 0;
@@ -1024,7 +1025,9 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 		}
 
 		// CC Switch handle
-		if (cruiseEnablePressed && !cruiseEnablePressedPrev && (engine->fuelComputer.running.timeSinceCrankingInSecs > 10.0f)) {
+		// timeSinceCrankingInSecs is huge before the first crank, so also require a running engine
+		if (cruiseEnablePressed && !cruiseEnablePressedPrev && engine->rpmCalculator.isRunning()
+				&& (engine->fuelComputer.running.timeSinceCrankingInSecs > 5.0f)) {
 			if (getCCStatus() == CruiseControlStatus::Disabled) {
 				setCCStatus(CruiseControlStatus::Standby);
 			} else {
