@@ -1,3 +1,4 @@
+#include "ext/rusefi/firmware/controllers/storage.h"
 #include "pch.h"
 
 #include "engine_state.h"
@@ -18,6 +19,7 @@
 #include "malfunction_central.h"
 #include "shutdown_controller.h"
 #include "trigger_central.h"
+#include "storage.h"
 
 static uint8_t frameCounter142 = 0x0;
 static uint8_t frameCounter144 = 0x0;
@@ -834,7 +836,11 @@ void boardHandleCan(CanCycle cycle) {
 
 		{
 			CanTxMessage msg(CanCategory::NBC, 0x502, 0x1/* DLC */);
-			msg[0] = harleyKeepAlive;
+			if (harleyKeepAlive == 0x00 && getNeedToWriteConfiguration()) {
+				msg[0] = 0x1;
+			} else {
+				msg[0] = harleyKeepAlive;
+			}
 		}
 	}
 }
