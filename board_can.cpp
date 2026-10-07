@@ -13,6 +13,7 @@
 #include "board_uds.h"
 #include "board_config.h"
 #include "board_autotune.h"
+#include "board_atIdleBase.h"
 #include "cruise_control.h"
 #include "electronic_throttle.h"
 #include "error_handling.h"
@@ -510,6 +511,9 @@ void boardPeriodicSlow() {
 		prgselForce = false;
 		cpcForce    = false;
 	}
+
+	// AtIdleBase processing
+	atIdleBaseState.periodicSlowCallback();
 }
 
 void boardHandleCan(CanCycle cycle) {
@@ -916,6 +920,7 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 			if(!cfcRunning || config->cfcDisableWhenEngineStopped) {
 				if(frame.data8[0] == 0x00) {
 					autotuneState.onShutdown();
+					atIdleBaseState.onShutdown();
 				}
 
 				harleyKeepAlive = frame.data8[0];
