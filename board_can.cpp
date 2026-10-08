@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "storage.h"
 
 #include "engine_state.h"
 
@@ -11,12 +12,14 @@
 #include "board_uds.h"
 #include "board_config.h"
 #include "board_autotune.h"
+#include "board_atIdleBase.h"
 #include "cruise_control.h"
 #include "electronic_throttle.h"
 #include "error_handling.h"
 #include "malfunction_central.h"
 #include "shutdown_controller.h"
 #include "trigger_central.h"
+
 
 static uint8_t frameCounter142 = 0x0;
 static uint8_t frameCounter144 = 0x0;
@@ -28,7 +31,8 @@ static bool harleyIgnitionOffRequested = false;
 static bool harleyIgnitionOffRequestedPrev = false;
 static bool harleyIgnitionOnRequested = false;
 static bool harleyIgnitionOnRequestedPrev = false;
-static bool cruiseEnablePressedPrev = false;
+// Starts as "pressed" so a switch already reporting pressed at power-up is not taken as a press
+static bool cruiseEnablePressedPrev = true;
 static bool cruiseDecPressedPrev = false;
 static bool cruiseIncPressedPrev = false;
 static efitick_t cruiseDecPressStartNt = 0;
@@ -351,6 +355,9 @@ void boardPeriodicSlow() {
 	if(harleyIgnitionOffRequested && !harleyIgnitionOnRequested) {
 		prgselForce = false;
 	}
+
+	// AtIdleBase processing
+	atIdleBaseState.periodicSlowCallback();
 }
 
 void boardHandleCan(CanCycle cycle) {
@@ -643,7 +650,11 @@ void boardHandleCan(CanCycle cycle) {
 
 		{
 			CanTxMessage msg(CanCategory::NBC, 0x502, 0x1/* DLC */);
-			msg[0] = harleyKeepAlive;
+			if (harleyKeepAlive == 0x00 && getNeedToWriteConfiguration()) {
+				msg[0] = 0x1;
+			} else {
+				msg[0] = harleyKeepAlive;
+			}
 		}
 	}
 }
@@ -717,6 +728,7 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 	if (CAN_SID(frame) == 0x500) {
 		if(frame.data8[0] == 0x00) {
 			autotuneState.onShutdown();
+			atIdleBaseState.onShutdown();
 		}
 	
 		harleyKeepAlive = frame.data8[0];
@@ -831,7 +843,9 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 		}
 
 		// CC Switch handle
-		if (cruiseEnablePressed && !cruiseEnablePressedPrev && (engine->fuelComputer.running.timeSinceCrankingInSecs > 10.0f)) {
+		// timeSinceCrankingInSecs is huge before the first crank, so also require a running engine
+		if (cruiseEnablePressed && !cruiseEnablePressedPrev && engine->rpmCalculator.isRunning()
+				&& (engine->fuelComputer.running.timeSinceCrankingInSecs > 5.0f)) {
 			if (getCCStatus() == CruiseControlStatus::Disabled) {
 				setCCStatus(CruiseControlStatus::Standby);
 			} else {

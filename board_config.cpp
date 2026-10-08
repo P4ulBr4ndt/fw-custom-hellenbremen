@@ -3,6 +3,7 @@
 #include "board_can.h"
 #include "board_config.h"
 #include "board_autotune.h"
+#include "board_atIdleBase.h"
 #include "board_types.h"
 
 #include <cstring>
@@ -32,6 +33,16 @@ void boardDefaultConfiguration() {
 	// is this engine's cam/phase-sync mechanism (via MAP signal), since it has no cam sensor.
 	engineConfiguration->vvtMode[0] = VVT_MAP_V_TWIN;
 	engineConfiguration->mapCamDetectionAnglePosition = 50;
+
+	// Widened cam gaps for VVT_BOSCH_QUICK_START (unused with MAP cam sync): V-twin cranking speed
+	// ripple pushes the sync ratios (nominal 0.645 / 1.556) to ~0.47 / ~1.10, just outside the stock +-25%
+	// Note: override applies to whichever decoder cam 1 uses - review when selecting a different cam wheel
+	engineConfiguration->overrideVvtTriggerGaps = true;
+	engineConfiguration->gapVvtTrackingLengthOverride = 2;
+	engineConfiguration->triggerVVTGapOverrideFrom[0] = 0.35;
+	engineConfiguration->triggerVVTGapOverrideTo[0] = 0.85;
+	engineConfiguration->triggerVVTGapOverrideFrom[1] = 0.95;
+	engineConfiguration->triggerVVTGapOverrideTo[1] = 2.0;
 
 	// Aux Outputs
 	engineConfiguration->fanPin = Gpio::Unassigned;
@@ -183,6 +194,50 @@ void boardDefaultConfiguration() {
 
 	config->autotuneMaxAbsoluteChange = 50.0f;
 	config->autotuneMaxPercentageChange = 50.0f;
+
+	// Idle base autotune conditions
+	config->atIdleBaseMinRpm = 700;
+	config->atIdleBaseMinClt = 40;
+	config->atIdleBaseMaxTgs = 1;
+
+	config->atIdleBaseAutoApply = true;
+	config->atIdleBaseAutoBurn  = true;
+	config->atIdleBaseApplyPeriod = 5;
+
+	// Idle base autotune cell change resistance presets
+	config->atIdleBaseVeryHighInitialWeight = 100.0f;
+	config->atIdleBaseVeryHighWeightThreshold = 0.25f;
+	config->atIdleBaseVeryHighDeadband = 0.5f;
+	config->atIdleBaseVeryHighMaxWeight = 100000.0f;
+
+	config->atIdleBaseHighInitialWeight = 20.0f;
+	config->atIdleBaseHighWeightThreshold = 0.1f;
+	config->atIdleBaseHighDeadband = 0.0f;
+	config->atIdleBaseHighMaxWeight = 1000.0f;
+
+	config->atIdleBaseNormalInitialWeight = 5.0f;
+	config->atIdleBaseNormalWeightThreshold = 0.0f;
+	config->atIdleBaseNormalDeadband = 0.0f;
+	config->atIdleBaseNormalMaxWeight = 300.0f;
+
+	config->atIdleBaseLowInitialWeight = 3.0f;
+	config->atIdleBaseLowWeightThreshold = 0.0f;
+	config->atIdleBaseLowDeadband = 0.0f;
+	config->atIdleBaseLowMaxWeight = 100.0f;
+
+	config->atIdleBaseVeryLowInitialWeight = 0.5f;
+	config->atIdleBaseVeryLowWeightThreshold = 0.0f;
+	config->atIdleBaseVeryLowDeadband = 0.0f;
+	config->atIdleBaseVeryLowMaxWeight = 5.0f;
+
+	config->atIdleBaseCellChangeResistance = autotuneCellChangeResistance_e::Normal;
+	config->atIdleBaseActiveInitialWeight = config->atIdleBaseNormalInitialWeight;
+	config->atIdleBaseActiveWeightThreshold = config->atIdleBaseNormalWeightThreshold;
+	config->atIdleBaseActiveDeadband = config->atIdleBaseNormalDeadband;
+	config->atIdleBaseActiveMaxWeight = config->atIdleBaseNormalMaxWeight;
+
+	config->atIdleBaseMaxAbsoluteChange = 10.0f;
+	config->atIdleBaseMaxPercentageChange = 50.0f;
 }
 
 static void boardSanitizeConfig() {
@@ -300,6 +355,8 @@ void boardCustomInitHardware() {
 	// Not strictly hardware, but does not fit for boardConfigOverrides()
 	// or anywhere else.
 	autotuneState.initializeStates();
+	atIdleBaseState.initializeStates();
+
 }
 
 void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {
@@ -332,6 +389,28 @@ void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {
 		case 0x0E:
 			autotuneState.resetApplyToRAMIndicator();
 			break;
+		case 0x0F:
+			atIdleBaseState.toggleRunning();
+			break;
+		case 0x10:
+			atIdleBaseState.burningROM();
+			break;
+		case 0x11:
+			atIdleBaseState.applyingToRAM();
+			break;
+		case 0x12:
+			atIdleBaseState.prepareFetchData();
+			config->atIdleBaseFetchDataDone = true;
+			break;
+		case 0x13:
+			config->atIdleBaseFetchDataDone = false;
+			break;
+		case 0x14:
+			atIdleBaseState.toggleAutoApply();
+			break;
+		case 0x15:
+			atIdleBaseState.resetApplyToRAMIndicator();
+			break;
 		default:
 			break;
 	}
@@ -342,6 +421,7 @@ void boardCustomOnConfigurationChange(engine_configuration_s* previousConfigurat
 
 	autotuneState.checkCyclicBufferSize();
 	autotuneState.applyCellChangeResistancePreset();
+	atIdleBaseState.applyCellChangeResistancePreset();
 
 	if(!config->prgselActive) {
 		prgselPwm.setFrequency(NAN);

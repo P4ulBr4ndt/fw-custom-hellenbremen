@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "storage.h"
 #include "tunerstudio.h"
 #include "table_helper.h"
 #include "airmass.h"
@@ -352,14 +353,14 @@ void AutotuneState::applyingToRAM() {
 	copyTable(config->veFrontTable, m_front.veTable);
 
 	config->autotuneApplyToRamInd = true;
-	m_pendingBurn = true;
+	m_pendingBurn = true; 
 	tuneRan = false;
 
 	return;
 }
 
 void AutotuneState::burningROM() {
-	if (!running && (tuneRan || m_pendingBurn)) {
+	if (!running && (tuneRan || m_pendingBurn) && !getNeedToWriteConfiguration()) {
 		applyingToRAM(); // Otherwise the tune doesn't land in config->veTable/veFrontTable
 		requestBurn();
 		m_pendingBurn = false;
