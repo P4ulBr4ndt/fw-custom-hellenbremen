@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <msq xmlns="http://www.msefi.com/:msq">
     <page/>
-    <page number="0" size="32000">
+    <page number="0" size="32196">
         <constant name="accelEnrichmentMode">"MS Adder"</constant>
         <constant name="accelerometerCsPin">"NONE"</constant>
         <constant name="accelerometerCsPinMode">"default"</constant>
@@ -188,6 +188,42 @@
         <constant name="antiLagEnabled">"disabled"</constant>
         <constant digits="3" name="applyNonlinearBelowPulse" units="ms">0.0</constant>
         <constant name="artificialTestMisfire">"No thank you"</constant>
+        <constant digits="2" name="atIdleBaseActiveDeadband" units="">0.0</constant>
+        <constant digits="2" name="atIdleBaseActiveInitialWeight" units="">0.0</constant>
+        <constant digits="1" name="atIdleBaseActiveMaxWeight" units="">0.0</constant>
+        <constant digits="2" name="atIdleBaseActiveWeightThreshold" units="">0.0</constant>
+        <constant digits="0" name="atIdleBaseApplyPeriod" units="sec">0</constant>
+        <constant name="atIdleBaseApplyToRamInd">"No"</constant>
+        <constant name="atIdleBaseAutoApply">"No"</constant>
+        <constant name="atIdleBaseAutoBurn">"No"</constant>
+        <constant name="atIdleBaseCellChangeResistance">"Very High"</constant>
+        <constant name="atIdleBaseFetchDataDone">"No"</constant>
+        <constant digits="2" name="atIdleBaseHighDeadband" units="">0.0</constant>
+        <constant digits="2" name="atIdleBaseHighInitialWeight" units="">0.0</constant>
+        <constant digits="1" name="atIdleBaseHighMaxWeight" units="">0.0</constant>
+        <constant digits="2" name="atIdleBaseHighWeightThreshold" units="">0.0</constant>
+        <constant digits="2" name="atIdleBaseLowDeadband" units="">0.0</constant>
+        <constant digits="2" name="atIdleBaseLowInitialWeight" units="">0.0</constant>
+        <constant digits="1" name="atIdleBaseLowMaxWeight" units="">0.0</constant>
+        <constant digits="2" name="atIdleBaseLowWeightThreshold" units="">0.0</constant>
+        <constant digits="1" name="atIdleBaseMaxAbsoluteChange" units="%">0.0</constant>
+        <constant digits="1" name="atIdleBaseMaxPercentageChange" units="%">0.0</constant>
+        <constant digits="0" name="atIdleBaseMaxTgs" units="%">0</constant>
+        <constant digits="0" name="atIdleBaseMinClt" units="C">0</constant>
+        <constant digits="0" name="atIdleBaseMinRpm" units="RPM">0</constant>
+        <constant digits="2" name="atIdleBaseNormalDeadband" units="">0.0</constant>
+        <constant digits="2" name="atIdleBaseNormalInitialWeight" units="">0.0</constant>
+        <constant digits="1" name="atIdleBaseNormalMaxWeight" units="">0.0</constant>
+        <constant digits="2" name="atIdleBaseNormalWeightThreshold" units="">0.0</constant>
+        <constant name="atIdleBaseRunning">"No"</constant>
+        <constant digits="2" name="atIdleBaseVeryHighDeadband" units="">0.0</constant>
+        <constant digits="2" name="atIdleBaseVeryHighInitialWeight" units="">0.0</constant>
+        <constant digits="1" name="atIdleBaseVeryHighMaxWeight" units="">0.0</constant>
+        <constant digits="2" name="atIdleBaseVeryHighWeightThreshold" units="">0.0</constant>
+        <constant digits="2" name="atIdleBaseVeryLowDeadband" units="">0.0</constant>
+        <constant digits="2" name="atIdleBaseVeryLowInitialWeight" units="">0.0</constant>
+        <constant digits="1" name="atIdleBaseVeryLowMaxWeight" units="">0.0</constant>
+        <constant digits="2" name="atIdleBaseVeryLowWeightThreshold" units="">0.0</constant>
         <constant digits="2" name="autotuneActiveDeadband" units="">0.0</constant>
         <constant digits="2" name="autotuneActiveInitialWeight" units="">0.0</constant>
         <constant digits="1" name="autotuneActiveMaxWeight" units="">0.0</constant>
@@ -600,7 +636,7 @@
         <constant name="brakePedalPin">"NONE"</constant>
         <constant name="brakePedalPinMode">"PULLUP"</constant>
         <constant digits="0" name="byFirmwareVersion" units="index">0</constant>
-        <constant digits="0" name="calibrationBirthday" units="">20261005</constant>
+        <constant digits="0" name="calibrationBirthday" units="">20261008</constant>
         <constant digits="0" name="camDecoder2jzPosition" units="angle">95</constant>
         <constant digits="0" name="camDecoder2jzPrecision" units="">40</constant>
         <constant name="camInputs1">"NONE"</constant>
@@ -760,6 +796,36 @@
          90.0
          100.0
          110.0
+</constant>
+        <constant cols="1" digits="2" name="cltIdleBaseTableDelta" rows="8" units="%">
+         0.0
+         0.0
+         0.0
+         0.0
+         0.0
+         0.0
+         0.0
+         0.0
+</constant>
+        <constant cols="1" digits="0" name="cltIdleBaseTableHits" rows="8" units="">
+         0
+         0
+         0
+         0
+         0
+         0
+         0
+         0
+</constant>
+        <constant cols="1" digits="2" name="cltIdleBaseTableTmp" rows="8" units="%">
+         0.0
+         0.0
+         0.0
+         0.0
+         0.0
+         0.0
+         0.0
+         0.0
 </constant>
         <constant cols="1" digits="2" name="cltIdleCorrBins" rows="8" units="{bitStringValue(unitsLabels, useMetricOnInterface)}">
          -40.0
@@ -5569,7 +5635,7 @@ end</constant>
 </constant>
         <constant name="yesUnderstandLocking">"no"</constant>
     </page>
-    <versionInfo firmwareInfo="20260227" nPages="1" signature="DP.main.261005.HD-E5.2460645513" version="5.0"/>
+    <versionInfo firmwareInfo="20260227" nPages="1" signature="DP.main.261008.HD-E5.3910491679" version="5.0"/>
     <bibliography author="rusEFI 20260227" writeDate="date"/>
     <settings/>
     <userComments/>
