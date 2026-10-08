@@ -351,13 +351,13 @@ void AtIdleBase::toggleAutoApply() {
 
 void AtIdleBase::writeIACCoastingTable() {
 	for (size_t m = 0; m < CLT_IDLE_TABLE_CLT_SIZE; m++) {
-		for(size_t n = 0; n < IAC_COASTING_RPM_SIZE; n++) {
-			if(n < 2) {
-				config->cltIacCoastingTable[n][m] = config->cltIdleCorrTable[0][m];
-			} else if(n == 3) {
-				config->cltIacCoastingTable[n][m] = (config->cltIdleCorrTable[0][m] + 5.0f) / 2.0f;
-			} else if(n > 4) {
-				config->cltIacCoastingTable[][m] = 5.0f;
+		for (size_t n = 0; n < IAC_COASTING_RPM_SIZE; n++) {
+			if (n < 2) {
+				config->iacCoasting[n][m] = config->cltIdleCorrTable[0][m];
+			} else if (n == 2) {
+				config->iacCoasting[n][m] = (config->cltIdleCorrTable[0][m] + 5.0f) / 2.0f;
+			} else {
+				config->iacCoasting[n][m] = 5.0f;
 			}
 		}
 	}
