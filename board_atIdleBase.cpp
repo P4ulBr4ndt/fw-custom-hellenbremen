@@ -83,6 +83,22 @@ void AtIdleBase::burningROM() {
 	if (!m_running && (m_tuneRan || m_pendingBurn)) {
 		applyingToRAM(); // Otherwise the tune doesn't land in config->cltIdleCorrTable
 
+		// Respecting the free choice of bins, find the index of config->cltIdleCorrBins
+		// that is closest to 100° C
+		size_t resultIdx = 0;
+		for (size_t m = 1; m < CLT_IDLE_TABLE_CLT_SIZE; m++) {
+			if (std::abs(config->cltIdleCorrBins[m] - 100.0f) < std::abs(config->cltIdleCorrBins[resultIdx] - 100.0f)) {
+				resultIdx = m;
+			}
+		}
+
+		// Every table cell above the resultIdx entry should have the same value
+		// of the resultIdx entry.
+		for (size_t m = resultIdx + 1; m < CLT_IDLE_TABLE_CLT_SIZE; m++) {
+			config->cltIdleCorrTable[0][m] = config->cltIdleCorrTable[0][resultIdx];
+			config->cltIdleCorrTable[1][m] = config->cltIdleCorrTable[1][resultIdx];
+		}
+
 		// A write already pending (e.g. requested by the VE autotune) saves the whole config, including this tune
 		if (!getNeedToWriteConfiguration()) {
 			requestBurn();
