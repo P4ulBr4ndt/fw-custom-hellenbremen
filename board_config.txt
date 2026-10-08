@@ -151,4 +151,54 @@ uint8_t[FUEL_LOAD_COUNT x FUEL_RPM_COUNT] autoscale lambdaTableBefore;;{useLambd
 
 bit autotuneAutomaticCellChangeResistance,"Yes","No";Sets Cell Change Resistance to "Normal" if Wideband and "High" if Narrowband is configured.
 
+bit atIdleBaseRunning,"Yes","No";
+bit atIdleBaseAutoApply,"Yes","No";
+bit atIdleBaseAutoBurn,"Yes","No";
+bit atIdleBaseFetchDataDone,"Yes","No";
+bit atIdleBaseApplyToRamInd,"Yes","No";
+
+uint16_t atIdleBaseMinRpm;Learning only above this RPM;"RPM", 1, 0, 0, 18000, 0
+int16_t  atIdleBaseMinClt;Learning can only be started below this CLT;"C", 1, 0, -40, 250, 0
+uint8_t  atIdleBaseMaxTgs;Learning only below this pedal position;"%", 1, 0, 0, 100, 0
+uint16_t atIdleBaseApplyPeriod;;"sec", 1, 0, 1, 300, 0
+
+float atIdleBaseVeryHighInitialWeight;;"", 1, 0, 0, 1000, 2
+float atIdleBaseVeryHighWeightThreshold;;"", 1, 0, 0, 10, 2
+float atIdleBaseVeryHighDeadband;;"", 1, 0, 0, 100, 2
+float atIdleBaseVeryHighMaxWeight;;"", 1, 0, 0, 1000000, 1
+
+float atIdleBaseHighInitialWeight;;"", 1, 0, 0, 1000, 2
+float atIdleBaseHighWeightThreshold;;"", 1, 0, 0, 10, 2
+float atIdleBaseHighDeadband;;"", 1, 0, 0, 100, 2
+float atIdleBaseHighMaxWeight;;"", 1, 0, 0, 1000000, 1
+
+float atIdleBaseNormalInitialWeight;;"", 1, 0, 0, 1000, 2
+float atIdleBaseNormalWeightThreshold;;"", 1, 0, 0, 10, 2
+float atIdleBaseNormalDeadband;;"", 1, 0, 0, 100, 2
+float atIdleBaseNormalMaxWeight;;"", 1, 0, 0, 1000000, 1
+
+float atIdleBaseLowInitialWeight;;"", 1, 0, 0, 1000, 2
+float atIdleBaseLowWeightThreshold;;"", 1, 0, 0, 10, 2
+float atIdleBaseLowDeadband;;"", 1, 0, 0, 100, 2
+float atIdleBaseLowMaxWeight;;"", 1, 0, 0, 1000000, 1
+
+float atIdleBaseVeryLowInitialWeight;;"", 1, 0, 0, 1000, 2
+float atIdleBaseVeryLowWeightThreshold;;"", 1, 0, 0, 10, 2
+float atIdleBaseVeryLowDeadband;;"", 1, 0, 0, 100, 2
+float atIdleBaseVeryLowMaxWeight;;"", 1, 0, 0, 1000000, 1
+
+autotuneCellChangeResistance_e atIdleBaseCellChangeResistance;Cell change resistance preset applied to the active parameters below, refreshed after every burn;
+
+float atIdleBaseMaxAbsoluteChange;;"%", 1, 0, 0, 100, 1
+float atIdleBaseMaxPercentageChange;;"%", 1, 0, 0, 100, 1
+
+float atIdleBaseActiveInitialWeight;;"", 1, 0, 0, 1000, 2
+float atIdleBaseActiveWeightThreshold;;"", 1, 0, 0, 10, 2
+float atIdleBaseActiveDeadband;;"", 1, 0, 0, 100, 2
+float atIdleBaseActiveMaxWeight;;"", 1, 0, 0, 1000000, 1
+
+float[CLT_IDLE_TABLE_CLT_SIZE] cltIdleBaseTableTmp;;"%", 1, 0, 0, 100, 2
+float[CLT_IDLE_TABLE_CLT_SIZE] cltIdleBaseTableDelta;;"%", 1, 0, -100, 100, 2
+uint16_t[CLT_IDLE_TABLE_CLT_SIZE] cltIdleBaseTableHits;;"", 1, 0, 0, 65535, 0
+
 uint16_t outputPinsAlignFill;
