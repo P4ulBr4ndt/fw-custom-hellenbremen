@@ -99,10 +99,10 @@ void AtIdleBase::burningROM() {
 			config->cltIdleCorrTable[1][m] = config->cltIdleCorrTable[1][resultIdx];
 		}
 
-		// Add a half percent to make the open-loop idle position more robust
+		// Add a half percent to every cell to make the open-loop idle position more robust
 		for (size_t m = 0; m < CLT_IDLE_TABLE_CLT_SIZE; m++) {
-			config->cltIdleCorrTable[0][m] = config->cltIdleCorrTable[0][resultIdx] + 0.5f;
-			config->cltIdleCorrTable[1][m] = config->cltIdleCorrTable[1][resultIdx] + 0.5f;
+			config->cltIdleCorrTable[0][m] = config->cltIdleCorrTable[0][m] + 0.5f;
+			config->cltIdleCorrTable[1][m] = config->cltIdleCorrTable[1][m] + 0.5f;
 		}
 
 		writeIACCoastingTable();
