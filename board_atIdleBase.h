@@ -45,6 +45,7 @@ public:
 	void applyingToRAM();
 	void burningROM();
 	void applyCellChangeResistancePreset();
+	void writeIACCoastingTable();
 
 	void prepareFetchData();
 	void resetApplyToRAMIndicator();

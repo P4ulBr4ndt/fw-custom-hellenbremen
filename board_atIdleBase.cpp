@@ -99,6 +99,8 @@ void AtIdleBase::burningROM() {
 			config->cltIdleCorrTable[1][m] = config->cltIdleCorrTable[1][resultIdx];
 		}
 
+		writeIACCoastingTable();
+
 		// A write already pending (e.g. requested by the VE autotune) saves the whole config, including this tune
 		if (!getNeedToWriteConfiguration()) {
 			requestBurn();
@@ -343,6 +345,22 @@ void AtIdleBase::recordProcessing() {
 
 void AtIdleBase::toggleAutoApply() {
 	config->atIdleBaseAutoApply = !config->atIdleBaseAutoApply;
+
+	return;
+}
+
+void AtIdleBase::writeIACCoastingTable() {
+	for (size_t m = 0; m < CLT_IDLE_TABLE_CLT_SIZE; m++) {
+		for(size_t n = 0; n < IAC_COASTING_RPM_SIZE; n++) {
+			if(n < 2) {
+				config->cltIacCoastingTable[n][m] = config->cltIdleCorrTable[0][m];
+			} else if(n == 3) {
+				config->cltIacCoastingTable[n][m] = (config->cltIdleCorrTable[0][m] + 5.0f) / 2.0f;
+			} else if(n > 4) {
+				config->cltIacCoastingTable[][m] = 5.0f;
+			}
+		}
+	}
 
 	return;
 }
