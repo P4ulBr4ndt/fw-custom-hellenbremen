@@ -28,7 +28,7 @@ static void o2SensorInitialization() {
 		engineConfiguration->afr.hwChannel2 = EFI_ADC_6; // PA6
 
 		engineConfiguration->enableAemXSeries = false;
-		engineConfiguration->canWbo[0].type = can_wbo_type_e::NONE;
+		engineConfiguration->canWbo[0].type = can_wbo_type_e::DISABLED;
 	}
 
 	return;
