@@ -16,6 +16,24 @@
 
 #define HARLEY_V_TWIN 45.0
 
+static void o2SensorInitialization() {
+	if(config->useWidebandSensor) {
+		engineConfiguration->afr.hwChannel  = EFI_ADC_NONE;
+		engineConfiguration->afr.hwChannel2 = EFI_ADC_NONE;
+
+		engineConfiguration->enableAemXSeries = true;
+		engineConfiguration->canWbo[0].type = can_wbo_type_e::RUSEFI;
+	} else {
+		engineConfiguration->afr.hwChannel  = EFI_ADC_7; // PA7
+		engineConfiguration->afr.hwChannel2 = EFI_ADC_6; // PA6
+
+		engineConfiguration->enableAemXSeries = false;
+		engineConfiguration->canWbo[0].type = can_wbo_type_e::NONE;
+	}
+
+	return;
+}
+
 // Executed after flash when empty or when factory resetted
 void boardDefaultConfiguration() {
 	// Trigger
@@ -83,11 +101,17 @@ void boardDefaultConfiguration() {
 	config->fuelLevelValues[7] = 0;
 
 	// AFR - wideband O2 via CAN (rusEFI native protocol on CAN1)
+	config->useWidebandSensor = true;
+
 	engineConfiguration->afr.hwChannel = EFI_ADC_NONE;
+	engineConfiguration->afr.hwChannel2 = EFI_ADC_NONE;
+
 	engineConfiguration->enableAemXSeries = true;
+	engineConfiguration->widebandOnSecondBus = false; // Use CAN1
+
 	engineConfiguration->canWbo[0].type = can_wbo_type_e::RUSEFI;
 	engineConfiguration->canWbo[1].type = can_wbo_type_e::RUSEFI;
-	engineConfiguration->widebandOnSecondBus = false; // Use CAN1
+
 	engineConfiguration->afrExpAverageAlpha = 1; // no smoothing
 
 	// MAP
@@ -457,6 +481,7 @@ void boardCustomInitHardware() {
 	autotuneState.initializeStates();
 	atIdleBaseState.initializeStates();
 
+	o2SensorInitialization();
 }
 
 void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {

@@ -201,4 +201,6 @@ float[CLT_IDLE_TABLE_CLT_SIZE] cltIdleBaseTableTmp;;"%", 1, 0, 0, 100, 2
 float[CLT_IDLE_TABLE_CLT_SIZE] cltIdleBaseTableDelta;;"%", 1, 0, -100, 100, 2
 uint16_t[CLT_IDLE_TABLE_CLT_SIZE] cltIdleBaseTableHits;;"", 1, 0, 0, 65535, 0
 
+bit useWidebandSensor,"Yes","No";On Change: Requires power cycle after burning to take effect
+
 uint16_t outputPinsAlignFill;
