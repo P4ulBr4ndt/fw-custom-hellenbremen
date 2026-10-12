@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <msq xmlns="http://www.msefi.com/:msq">
     <page/>
-    <page number="0" size="32196">
+    <page number="0" size="32200">
         <constant name="accelEnrichmentMode">"MS Adder"</constant>
         <constant name="accelerometerCsPin">"NONE"</constant>
         <constant name="accelerometerCsPinMode">"default"</constant>
@@ -636,7 +636,7 @@
         <constant name="brakePedalPin">"NONE"</constant>
         <constant name="brakePedalPinMode">"PULLUP"</constant>
         <constant digits="0" name="byFirmwareVersion" units="index">0</constant>
-        <constant digits="0" name="calibrationBirthday" units="">20261008</constant>
+        <constant digits="0" name="calibrationBirthday" units="">20261012</constant>
         <constant digits="0" name="camDecoder2jzPosition" units="angle">95</constant>
         <constant digits="0" name="camDecoder2jzPrecision" units="">40</constant>
         <constant name="camInputs1">"NONE"</constant>
@@ -4931,6 +4931,7 @@ end</constant>
         <constant name="useTLE8888_cranking_hack">"yes"</constant>
         <constant name="useTLE8888_stepper">"no"</constant>
         <constant name="useVssAsSecondWheelSpeed">"no"</constant>
+        <constant name="useWidebandSensor">"No"</constant>
         <constant name="vbattAdcChannel">"Disabled"</constant>
         <constant digits="2" name="vbattDividerCoeff" units="coef">5.33</constant>
         <constant cols="1" digits="1" name="veBlends1_blendBins" rows="8" units="">
@@ -5544,7 +5545,7 @@ end</constant>
 </constant>
         <constant name="yesUnderstandLocking">"no"</constant>
     </page>
-    <versionInfo firmwareInfo="20260227" nPages="1" signature="DP.main.261008.HD-E5.3910491679" version="5.0"/>
+    <versionInfo firmwareInfo="20260227" nPages="1" signature="DP.main.261012.HD-E5.689842591" version="5.0"/>
     <bibliography author="rusEFI 20260227" writeDate="date"/>
     <settings/>
     <userComments/>
