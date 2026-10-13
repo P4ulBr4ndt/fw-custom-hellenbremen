@@ -435,9 +435,9 @@ void boardPeriodicSlow() {
 	bool cfcOffTempCond        = ((currCltTemp <= config->cfcLowSpeedOffTemp  && !cfcHighSpeedMode) || 
 						          (currCltTemp <= config->cfcHighSpeedOffTemp && cfcHighSpeedMode)) && cfcRunning;
 
-	if (((cfcOnTempCond && cfcDisabledEngCond) || cfcForce || cfcUserForceOn) && !atIdleBaseState.isRunning()) {
+	if ((cfcOnTempCond && cfcDisabledEngCond) || cfcForce || cfcUserForceOn) {
 		cfcPin.setValue(true);
-	} else if (((cfcOffTempCond || cfcIsShutdownComplete) && !cfcForce && !cfcUserForceOn) || atIdleBaseState.isRunning()) {
+	} else if ((cfcOffTempCond || cfcIsShutdownComplete) && !cfcForce && !cfcUserForceOn) {
 		cfcPin.setValue(false);
 	}
 
