@@ -21,7 +21,6 @@
 #include "shutdown_controller.h"
 #include "trigger_central.h"
 
-
 static uint8_t frameCounter142 = 0x0;
 static uint8_t frameCounter144 = 0x0;
 static uint8_t frameCounter146_342 = 0x0;
@@ -52,6 +51,7 @@ static bool  cfcUserForceOn     = false;
 static bool  cfcTgsHoldArmed    = false;
 static bool  cfcTgsPressHandled = false;
 static Timer cfcUserForceTimer;
+static Timer cfcUserForceInhibitTimer;
 
 // CCFC
 static bool ccfcForce       = false;
@@ -73,6 +73,10 @@ extern StoredValueSensor luaGauges[LUA_GAUGE_COUNT];
 
 void setCfcForce(bool state) {
 	cfcForce = state;
+}
+
+void inhibitCfcUserForce() {
+	cfcUserForceInhibitTimer.reset();
 }
 
 void setCcfcForce(bool state) {
@@ -388,7 +392,8 @@ void boardPeriodicSlow() {
 	bool cfcRunning = cfcPin.getLogicValue();
 
 	// Manual CFC Force mode routine as in OEM EMC
-	bool cfcUserForceTGSHeld = (currTGS > 95.0f) && !isEngineActive;
+	bool cfcUserForceInhibit = !cfcUserForceInhibitTimer.hasElapsedSec(5.0f);
+	bool cfcUserForceTGSHeld = (currTGS > 95.0f) && !isEngineActive && !cfcUserForceInhibit;
 
 	if (!cfcUserForceTGSHeld) {
 		cfcTgsHoldArmed    = false;
@@ -396,7 +401,7 @@ void boardPeriodicSlow() {
 	} else if (!cfcTgsHoldArmed) {
 		cfcTgsHoldArmed = true;
 		cfcUserForceTimer.reset();
-	} else if (!cfcTgsPressHandled && cfcUserForceTimer.getElapsedSeconds() > 3.0f) {
+	} else if (!cfcTgsPressHandled && cfcUserForceTimer.hasElapsedSec(3.0f)) {
 		bool cfcRunningFromTempCond = cfcRunning && !cfcUserForceOn && !cfcForce;
 		if (cfcUserForceOn || !cfcRunningFromTempCond) {
 			cfcUserForceOn = !cfcUserForceOn;

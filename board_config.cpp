@@ -560,6 +560,9 @@ void boardHandleTsCommand(uint16_t subsystem, uint16_t index) {
 		case 0x15:
 			atIdleBaseState.resetApplyToRAMIndicator();
 			break;
+		case 0x16:
+			inhibitCfcUserForce();
+			break;
 		default:
 			break;
 	}
