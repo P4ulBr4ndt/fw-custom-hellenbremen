@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <msq xmlns="http://www.msefi.com/:msq">
     <page/>
-    <page number="0" size="32200">
+    <page number="0" size="32204">
         <constant name="accelEnrichmentMode">"MS Adder"</constant>
         <constant name="accelerometerCsPin">"NONE"</constant>
         <constant name="accelerometerCsPinMode">"default"</constant>
@@ -207,6 +207,7 @@
         <constant digits="1" name="atIdleBaseLowMaxWeight" units="">0.0</constant>
         <constant digits="2" name="atIdleBaseLowWeightThreshold" units="">0.0</constant>
         <constant digits="1" name="atIdleBaseMaxAbsoluteChange" units="%">0.0</constant>
+        <constant digits="0" name="atIdleBaseMaxClt" units="C">0</constant>
         <constant digits="1" name="atIdleBaseMaxPercentageChange" units="%">0.0</constant>
         <constant digits="0" name="atIdleBaseMaxTgs" units="%">0</constant>
         <constant digits="0" name="atIdleBaseMinClt" units="C">0</constant>
@@ -636,7 +637,7 @@
         <constant name="brakePedalPin">"NONE"</constant>
         <constant name="brakePedalPinMode">"PULLUP"</constant>
         <constant digits="0" name="byFirmwareVersion" units="index">0</constant>
-        <constant digits="0" name="calibrationBirthday" units="">20261012</constant>
+        <constant digits="0" name="calibrationBirthday" units="">20261013</constant>
         <constant digits="0" name="camDecoder2jzPosition" units="angle">95</constant>
         <constant digits="0" name="camDecoder2jzPrecision" units="">40</constant>
         <constant name="camInputs1">"NONE"</constant>
@@ -5545,7 +5546,7 @@ end</constant>
 </constant>
         <constant name="yesUnderstandLocking">"no"</constant>
     </page>
-    <versionInfo firmwareInfo="20260227" nPages="1" signature="DP.main.261012.HD-E5.689842591" version="5.0"/>
+    <versionInfo firmwareInfo="20260227" nPages="1" signature="DP.main.261013.HD-E5.592954347" version="5.0"/>
     <bibliography author="rusEFI 20260227" writeDate="date"/>
     <settings/>
     <userComments/>
