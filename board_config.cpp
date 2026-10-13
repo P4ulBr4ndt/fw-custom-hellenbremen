@@ -253,6 +253,7 @@ void boardDefaultConfiguration() {
 	// Idle base autotune conditions
 	config->atIdleBaseMinRpm = 700;
 	config->atIdleBaseMinClt = 40;
+	config->atIdleBaseMaxClt = 100;
 	config->atIdleBaseMaxTgs = 1;
 
 	config->atIdleBaseAutoApply = true;
@@ -347,6 +348,11 @@ static void boardSanitizeConfig() {
 	// Vmax
 	if (config->vmaxLimit > 0 && config->vmaxLimitRange == 0) {
 		config->vmaxLimitRange = 1;
+	}
+
+	// Autotune Idle Base
+	if (config->atIdleBaseMaxClt < config->atIdleBaseMinClt) {
+		config->atIdleBaseMaxClt = config->atIdleBaseMinClt;
 	}
 }
 

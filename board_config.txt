@@ -1,5 +1,11 @@
 ! type name;description;"unit", scale, offset, min, max, digits
 
+#define INSTANT_ACCEL_SHOT_TPS_COUNT 6
+#define INSTANT_ACCEL_SHOT_CLT_CORR_COUNT 10
+#define ETB_TARGET_SLEW_BINS_COUNT 12
+#define LAMBDA_DELAY_RPM_COUNT 3
+#define LAMBDA_DELAY_LOAD_COUNT 3
+
 uint16_t[VE_LOAD_COUNT x VE_RPM_COUNT] autoscale veFrontTable;;"%", 0.1, 0, 0, 200, 1
 int16_t[IGN_LOAD_COUNT x IGN_RPM_COUNT] autoscale ignitionFrontTable;;"deg", 0.1, 0, -20, 90, 1
 uint8_t[PEDAL_TO_TPS_SIZE x PEDAL_TO_TPS_RPM_SIZE] etbRoadTable;;"%", 1, 0, 0, 100, 0
@@ -9,12 +15,6 @@ uint8_t[PEDAL_TO_TPS_SIZE x PEDAL_TO_TPS_RPM_SIZE] etbTrackTable;;"%", 1, 0, 0, 
 int16_t[PEDAL_TO_TPS_SIZE x PEDAL_TO_TPS_RPM_SIZE] autoscale estimatedEngineTorqueTable;;"Nm", 0.1, 0, -400, 400, 1
 uint16_t[PEDAL_TO_TPS_RPM_SIZE] estimatedEngineTorqueRpmBins;;"rpm", 1, 0, 0, 12000, 0
 uint8_t[PEDAL_TO_TPS_SIZE] estimatedEngineTorqueTpsBins;;"%", 1, 0, 0, 100, 0
-
-#define INSTANT_ACCEL_SHOT_TPS_COUNT 6
-#define INSTANT_ACCEL_SHOT_CLT_CORR_COUNT 10
-#define ETB_TARGET_SLEW_BINS_COUNT 12
-#define LAMBDA_DELAY_RPM_COUNT 3
-#define LAMBDA_DELAY_LOAD_COUNT 3
 
 float instantAccelShotWindowMs;Instant accel window length;"ms", 1, 0, 0, 500, 0
 float instantAccelShotTopupMinSpacingMs;Instant accel top-up min spacing;"ms", 1, 0, 0, 100, 2
@@ -42,18 +42,18 @@ float[INSTANT_ACCEL_SHOT_TPS_COUNT] instantAccelShotTpsToBins;;"%", 1, 0, 0, 100
 int16_t[INSTANT_ACCEL_SHOT_CLT_CORR_COUNT] instantAccelShotCltCorrBins;;"SPECIAL_CASE_TEMPERATURE", 1, 0, -40, 150, 0
 float[INSTANT_ACCEL_SHOT_CLT_CORR_COUNT] instantAccelShotCltCorrMult;;"multiplier", 1, 0, 0, 5, 2
 
-uint8_t cfcHighSpeedThreshold;Upper Speed Threshold when to swtich to High Speed On/Off temperatures. Must be greater/equal than "Lower Speed Threshold";"SPECIAL_CASE_SPEED", 1, 0, 0, 255, 0
-uint8_t cfcLowSpeedThreshold;Lower Speed Threshold when to swtich to Low Speed On/Off temperatures. Must be less/equal than "Upper Speed Threshold";"SPECIAL_CASE_SPEED", 1, 0, 0, 255, 0
-uint8_t cfcLowSpeedOnTemp;Must be greater/equal than "Lower Speed Off Temperature";"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 0
-uint8_t cfcLowSpeedOffTemp;Must be less/equal than "Lower Speed On Temperature";"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 0
-uint8_t cfcHighSpeedOnTemp;Must be greater/equal than "Higher Speed Off Temperature";"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 0
-uint8_t cfcHighSpeedOffTemp;Must be less/equal than "Higher Speed On Temperature";"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 0
-bit cfcDisableWhenEngineStopped,"Yes","No";
-uint8_t cfcIdleAdder;Additional idle % when fan is active;"%", 1, 0, 0, 100, 0
+uint8_t  cfcHighSpeedThreshold;Upper Speed Threshold when to swtich to High Speed On/Off temperatures. Must be greater/equal than "Lower Speed Threshold";"SPECIAL_CASE_SPEED", 1, 0, 0, 255, 0
+uint8_t  cfcLowSpeedThreshold;Lower Speed Threshold when to swtich to Low Speed On/Off temperatures. Must be less/equal than "Upper Speed Threshold";"SPECIAL_CASE_SPEED", 1, 0, 0, 255, 0
+uint8_t  cfcLowSpeedOnTemp;Must be greater/equal than "Lower Speed Off Temperature";"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 0
+uint8_t  cfcLowSpeedOffTemp;Must be less/equal than "Lower Speed On Temperature";"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 0
+uint8_t  cfcHighSpeedOnTemp;Must be greater/equal than "Higher Speed Off Temperature";"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 0
+uint8_t  cfcHighSpeedOffTemp;Must be less/equal than "Higher Speed On Temperature";"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 0
+bit      cfcDisableWhenEngineStopped,"Yes","No";
+uint8_t  cfcIdleAdder;Additional idle % when fan is active;"%", 1, 0, 0, 100, 0
 uint16_t cfcMaxRuntimeAfterEngShutdown;;"s", 1, 0, 0, 65535, 0
-uint8_t cfcEngShutdownOffTemp;Coolant temperature to cool down to after engine shutdown. Must be great/equal than "Lower Speed On Temperature";"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 0
+uint8_t  cfcEngShutdownOffTemp;Coolant temperature to cool down to after engine shutdown. Must be great/equal than "Lower Speed On Temperature";"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 0
 
-bit prgselActive,"Yes","No";
+bit      prgselActive,"Yes","No";
 uint16_t prgselRPM;;"rpm", 1, 0, 0, 10000, 0
 uint8_t  prgselSpeed;;"SPECIAL_CASE_SPEED", 1, 0, 0, 255, 0
 uint8_t  prgselLowerTGS;Must be less/equal than "Activate above TGS";"%", 1, 0, 0, 100, 0
@@ -75,7 +75,7 @@ uint8_t ccfcIdleAdder;Additional idle RPM in % when fan is active;"%", 1, 0, 0, 
 
 uint8_t cpcOnTemp;Must be greater/equal than "Lower Off Temperature";"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 0
 uint8_t cpcOffTemp;Must be less/equal than "Higher Off Temperature";"SPECIAL_CASE_TEMPERATURE", 1, 0, 0, 110, 0
-bit cpcDisableWhenEngineStopped,"Yes","No";
+bit     cpcDisableWhenEngineStopped,"Yes","No";
 uint8_t cpcIdleAdder;Additional idle % when fan is active;"%", 1, 0, 0, 100, 0
 
 float fuelLevelTankVolume;;"L", 1, 0, 0, 50, 1
@@ -159,6 +159,7 @@ bit atIdleBaseApplyToRamInd,"Yes","No";
 
 uint16_t atIdleBaseMinRpm;Learning only above this RPM;"RPM", 1, 0, 0, 18000, 0
 int16_t  atIdleBaseMinClt;Learning can only be started below this CLT;"C", 1, 0, -40, 250, 0
+int16_t  atIdleBaseMaxClt;Learning stops above this CLT;"C", 1, 0, -40, 250, 0
 uint8_t  atIdleBaseMaxTgs;Learning only below this pedal position;"%", 1, 0, 0, 100, 0
 uint16_t atIdleBaseApplyPeriod;;"sec", 1, 0, 1, 300, 0
 
