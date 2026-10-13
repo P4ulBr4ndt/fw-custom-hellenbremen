@@ -88,8 +88,8 @@ have actually been inspected.
 
 CI entry point: `.github/workflows/build-firmware.yaml`, which delegates to
 `ext/rusefi/.github/workflows/custom-board-build/action.yaml` for generation and
-builds. It runs on push/manual dispatch; simulator execution is enabled for
-`master`/`main`. The root workflow extracts and uploads the board INI and BIN.
+builds. It runs on push/manual dispatch; simulator execution is disabled so CI
+does not commit default tunes. The root workflow extracts and uploads the board INI and BIN.
 `.github/workflows/update-rusefi-reference.yaml` handles scheduled/manual
 dependency-reference updates. Inspect CI logs for failures and fix source
 inputs; leave generated changes to CI.
