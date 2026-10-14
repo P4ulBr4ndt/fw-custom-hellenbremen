@@ -71,6 +71,11 @@ static bool cpcUserForceOn = false;
 // Required for indicators
 extern StoredValueSensor luaGauges[LUA_GAUGE_COUNT];
 
+// Vehicles without a jiffy stand switch must never report the stand as down
+static bool isJssDown() {
+	return config->jssInstalled && engine->engineState.jssState != 0;
+}
+
 void setCfcForce(bool state) {
 	cfcForce = state;
 }
@@ -84,6 +89,12 @@ void setCcfcForce(bool state) {
 }
 
 void setPrgselForce(bool state) {
+	if(!config->prgselInstalled) {
+		prgselPwm.setFrequency(NAN);
+		prgselForce = false;
+		return;
+	}
+
 	if(state && !config->prgselActive)
 		prgselPwm.setFrequency(config->prgselPWMFreq);
 	else if(!state && !config->prgselActive)
@@ -338,7 +349,7 @@ void decreaseDesiredCCSpeedForCurrentGear() {
 } // namespace
 
 void boardPeriodicSlow() {
-	bool jssDown        = engine->engineState.jssState != 0;
+	bool jssDown        = isJssDown();
 	uint8_t currentGear = calculateHarleyGearIndex();
 	bool isNeutral      = currentGear == 0;
 
@@ -374,7 +385,7 @@ void boardPeriodicSlow() {
 	jssStopRequestActive = shouldRequestStop;
 
 	// Purge Valve Solenoid routines
-	bool prgselRunning = config->prgselActive && 
+	bool prgselRunning = config->prgselInstalled && config->prgselActive &&
 						 (prgselForce || ((currRPM     >= config->prgselRPM) &&
 		 				                  (currSpeed   >= config->prgselSpeed) &&
 		 				                  (currTGS     >= config->prgselLowerTGS) &&
@@ -574,7 +585,7 @@ void boardHandleCan(CanCycle cycle) {
 				msg[0] |= 0x10;
 			}
 			
-			if (!engine->engineState.jssState) {
+			if (!isJssDown()) {
 				msg[0] |= 0x01;
 			} else {
 				msg[0] |= 0x02;
@@ -694,7 +705,7 @@ void boardHandleCan(CanCycle cycle) {
 					break;
 			}
 
-			if(engine->engineState.jssState) {
+			if(isJssDown()) {
 				msg[0] |= 0x02;
 			}
 

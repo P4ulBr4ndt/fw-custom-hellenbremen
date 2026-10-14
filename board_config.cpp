@@ -169,6 +169,10 @@ void boardDefaultConfiguration() {
 	config->cpcDisableWhenEngineStopped = false;
 	config->cpcIdleAdder = 0; // Not used yet
 
+	// Vehicle equipment
+	config->jssInstalled = true;
+	config->prgselInstalled = true;
+
 	// PRGSEL
 	config->prgselOutputPin = Gpio::D10;
 	config->prgselActive = true;
@@ -575,7 +579,7 @@ void boardCustomOnConfigurationChange(engine_configuration_s* previousConfigurat
 	autotuneState.applyCellChangeResistancePreset();
 	atIdleBaseState.applyCellChangeResistancePreset();
 
-	if(!config->prgselActive) {
+	if(!config->prgselInstalled || !config->prgselActive) {
 		prgselPwm.setFrequency(NAN);
 	} else {
 		prgselPwm.setFrequency(config->prgselPWMFreq);
