@@ -1169,7 +1169,7 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 		// This value ranges from 0x0000 to 0x0DA4 (foot brake pressed to the maximum)
 		uint16_t footBrakeValue = (static_cast<uint16_t>(frame.data8[2]) << 8) | frame.data8[3];
 
-		bool footBrakeEngaged = footBrakeValue > 0;
+		bool footBrakeEngaged = footBrakeValue > config->ccFootBrakeDisengageThreshold;
 		if (getCCStatus() == CruiseControlStatus::Enabled && footBrakeEngaged) {
 			setCCStatus(CruiseControlStatus::Standby);
 		}

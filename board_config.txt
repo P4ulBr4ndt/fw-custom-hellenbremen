@@ -206,4 +206,5 @@ bit useWidebandSensor,"Yes","No";On Change: Requires power cycle after burning t
 bit jssInstalled,"Yes","No";Set to "No" if the vehicle has no jiffy stand switch. The jiffy stand is then always treated as retracted.
 bit prgselInstalled,"Yes","No";Set to "No" if the vehicle has no purge solenoid. The purge solenoid output is then never driven.
 
+uint16_t ccFootBrakeDisengageThreshold;Cruise control disengages when the foot brake value (CAN 0x324) exceeds this. Raw range 0 (released) to 3492 (0x0DA4, fully pressed). Raise to ignore vibration on the brake pedal.;"", 1, 0, 0, 3492, 0
 uint16_t outputPinsAlignFill;

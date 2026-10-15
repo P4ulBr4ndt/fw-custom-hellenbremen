@@ -174,6 +174,9 @@ void boardDefaultConfiguration() {
 	config->jssInstalled = true;
 	config->prgselInstalled = true;
 
+	// Cruise control
+	config->ccFootBrakeDisengageThreshold = 50;
+
 	// PRGSEL
 	config->prgselOutputPin = Gpio::D10;
 	config->prgselActive = true;
