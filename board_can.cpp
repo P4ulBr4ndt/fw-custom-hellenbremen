@@ -684,7 +684,7 @@ void boardHandleCan(CanCycle cycle) {
 			// msg[0]:  bit 7  6  5  4  3  2  1  0
 			//              |  |  │  |  │  │  │  └── 0 (Always off?, observation)
 			//              |  |  │  |  │  │  └───── JSS
-			//              |  |  │  |  │  └──────── 1 (Always on?,  observation)
+			//              |  |  │  |  │  └──────── !(JSS && (Gear != N))
 			// 				|  |  |  |  └─────────── JSS && (Gear != N)
 			//              |  |  |  └────────────── CC Disabled
 			//              |  |  └───────────────── CC Standby
@@ -707,7 +707,7 @@ void boardHandleCan(CanCycle cycle) {
 
 			if(isJssDown()) {
 				if(calculateHarleyGearIndex() != 0) {
-					msg[0] |= 0x08;
+					msg[0] |= 0x0A;
 					msg[0] &= ~0x04;
 				} else {
 					msg[0] |= 0x02;
