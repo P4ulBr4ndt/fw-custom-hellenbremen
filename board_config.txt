@@ -201,6 +201,7 @@ float atIdleBaseActiveMaxWeight;;"", 1, 0, 0, 1000000, 1
 float[CLT_IDLE_TABLE_CLT_SIZE] cltIdleBaseTableTmp;;"%", 1, 0, 0, 100, 2
 float[CLT_IDLE_TABLE_CLT_SIZE] cltIdleBaseTableDelta;;"%", 1, 0, -100, 100, 2
 uint16_t[CLT_IDLE_TABLE_CLT_SIZE] cltIdleBaseTableHits;;"", 1, 0, 0, 65535, 0
+float atIdleBase
 
 bit useWidebandSensor,"Yes","No";On Change: Requires power cycle after burning to take effect
 bit jssInstalled,"Yes","No";Set to "No" if the vehicle has no jiffy stand switch. The jiffy stand is then always treated as retracted.
