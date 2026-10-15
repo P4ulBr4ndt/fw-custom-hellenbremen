@@ -21,11 +21,18 @@ static void o2SensorInitialization() {
 		engineConfiguration->afr.hwChannel  = EFI_ADC_NONE;
 		engineConfiguration->afr.hwChannel2 = EFI_ADC_NONE;
 
+		// Heater
+		engineConfiguration->gppwm[0].pin = Gpio::Unassigned;
+		engineConfiguration->gppwm[1].pin = Gpio::Unassigned;
+
 		engineConfiguration->enableAemXSeries = true;
 		engineConfiguration->canWbo[0].type = can_wbo_type_e::RUSEFI;
 	} else {
 		engineConfiguration->afr.hwChannel  = EFI_ADC_7; // PA7
 		engineConfiguration->afr.hwChannel2 = EFI_ADC_6; // PA6
+
+		engineConfiguration->gppwm[0].pin = Gpio::D15;
+		engineConfiguration->gppwm[1].pin = Gpio::D14;
 
 		engineConfiguration->enableAemXSeries = false;
 		engineConfiguration->canWbo[0].type = can_wbo_type_e::DISABLED;
@@ -102,15 +109,9 @@ void boardDefaultConfiguration() {
 
 	// AFR - wideband O2 via CAN (rusEFI native protocol on CAN1)
 	config->useWidebandSensor = true;
-
-	engineConfiguration->afr.hwChannel = EFI_ADC_NONE;
-	engineConfiguration->afr.hwChannel2 = EFI_ADC_NONE;
-
-	engineConfiguration->enableAemXSeries = true;
 	engineConfiguration->widebandOnSecondBus = false; // Use CAN1
-
-	engineConfiguration->canWbo[0].type = can_wbo_type_e::RUSEFI;
-	engineConfiguration->canWbo[1].type = can_wbo_type_e::RUSEFI;
+	engineConfiguration->canWbo[1].type = can_wbo_type_e::DISABLED;
+	o2SensorInitialization();
 
 	engineConfiguration->afrExpAverageAlpha = 1; // no smoothing
 
