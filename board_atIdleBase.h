@@ -52,6 +52,7 @@ public:
 
 	void prepareFetchData();
 	void resetApplyToRAMIndicator();
+	void resetConfiguration();
 
 	bool areIdleBaseConditionsMet();
 	bool areStartConditionsMet();
