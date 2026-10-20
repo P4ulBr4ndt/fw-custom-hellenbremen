@@ -87,13 +87,15 @@ void AtIdleBase::burningROM() {
 	if (!m_running && (m_tuneRan || m_pendingBurn)) {
 		applyingToRAM(); // Otherwise the tune doesn't land in config->cltIdleCorrTable
 
-		// Respecting the free choice of bins, find the index of config->cltIdleCorrBins
-		// that is closest to 100° C
+		// Respecting the free choice of bins, find the index of the highest entry of
+		// config->cltIdleCorrBins that does not exceed atIdleBaseMaxCLT (bins are ascending).
+		// Falls back to the first bin if atIdleBaseMaxCLT lies below all bins.
 		size_t resultIdx = 0;
 		for (size_t m = 1; m < CLT_IDLE_TABLE_CLT_SIZE; m++) {
-			if (std::abs(config->cltIdleCorrBins[m] - 100.0f) < std::abs(config->cltIdleCorrBins[resultIdx] - 100.0f)) {
-				resultIdx = m;
+			if (config->cltIdleCorrBins[m] > config->atIdleBaseMaxClt) {
+				break;
 			}
+			resultIdx = m;
 		}
 
 		// Every table cell above the resultIdx entry should have the same value
