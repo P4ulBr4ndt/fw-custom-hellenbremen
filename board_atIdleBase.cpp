@@ -92,7 +92,7 @@ void AtIdleBase::burningROM() {
 		// Falls back to the first bin if atIdleBaseMaxCLT lies below all bins.
 		size_t resultIdx = 0;
 		for (size_t m = 1; m < CLT_IDLE_TABLE_CLT_SIZE; m++) {
-			if (config->cltIdleCorrBins[m] > config->atIdleBaseMaxCLT) {
+			if (config->cltIdleCorrBins[m] > config->atIdleBaseMaxClt) {
 				break;
 			}
 			resultIdx = m;
