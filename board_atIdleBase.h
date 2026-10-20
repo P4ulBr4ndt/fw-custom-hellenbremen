@@ -27,6 +27,8 @@ public:
 
 	struct atIdleBaseSample_s {
 		SensorResult clt = unexpected; // expected<float> has no default constructor
+		SensorResult tgs = unexpected; // expected<float> has no default constructor
+
 		float rpm;
 		float idlePos;
 
@@ -46,9 +48,11 @@ public:
 	void burningROM();
 	void applyCellChangeResistancePreset();
 	void writeIACCoastingTable();
+	bool isRunning() const;
 
 	void prepareFetchData();
 	void resetApplyToRAMIndicator();
+	void resetConfiguration();
 
 	bool areIdleBaseConditionsMet();
 	bool areStartConditionsMet();
@@ -71,6 +75,8 @@ private:
 
 	atIdleBaseSample_s     m_recordedSample;
 	live_data_atIdleBase_s m_liveData;
+
+	const IdleController& m_idle() const;
 };
 
 extern AtIdleBase atIdleBaseState;

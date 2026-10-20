@@ -12,6 +12,7 @@ void AtIdleBase::initializeStates() {
 	config->atIdleBaseRunning       = m_running;
 	config->atIdleBaseFetchDataDone = m_fetchDataDone;
 	config->atIdleBaseApplyToRamInd = false;
+	config->atIdleBaseStartTempPersist = 0;
 
 	initializeLiveDataStructs();
 
@@ -45,6 +46,7 @@ void AtIdleBase::toggleRunning() {
 	if (m_running) {
 		m_running = false;
 	} else {
+		recordProcessing();
 		if(areStartConditionsMet()) {
 			applyCellChangeResistancePreset();
 
@@ -52,7 +54,9 @@ void AtIdleBase::toggleRunning() {
 			initializeLiveDataStructs();
 
 			m_running = true;
+			
 			config->atIdleBaseFetchDataDone = false;
+
 			m_autoApplyTimer.reset();
 		}
 	}
@@ -146,13 +150,9 @@ void AtIdleBase::resetApplyToRAMIndicator() {
 }
 
 bool AtIdleBase::areIdleBaseConditionsMet() {
-	const auto& idle = engine->module<IdleController>().unmock();
-	const auto  tgs  = Sensor::get(SensorType::AcceleratorPedal);
-
-	if(m_recordedSample.clt.Valid &&
-	   m_recordedSample.rpm > config->atIdleBaseMinRpm &&
-	   idle.getCurrentPhase() == IIdleController::Phase::Idling &&
-	   tgs.Value < config->atIdleBaseMaxTgs) {
+	if(m_recordedSample.rpm > config->atIdleBaseMinRpm &&
+	   m_idle().getCurrentPhase() == IIdleController::Phase::Idling &&
+	   m_recordedSample.tgs.Valid && m_recordedSample.tgs.Value < config->atIdleBaseMaxTgs) {
 		return true;
 	} else {
 		return false;
@@ -160,13 +160,8 @@ bool AtIdleBase::areIdleBaseConditionsMet() {
 }
 
 bool AtIdleBase::areStartConditionsMet() {
-	const auto& idle = engine->module<IdleController>().unmock();
-	const auto  clt  = Sensor::get(SensorType::Clt);
-
-	// Dashpot taper still active after leaving the running phase would distort the first samples
-	if(clt.Valid && 
-	   clt.Value < config->atIdleBaseMinClt &&
-	   idle.iacByTpsTaper == 0.0f) {
+	if(m_recordedSample.clt.Valid && 
+	   m_recordedSample.clt.Value < config->atIdleBaseMinClt) {
 		return true;
 	} else {
 		return false;
@@ -179,8 +174,11 @@ bool AtIdleBase::areStartConditionsMet() {
 // Elaboration: After the save, the integrator of the PID still has old
 // information stored, which might creep up the idle position again. 
 void AtIdleBase::evaluateNewCellSelection() {
+	// The abortion here is intended for violating running conditions.
+	// Therefore, no burn to ROM is intended
 	if (!areIdleBaseConditionsMet()) {
 		toggleRunning();
+		resetConfiguration();
 		return;
 	}
 	
@@ -343,7 +341,8 @@ void AtIdleBase::periodicSlowCallback() {
 void AtIdleBase::recordProcessing() {
 	m_recordedSample.clt           = Sensor::get(SensorType::Clt);
 	m_recordedSample.rpm           = Sensor::getOrZero(SensorType::Rpm);
-	m_recordedSample.idlePos       = engine->module<IdleController>().unmock().currentIdlePosition; // "Idle position" gauge
+	m_recordedSample.tgs           = Sensor::get(SensorType::AcceleratorPedal);
+	m_recordedSample.idlePos       = m_idle().currentIdlePosition; // "Idle position" gauge
 	m_recordedSample.cellSelection = getIdleBaseTblCellSelection(m_recordedSample.clt.Value);
 
 	return;
@@ -367,6 +366,32 @@ void AtIdleBase::writeIACCoastingTable() {
 			}
 		}
 	}
+
+	return;
+}
+
+bool AtIdleBase::isRunning() const {
+	return m_running;
+}
+
+const IdleController& AtIdleBase::m_idle() const { 
+	return engine->module<IdleController>().unmock();
+}
+
+// Discards an aborted session: restores the table as it was at session start (undoing
+// any auto-apply) and clears the pending state, so onShutdown() has nothing to burn.
+void AtIdleBase::resetConfiguration() {
+	for (size_t m = 0; m < CLT_IDLE_TABLE_CLT_SIZE; m++) {
+		config->cltIdleCorrTable[0][m] = m_liveData.preTuneIdleBaseTable[m];
+		config->cltIdleCorrTable[1][m] = m_liveData.preTuneIdleBaseTable[m];
+	}
+
+	m_tuneRan     = false;
+	m_pendingBurn = false;
+
+	initializeLiveDataStructs();
+	prepareFetchData();
+	resetApplyToRAMIndicator();
 
 	return;
 }

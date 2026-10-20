@@ -21,14 +21,25 @@ static void o2SensorInitialization() {
 		engineConfiguration->afr.hwChannel  = EFI_ADC_NONE;
 		engineConfiguration->afr.hwChannel2 = EFI_ADC_NONE;
 
+		// Heater
+		engineConfiguration->gppwm[0].pin = Gpio::Unassigned;
+		engineConfiguration->gppwm[1].pin = Gpio::Unassigned;
+
 		engineConfiguration->enableAemXSeries = true;
 		engineConfiguration->canWbo[0].type = can_wbo_type_e::RUSEFI;
+
+		engineConfiguration->fuelClosedLoopCorrectionEnabled = true;
 	} else {
 		engineConfiguration->afr.hwChannel  = EFI_ADC_7; // PA7
 		engineConfiguration->afr.hwChannel2 = EFI_ADC_6; // PA6
 
+		engineConfiguration->gppwm[0].pin = Gpio::D15;
+		engineConfiguration->gppwm[1].pin = Gpio::D14;
+
 		engineConfiguration->enableAemXSeries = false;
 		engineConfiguration->canWbo[0].type = can_wbo_type_e::DISABLED;
+
+		engineConfiguration->fuelClosedLoopCorrectionEnabled = false;
 	}
 
 	return;
@@ -103,15 +114,9 @@ void boardDefaultConfiguration() {
 
 	// AFR - wideband O2 via CAN (rusEFI native protocol on CAN1)
 	config->useWidebandSensor = true;
-
-	engineConfiguration->afr.hwChannel = EFI_ADC_NONE;
-	engineConfiguration->afr.hwChannel2 = EFI_ADC_NONE;
-
-	engineConfiguration->enableAemXSeries = true;
 	engineConfiguration->widebandOnSecondBus = false; // Use CAN1
-
-	engineConfiguration->canWbo[0].type = can_wbo_type_e::RUSEFI;
-	engineConfiguration->canWbo[1].type = can_wbo_type_e::RUSEFI;
+	engineConfiguration->canWbo[1].type = can_wbo_type_e::DISABLED;
+	o2SensorInitialization();
 
 	engineConfiguration->afrExpAverageAlpha = 1; // no smoothing
 
@@ -137,6 +142,13 @@ void boardDefaultConfiguration() {
 	setRpmTableBin(config->estimatedEngineTorqueRpmBins);
 	setLinearCurve(config->estimatedEngineTorqueTpsBins, 0.0f, 100.0f, 1.0f);
 	setTable(config->estimatedEngineTorqueTable, 0);
+
+	// Vehicle equipment
+	config->jssInstalled = true;
+	config->prgselInstalled = true;
+
+	// Cruise control
+	config->ccFootBrakeDisengageThreshold = 50;
 
 	// PRGSEL
 	config->prgselOutputPin = Gpio::D10;
@@ -222,6 +234,7 @@ void boardDefaultConfiguration() {
 	// Idle base autotune conditions
 	config->atIdleBaseMinRpm = 700;
 	config->atIdleBaseMinClt = 40;
+	config->atIdleBaseMaxClt = 100;
 	config->atIdleBaseMaxTgs = 1;
 
 	config->atIdleBaseAutoApply = true;
@@ -273,6 +286,11 @@ static void boardSanitizeConfig() {
 	// Vmax
 	if (config->vmaxLimit > 0 && config->vmaxLimitRange == 0) {
 		config->vmaxLimitRange = 1;
+	}
+
+	// Autotune Idle Base
+	if (config->atIdleBaseMaxClt < config->atIdleBaseMinClt) {
+		config->atIdleBaseMaxClt = config->atIdleBaseMinClt;
 	}
 }
 
@@ -448,7 +466,7 @@ void boardCustomOnConfigurationChange(engine_configuration_s* previousConfigurat
 	autotuneState.applyCellChangeResistancePreset();
 	atIdleBaseState.applyCellChangeResistancePreset();
 
-	if(!config->prgselActive) {
+	if(!config->prgselInstalled || !config->prgselActive) {
 		prgselPwm.setFrequency(NAN);
 	} else {
 		prgselPwm.setFrequency(config->prgselPWMFreq);

@@ -20,7 +20,6 @@
 #include "shutdown_controller.h"
 #include "trigger_central.h"
 
-
 static uint8_t frameCounter142 = 0x0;
 static uint8_t frameCounter144 = 0x0;
 static uint8_t frameCounter146_342 = 0x0;
@@ -48,7 +47,18 @@ static bool prgselForce = false;
 // Required for indicators
 extern StoredValueSensor luaGauges[LUA_GAUGE_COUNT];
 
+// Vehicles without a jiffy stand switch must never report the stand as down
+static bool isJssDown() {
+	return config->jssInstalled && engine->engineState.jssState != 0;
+}
+
 void setPrgselForce(bool state) {
+	if(!config->prgselInstalled) {
+		prgselPwm.setFrequency(NAN);
+		prgselForce = false;
+		return;
+	}
+
 	if(state && !config->prgselActive)
 		prgselPwm.setFrequency(config->prgselPWMFreq);
 	else if(!state && !config->prgselActive)
@@ -304,7 +314,7 @@ void decreaseDesiredCCSpeedForCurrentGear() {
 } // namespace
 
 void boardPeriodicSlow() {
-	bool jssDown        = engine->engineState.jssState != 0;
+	bool jssDown        = isJssDown();
 	uint8_t currentGear = calculateHarleyGearIndex();
 	bool isNeutral      = currentGear == 0;
 
@@ -331,7 +341,7 @@ void boardPeriodicSlow() {
 	jssStopRequestActive = shouldRequestStop;
 
 	// Purge Valve Solenoid routines
-	bool prgselRunning = config->prgselActive && 
+	bool prgselRunning = config->prgselInstalled && config->prgselActive &&
 						 (prgselForce || ((currRPM     >= config->prgselRPM) &&
 		 				                  (currSpeed   >= config->prgselSpeed) &&
 		 				                  (currTGS     >= config->prgselLowerTGS) &&
@@ -413,7 +423,7 @@ void boardHandleCan(CanCycle cycle) {
 				msg[0] |= 0x10;
 			}
 			
-			if (!engine->engineState.jssState) {
+			if (!isJssDown()) {
 				msg[0] |= 0x01;
 			} else {
 				msg[0] |= 0x02;
@@ -472,8 +482,8 @@ void boardHandleCan(CanCycle cycle) {
 			// msg[0]:  bit 7  6  5  4  3  2  1  0
 			//              |  |  │  |  │  │  │  └── 0 (Always off?, observation)
 			//              |  |  │  |  │  │  └───── JSS
-			//              |  |  │  |  │  └──────── 1 (Always on?,  observation)
-			// 				|  |  |  |  └─────────── 0 (Always off?, observation)
+			//              |  |  │  |  │  └──────── !(JSS && (Gear != N))
+			// 				|  |  |  |  └─────────── JSS && (Gear != N)
 			//              |  |  |  └────────────── CC Disabled
 			//              |  |  └───────────────── CC Standby
 			//				|  └──────────────────── !CC Enabled
@@ -493,8 +503,13 @@ void boardHandleCan(CanCycle cycle) {
 					break;
 			}
 
-			if(engine->engineState.jssState) {
-				msg[0] |= 0x02;
+			if(isJssDown()) {
+				if(calculateHarleyGearIndex() != 0) {
+					msg[0] |= 0x0A;
+					msg[0] &= ~0x04;
+				} else {
+					msg[0] |= 0x02;
+				}
 			}
 
 			// msg[1]:  bit 7  6  5  4  3  2  1  0
@@ -960,7 +975,7 @@ void boardProcessCanRx(size_t busIndex, const CANRxFrame& frame, efitick_t nowNt
 		// This value ranges from 0x0000 to 0x0DA4 (foot brake pressed to the maximum)
 		uint16_t footBrakeValue = (static_cast<uint16_t>(frame.data8[2]) << 8) | frame.data8[3];
 
-		bool footBrakeEngaged = footBrakeValue > 0;
+		bool footBrakeEngaged = footBrakeValue > config->ccFootBrakeDisengageThreshold;
 		if (getCCStatus() == CruiseControlStatus::Enabled && footBrakeEngaged) {
 			setCCStatus(CruiseControlStatus::Standby);
 		}

@@ -360,9 +360,12 @@ void AutotuneState::applyingToRAM() {
 }
 
 void AutotuneState::burningROM() {
-	if (!running && (tuneRan || m_pendingBurn) && !getNeedToWriteConfiguration()) {
+	if (!running && (tuneRan || m_pendingBurn)) {
 		applyingToRAM(); // Otherwise the tune doesn't land in config->veTable/veFrontTable
-		requestBurn();
+		if (!getNeedToWriteConfiguration()) {
+			requestBurn();
+		}
+		
 		m_pendingBurn = false;
 	}
 
