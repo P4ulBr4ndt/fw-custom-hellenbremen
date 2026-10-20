@@ -12,6 +12,7 @@ void AtIdleBase::initializeStates() {
 	config->atIdleBaseRunning       = m_running;
 	config->atIdleBaseFetchDataDone = m_fetchDataDone;
 	config->atIdleBaseApplyToRamInd = false;
+	config->atIdleBaseStartTempPersist = 0;
 
 	initializeLiveDataStructs();
 
@@ -159,7 +160,6 @@ bool AtIdleBase::areIdleBaseConditionsMet() {
 }
 
 bool AtIdleBase::areStartConditionsMet() {
-	// Dashpot taper still active after leaving the running phase would distort the first samples
 	if(m_recordedSample.clt.Valid && 
 	   m_recordedSample.clt.Value < config->atIdleBaseMinClt) {
 		return true;

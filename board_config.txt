@@ -156,7 +156,7 @@ bit atIdleBaseAutoApply,"Yes","No";
 bit atIdleBaseAutoBurn,"Yes","No";
 bit atIdleBaseFetchDataDone,"Yes","No";
 bit atIdleBaseApplyToRamInd,"Yes","No";
-float atIdleBaseStartingTempPersistence;;"C", 1, 0, -40, 250, 0
+int16_t atIdleBaseStartTempPersist;;"C", 1, 0, -40, 250, 0
 
 uint16_t atIdleBaseMinRpm;Learning only above this RPM;"RPM", 1, 0, 0, 18000, 0
 int16_t  atIdleBaseMinClt;Learning can only be started below this CLT;"C", 1, 0, -40, 250, 0
