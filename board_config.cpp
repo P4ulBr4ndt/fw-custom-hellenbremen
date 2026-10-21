@@ -27,6 +27,8 @@ static void o2SensorInitialization() {
 
 		engineConfiguration->enableAemXSeries = true;
 		engineConfiguration->canWbo[0].type = can_wbo_type_e::RUSEFI;
+
+		engineConfiguration->fuelClosedLoopCorrectionEnabled = true;
 	} else {
 		engineConfiguration->afr.hwChannel  = EFI_ADC_7; // PA7
 		engineConfiguration->afr.hwChannel2 = EFI_ADC_6; // PA6
@@ -36,6 +38,8 @@ static void o2SensorInitialization() {
 
 		engineConfiguration->enableAemXSeries = false;
 		engineConfiguration->canWbo[0].type = can_wbo_type_e::DISABLED;
+
+		engineConfiguration->fuelClosedLoopCorrectionEnabled = false;
 	}
 
 	return;

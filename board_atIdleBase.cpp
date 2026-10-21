@@ -12,6 +12,7 @@ void AtIdleBase::initializeStates() {
 	config->atIdleBaseRunning       = m_running;
 	config->atIdleBaseFetchDataDone = m_fetchDataDone;
 	config->atIdleBaseApplyToRamInd = false;
+	config->atIdleBaseStartTempPersist = 0;
 
 	initializeLiveDataStructs();
 
@@ -86,13 +87,15 @@ void AtIdleBase::burningROM() {
 	if (!m_running && (m_tuneRan || m_pendingBurn)) {
 		applyingToRAM(); // Otherwise the tune doesn't land in config->cltIdleCorrTable
 
-		// Respecting the free choice of bins, find the index of config->cltIdleCorrBins
-		// that is closest to 100° C
+		// Respecting the free choice of bins, find the index of the highest entry of
+		// config->cltIdleCorrBins that does not exceed atIdleBaseMaxCLT (bins are ascending).
+		// Falls back to the first bin if atIdleBaseMaxCLT lies below all bins.
 		size_t resultIdx = 0;
 		for (size_t m = 1; m < CLT_IDLE_TABLE_CLT_SIZE; m++) {
-			if (std::abs(config->cltIdleCorrBins[m] - 100.0f) < std::abs(config->cltIdleCorrBins[resultIdx] - 100.0f)) {
-				resultIdx = m;
+			if (config->cltIdleCorrBins[m] > config->atIdleBaseMaxClt) {
+				break;
 			}
+			resultIdx = m;
 		}
 
 		// Every table cell above the resultIdx entry should have the same value
@@ -151,8 +154,7 @@ void AtIdleBase::resetApplyToRAMIndicator() {
 bool AtIdleBase::areIdleBaseConditionsMet() {
 	if(m_recordedSample.rpm > config->atIdleBaseMinRpm &&
 	   m_idle().getCurrentPhase() == IIdleController::Phase::Idling &&
-	   m_recordedSample.tgs.Valid && m_recordedSample.tgs.Value < config->atIdleBaseMaxTgs &&
-	   m_recordedSample.clt.Valid && m_recordedSample.clt.Value < config->atIdleBaseMaxClt) {
+	   m_recordedSample.tgs.Valid && m_recordedSample.tgs.Value < config->atIdleBaseMaxTgs) {
 		return true;
 	} else {
 		return false;
@@ -160,10 +162,8 @@ bool AtIdleBase::areIdleBaseConditionsMet() {
 }
 
 bool AtIdleBase::areStartConditionsMet() {
-	// Dashpot taper still active after leaving the running phase would distort the first samples
 	if(m_recordedSample.clt.Valid && 
-	   m_recordedSample.clt.Value < config->atIdleBaseMinClt &&
-	   m_idle().iacByTpsTaper == 0.0f) {
+	   m_recordedSample.clt.Value < config->atIdleBaseMinClt) {
 		return true;
 	} else {
 		return false;
@@ -176,8 +176,11 @@ bool AtIdleBase::areStartConditionsMet() {
 // Elaboration: After the save, the integrator of the PID still has old
 // information stored, which might creep up the idle position again. 
 void AtIdleBase::evaluateNewCellSelection() {
+	// The abortion here is intended for violating running conditions.
+	// Therefore, no burn to ROM is intended
 	if (!areIdleBaseConditionsMet()) {
 		toggleRunning();
+		resetConfiguration();
 		return;
 	}
 	
@@ -375,4 +378,22 @@ bool AtIdleBase::isRunning() const {
 
 const IdleController& AtIdleBase::m_idle() const { 
 	return engine->module<IdleController>().unmock();
+}
+
+// Discards an aborted session: restores the table as it was at session start (undoing
+// any auto-apply) and clears the pending state, so onShutdown() has nothing to burn.
+void AtIdleBase::resetConfiguration() {
+	for (size_t m = 0; m < CLT_IDLE_TABLE_CLT_SIZE; m++) {
+		config->cltIdleCorrTable[0][m] = m_liveData.preTuneIdleBaseTable[m];
+		config->cltIdleCorrTable[1][m] = m_liveData.preTuneIdleBaseTable[m];
+	}
+
+	m_tuneRan     = false;
+	m_pendingBurn = false;
+
+	initializeLiveDataStructs();
+	prepareFetchData();
+	resetApplyToRAMIndicator();
+
+	return;
 }
