@@ -107,6 +107,12 @@ void setCpcForce(bool state) {
 	cpcForce = state;
 }
 
+// Starts the CFC run-on window at power-up. Without this the timer stays in its
+// initial state and reads as long expired until the engine runs for the first time.
+void startEngNotRunningTimer() {
+	engNotRunningTimer.reset();
+}
+
 struct CruiseGearLimits {
 	bool allowCruise;
 	float minSpeedKph;
@@ -433,14 +439,11 @@ void boardPeriodicSlow() {
 		cfcHighSpeedMode = false;
 	}
 
-	bool cfcIsShutdownRunning  = cfcRunning 
-	                             && !isEngineActive 
-								 && (engNotRunningTimer.getElapsedSeconds() <= config->cfcMaxRuntimeAfterEngShutdown 
-								     && currCltTemp > config->cfcEngShutdownOffTemp 
-									 && config->cfcEngShutdownOffTemp <= config->cfcLowSpeedOffTemp 
-									 && config->cfcEngShutdownOffTemp <= config->cfcHighSpeedOffTemp);
-	bool cfcIsShutdownComplete = (engNotRunningTimer.getElapsedSeconds() > config->cfcMaxRuntimeAfterEngShutdown || currCltTemp <= config->cfcEngShutdownOffTemp) && cfcRunning && !isEngineActive;
-	bool cfcDisabledEngCond    = (!config->cfcDisableWhenEngineStopped || isEngineActive || cfcIsShutdownRunning);
+	// Run-on window after engine stop. ON and OFF conditions both use it, so they can't contradict each other.
+	bool cfcShutdownWindowOpen = engNotRunningTimer.getElapsedSeconds() <= config->cfcMaxRuntimeAfterEngShutdown
+	                             && currCltTemp > config->cfcEngShutdownOffTemp;
+	bool cfcIsShutdownComplete = cfcRunning && !isEngineActive && !cfcShutdownWindowOpen;
+	bool cfcDisabledEngCond    = isEngineActive || (!config->cfcDisableWhenEngineStopped && cfcShutdownWindowOpen);
 	bool cfcOnTempCond         = ((currCltTemp >  config->cfcLowSpeedOnTemp   && !cfcHighSpeedMode) ||
 	     				          (currCltTemp >  config->cfcHighSpeedOnTemp  && cfcHighSpeedMode)) && !cfcRunning;
 	bool cfcOffTempCond        = ((currCltTemp <= config->cfcLowSpeedOffTemp  && !cfcHighSpeedMode) || 
