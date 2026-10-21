@@ -45,7 +45,7 @@ static uint32_t lastReceivedOdometer = 0;
 // CFC
 static bool  cfcForce         = false;
 static bool  cfcHighSpeedMode = false;
-static Timer engNotRunningTimer;
+static Timer cfcRunOnTimer;
 
 static bool  cfcUserForceOn     = false;
 static bool  cfcTgsHoldArmed    = false;
@@ -105,12 +105,6 @@ void setPrgselForce(bool state) {
 
 void setCpcForce(bool state) {
 	cpcForce = state;
-}
-
-// Starts the CFC run-on window at power-up. Without this the timer stays in its
-// initial state and reads as long expired until the engine runs for the first time.
-void startEngNotRunningTimer() {
-	engNotRunningTimer.reset();
 }
 
 struct CruiseGearLimits {
@@ -377,12 +371,6 @@ void boardPeriodicSlow() {
 	float currCltTmp2 = Sensor::getOrZero(SensorType::Clt);
 	float currRuntime = engine->fuelComputer.running.timeSinceCrankingInSecs;
 
-	// Similar to engine->fuelComputer.running.timeSinceCrankingInSecs
-	// but for engine not running time. See engine2.cpp:170
-	if(isEngineActive) {
-		engNotRunningTimer.reset();
-	}
-
 	bool shouldRequestStop = jssDown && !isNeutral && isEngineActive;
 	if (shouldRequestStop && !jssStopRequestActive) {
 		doScheduleStopEngine(StopRequestedReason::Board1);
@@ -439,11 +427,19 @@ void boardPeriodicSlow() {
 		cfcHighSpeedMode = false;
 	}
 
-	// Run-on window after engine stop. ON and OFF conditions both use it, so they can't contradict each other.
-	bool cfcShutdownWindowOpen = engNotRunningTimer.getElapsedSeconds() <= config->cfcMaxRuntimeAfterEngShutdown
+	// Normal speed/temperature hysteresis applies while the engine runs, or with ignition on when the
+	// fan may run with the engine stopped. Otherwise only the run-on window, which starts when normal
+	// operation ends, decides. ON and OFF conditions both use it, so they can't contradict each other.
+	bool cfcIgnitionOff        = harleyIgnitionOffRequested && !harleyIgnitionOnRequested;
+	bool cfcNormalOperation    = isEngineActive || (!cfcIgnitionOff && !config->cfcDisableWhenEngineStopped);
+	if (cfcNormalOperation) {
+		cfcRunOnTimer.reset();
+	}
+
+	bool cfcShutdownWindowOpen = cfcRunOnTimer.getElapsedSeconds() <= config->cfcMaxRuntimeAfterEngShutdown
 	                             && currCltTemp > config->cfcEngShutdownOffTemp;
-	bool cfcIsShutdownComplete = cfcRunning && !isEngineActive && !cfcShutdownWindowOpen;
-	bool cfcDisabledEngCond    = isEngineActive || (!config->cfcDisableWhenEngineStopped && cfcShutdownWindowOpen);
+	bool cfcIsShutdownComplete = cfcRunning && !cfcNormalOperation && !cfcShutdownWindowOpen;
+	bool cfcDisabledEngCond    = cfcNormalOperation || (!config->cfcDisableWhenEngineStopped && cfcShutdownWindowOpen);
 	bool cfcOnTempCond         = ((currCltTemp >  config->cfcLowSpeedOnTemp   && !cfcHighSpeedMode) ||
 	     				          (currCltTemp >  config->cfcHighSpeedOnTemp  && cfcHighSpeedMode)) && !cfcRunning;
 	bool cfcOffTempCond        = ((currCltTemp <= config->cfcLowSpeedOffTemp  && !cfcHighSpeedMode) || 

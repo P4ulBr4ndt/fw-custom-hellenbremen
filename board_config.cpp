@@ -485,7 +485,6 @@ void boardCustomInitHardware() {
 
 	// Cooling Fan Control Pin init
 	cfcPin.initPin("CFC", config->cfcOutputPin);
-	startEngNotRunningTimer();
 
 	// Chassis Cooling Fan Control Pin init
 	ccfcPin.initPin("CCFC", config->ccfcOutputPin);

@@ -14,4 +14,3 @@ void inhibitCfcUserForce();
 void setCcfcForce(bool state);
 void setPrgselForce(bool state);
 void setCpcForce(bool state);
-void startEngNotRunningTimer();
