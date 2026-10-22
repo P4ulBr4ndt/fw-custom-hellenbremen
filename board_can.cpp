@@ -436,7 +436,7 @@ void boardPeriodicSlow() {
 		cfcRunOnTimer.reset();
 	}
 
-	bool cfcShutdownWindowOpen = cfcRunOnTimer.getElapsedSeconds() <= config->cfcMaxRuntimeAfterEngShutdown
+	bool cfcShutdownWindowOpen = !cfcRunOnTimer.hasElapsedSec(config->cfcMaxRuntimeAfterEngShutdown)
 	                             && currCltTemp > config->cfcEngShutdownOffTemp;
 	bool cfcIsShutdownComplete = cfcRunning && !cfcNormalOperation && !cfcShutdownWindowOpen;
 	bool cfcDisabledEngCond    = cfcNormalOperation || (!config->cfcDisableWhenEngineStopped && cfcShutdownWindowOpen);
