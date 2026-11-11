@@ -12,6 +12,7 @@ uint16_t[PEDAL_TO_TPS_SIZE x PEDAL_TO_TPS_RPM_SIZE] autoscale etbRoadTable;;"%",
 uint16_t[PEDAL_TO_TPS_SIZE x PEDAL_TO_TPS_RPM_SIZE] autoscale etbRainTable;;"%", 0.1, 0, 0, 100, 1
 uint16_t[PEDAL_TO_TPS_SIZE x PEDAL_TO_TPS_RPM_SIZE] autoscale etbSportTable;;"%", 0.1, 0, 0, 100, 1
 uint16_t[PEDAL_TO_TPS_SIZE x PEDAL_TO_TPS_RPM_SIZE] autoscale etbTrackTable;;"%", 0.1, 0, 0, 100, 1
+uint16_t[PEDAL_TO_TPS_SIZE x PEDAL_TO_TPS_RPM_SIZE] autoscale etbBaseTable;;"%", 0.1, 0, 0, 100, 1
 int16_t[PEDAL_TO_TPS_SIZE x PEDAL_TO_TPS_RPM_SIZE] autoscale estimatedEngineTorqueTable;;"Nm", 0.1, 0, -400, 400, 1
 uint16_t[PEDAL_TO_TPS_RPM_SIZE] estimatedEngineTorqueRpmBins;;"rpm", 1, 0, 0, 12000, 0
 uint8_t[PEDAL_TO_TPS_SIZE] estimatedEngineTorqueTpsBins;;"%", 1, 0, 0, 100, 0

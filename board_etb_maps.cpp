@@ -11,11 +11,11 @@ static constexpr uint8_t HD_ENGINE_MAP_RAIN = 0x2;
 static constexpr uint8_t HD_ENGINE_MAP_SPORT = 0x3;
 static constexpr uint8_t HD_ENGINE_MAP_TRACK = 0x5;
 
-pedal2tps_t etbRoadMap{"etbRoad"};
-pedal2tps_t etbRainMap{"etbRain"};
-pedal2tps_t etbSportMap{"etbSport"};
-pedal2tps_t etbTrackMap{"etbTrack"};
-pedal2tps_t etbBaseMap{"etbBase"};
+etb_pedal2tps_t etbRoadMap{"etbRoad"};
+etb_pedal2tps_t etbRainMap{"etbRain"};
+etb_pedal2tps_t etbSportMap{"etbSport"};
+etb_pedal2tps_t etbTrackMap{"etbTrack"};
+etb_pedal2tps_t etbBaseMap{"etbBase"};
 
 bool etbMapsInitialized = false;
 
@@ -28,7 +28,7 @@ void ensureEtbMapsInitialized() {
 	etbRainMap.initTable(config->etbRainTable, config->pedalToTpsRpmBins, config->pedalToTpsPedalBins);
 	etbSportMap.initTable(config->etbSportTable, config->pedalToTpsRpmBins, config->pedalToTpsPedalBins);
 	etbTrackMap.initTable(config->etbTrackTable, config->pedalToTpsRpmBins, config->pedalToTpsPedalBins);
-	etbBaseMap.initTable(config->pedalToTpsTable, config->pedalToTpsRpmBins, config->pedalToTpsPedalBins);
+	etbBaseMap.initTable(config->etbBaseTable, config->pedalToTpsRpmBins, config->pedalToTpsPedalBins);
 
 	etbMapsInitialized = true;
 }
